@@ -16,6 +16,9 @@ BOTOWNER_ID = str(119384097473822727) # User ID of the owner of this bot
 INITIAL_GAME_STATUS = "INFP is master race"
 
 def initialize_global_variables():
+   
+   # global email
+
    global re_alldigits
    global re_mentionstr
    global re_chmentionstr
@@ -34,7 +37,7 @@ def initialize_global_variables():
    bot_mention = get_mention_str(client.user.id)
    bot_name = client.user.name
    botowner_mention = get_mention_str(BOTOWNER_ID)
-   botowner = get_user_object(BOTOWNER_ID)
+   botowner = search_for_user(BOTOWNER_ID)
    initialization_timestamp = datetime.datetime.now()
    
    return
@@ -222,8 +225,8 @@ def cmd1_mentions_search(substr, msg):
 def cmd1_avatar(substr, msg):
    (left, right) = separate_left_word(substr)
    user = None
-   if re_mentionstr.fullmatch(left):
-      user = get_user_object(left[2:-1])
+   if len(left) > 0:
+      user = search_for_user(left, enablenamesearch=True)
       if user is None:
          return send_msg(msg, left + " doesn't even exist m8")
    else:
@@ -270,13 +273,14 @@ def cmd_help(substr, msg):
       buf += "\n`/db time` - Get bot system time."
       buf += "\n`/db setgame [text]` - Set game status."
       buf += "\n`/db clrgame` - Clear game status."
+      buf += "\n`/db throwexception` - Throw an exception."
 
    send_msg(msg, buf)
    return
 
 
 def cmd_source(msg):
-   buf = "https://github.com/simshadows/Random-Small-Programs/tree/master/3-Discord-mentionbot-python"
+   buf = "https://github.com/simshadows/discord-mentionbot"
    return send_msg(msg, buf)
 
 
@@ -308,8 +312,8 @@ def cmd_debugging(substr, msg):
          set_game_status(None)
          send_msg(msg, "Game cleared.")
 
-      elif left == "setname":
-         client.edit_profile()
+      elif left == "throwexception":
+         raise Exception
       
       else:
          cmd_invalidcmd(msg)
@@ -323,7 +327,7 @@ def cmd1_debugging_iam(substr, msg):
    if re_mentionstr.fullmatch(left):
       user_to_pose_as = left[2:-1]
       replacement_msg = copy.deepcopy(msg)
-      replacement_msg.author = get_user_object(user_to_pose_as)
+      replacement_msg.author = search_for_user(user_to_pose_as)
       if replacement_msg.author == None:
          return send_msg(msg, "Unknown user.")
       replacement_msg.content = right
@@ -467,30 +471,67 @@ def seconds_to_string(seconds):
       return str(seconds) + " seconds (uhh... I don't think this should be negative.)"
 
 
-# PRECONDITION: Input has no leading/trailing whitespace (i.e. stripped). 
-def get_user_object(text, namesearch=False):
-   user_ID = None
+# Search for a Member object.
+# Strings that may yield a Member object:
+#     A valid user ID
+#     A valid user mention string (e.g. "<@12345>")
+#     A valid username (only exact matches)
+# Note: Multiple users may be using the same username. This function will only return one.
+# Note: only guaranteed to work if input has no leading/trailing whitespace (i.e. stripped).
+# PARAMETER: serverrestriction - TYPE: Server, None
+#                                If None, search occurs over all reachable searchers.
+#                                If it's a valid server, the search is done on only that server.
+def search_for_user(text, enablenamesearch=False, serverrestriction=None): # TYPE: User
    if re_mentionstr.fullmatch(text):
-      user_ID = text[2:-1]
+      searchkey = lambda user : user.id == str(text[2:-1])
    elif re_alldigits.fullmatch(text):
-      user_ID = text
-   elif namesearch:
-      print("WARNING: namesearch has not yet been implemented.")
+      searchkey = lambda user : user.id == str(text)
+   elif enablenamesearch:
+      searchkey = lambda user : user.name == str(text)
+   else:
+      return None
 
-   for server in client.servers:
+   if serverrestriction is None:
+      servers = client.servers
+   else:
+      servers = [serverrestriction]
+
+   for server in servers:
       for user in server.members:
-         if user.id == str(user_ID):
+         if searchkey(user):
             return user
    return None
 
 
-# Pass in any text to possibly obtain channel ID such as:
-# Possible inputs to yield a channel ID:
-#
-# PRECONDITION: Input has no leading/trailing whitespace (i.e. stripped).     
-def get_channel_object(text, namesearch=False):
-   # TODODODODODODODODODO
-   return
+# Search for a Channel object.
+# Strings that may yield a Channel object:
+#     A valid channel ID
+#     A valid channel mention string (e.g. "<@12345>")
+#     A valid channel name (only exact matches)
+# PRECONDITION: Input has no leading/trailing whitespace (i.e. stripped).
+# PARAMETER: serverrestriction - TYPE: Server, None
+#                                If None, search occurs over all reachable searchers.
+#                                If it's a valid server, the search is done on only that server.
+def search_for_channel(text, enablenamesearch=False, serverrestriction=None): # Type: Channel
+   if re_chmentionstr.fullmatch(text):
+      searchkey = lambda channel : channel.id == str(text[2:-1])
+   elif re_alldigits.fullmatch(text):
+      searchkey = lambda channel : channel.id == str(text)
+   elif enablenamesearch:
+      searchkey = lambda channel : channel.name == str(text)
+   else:
+      return None
+
+   if serverrestriction is None:
+      servers = client.servers
+   else:
+      servers = [serverrestriction]
+
+   for server in servers:
+      for channel in server.channels:
+         if searchkey(channel):
+            return channel
+   return None
 
 
 def is_privileged_user(user_ID):
