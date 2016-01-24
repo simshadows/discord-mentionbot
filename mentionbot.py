@@ -20,16 +20,22 @@ def initialize_global_variables():
    global re_alldigits
    global re_mentionstr
    global re_chmentionstr
-   global re_option_ch
-   global re_option_max
-
    re_alldigits = re.compile("\d+")
    re_mentionstr = re.compile("<@\d+>")
    re_chmentionstr = re.compile("<#\d+>")
 
    # For matching command options.
-   re_option_ch = re.compile("ch=\S+") # e.g. "ch=<#124672134>"
-   re_option_max = re.compile("max=\d+") # e.g. "max=100"
+   global re_option_ch
+   global re_option_m
+   global re_option_r
+   re_option_ch = re.compile("ch=[\w\W]+") # e.g. "ch=<#124672134>"
+   re_option_m = re.compile("m=\d+") # e.g. "m=100"
+   re_option_r = re.compile("r=\d+") # e.g. "m=1000"
+
+   if re_option_ch.fullmatch("ch=<#23rcq2c>"):
+      print("SUCCESS!!!")
+   else:
+      print("FAIL WHALE")
 
    global mentionSummaryCache
    global bot_mention
@@ -139,7 +145,7 @@ def cmd1(substr, msg, no_default=False):
       if left == "help":
          cmd_help(right, msg)
 
-      elif (left == "mentions") or (left == "mb"):
+      elif (left == "mentions") or (left == "mb") or (left == "mentionbot"):
          cmd1_mentions(right, msg)
 
       elif left == "avatar":
@@ -192,7 +198,7 @@ def cmd1_mentions_summary(substr, msg, add_extra_help=False):
          add_extra_help = False # Never attach extra help message if sent via PM.
       elif (preserve_data == False) and ((flag == "k") or (flag == "preservedata")):
          preserve_data = True
-      elif (verbose == False) and ((flag == "v") or ("verbose")):
+      elif (verbose == False) and ((flag == "v") or (flag == "verbose")):
          verbose = True
       else: # Invalid flag!
          return cmd_badargs(msg)
@@ -220,25 +226,28 @@ def cmd1_mentions_summary(substr, msg, add_extra_help=False):
 
 
 def cmd1_mentions_search(substr, msg):
-   send_as_pm = False
-   ch = None # TYPE: String
-   searchmax = None # TYPE: Int. Should be named "max", but it's already a reserved word.
-
-   # re_option_max re_option_ch
+   send_as_pm = False # TYPE: Boolean
+   verbose = False # TYPE: Boolean
+   ch = None # TYPE: String, or None. This is a channel name, channel mention, or channel ID.
+   mentions_to_get = None # TYPE: Int, or None. This is the number of mentions this function will try to fetch.
+   search_range = None # TYPE: Int, or None. This is the number of messages the function will search through.
 
    flags = parse_flags(substr)
    for flag in flags:
-      print("FLAG: " + flag)
       if (send_as_pm == False) and ((flag == "p") or (flag == "privmsg")):
          send_as_pm = True
-      elif (ch == None) and re_option_ch.fullmatch(flag):
+      elif (verbose == False) and ((flag == "v") or (flag == "verbose")):
+         verbose = True
+      elif (ch is None) and re_option_ch.fullmatch(flag):
          ch = flag[3:]
-      elif (searchmax == None) and re_option_max.fullmatch(flag):
-         searchmax = int(flag[4:])
+      elif (mentions_to_get == None) and re_option_m.fullmatch(flag):
+         mentions_to_get = int(flag[2:])
+      elif (search_range == None) and re_option_r.fullmatch(flag):
+         search_range = int(flag[2:])
       else: # Invalid flag!
          return cmd_badargs(msg)
 
-   # Get channel object (and handle the default value)
+   # Get channel object from ch (and handle the default value)
    if ch is None:
       channel = msg.channel
    else:
@@ -248,11 +257,39 @@ def cmd1_mentions_search(substr, msg):
       channel = search_for_channel(ch, enablenamesearch=True, serverrestriction=server_to_search)
       if channel is None:
          return send_msg(msg, "Channel not found. Search failed.")
-   # Handle max's default value
-   if searchmax == None:
-      searchmax = 3
+   # Handle other default values or invalid inputs.
+   if mentions_to_get == None:
+      mentions_to_get = 3
+   elif mentions_to_get == 0:
+      return cmd_badargs(msg)
+   if search_range == None:
+      search_range = 2000
+   elif search_range == 0:
+      return cmd_badargs(msg)
 
-   buf = "Soz, I ain't implemented. But your options are " + channel.name + " and " + str(searchmax)
+   # Search
+   search_results = []
+   searched = 0 # Used for feedback on how many messages were searched.
+   mentions_left = mentions_to_get
+   for retrieved_msg in client.logs_from(channel, limit=search_range):
+      searched += 1
+      if msg.author in retrieved_msg.mentions:
+         search_results.append(retrieved_msg)
+         mentions_left -= 1
+         if mentions_left == 0:
+            break
+   
+   if len(search_results) == 0:
+      buf = "No results found."
+      buf += "\nLooked through " + str(searched) + " messages in <#" + channel.id + ">."
+      buf += "\n(mentions_to_get=" + str(mentions_to_get) + ", range=" + str(search_range) + ")"
+   else:
+      mentions_found = mentions_to_get - mentions_left
+      buf = "Here are your " + str(mentions_found) + " latest mentions in <#" + channel.id + ">."
+      buf += "\n(mentions_to_get=" + str(mentions_to_get) + ", range=" 
+      buf += str(search_range) + ", searched=" + str(searched) + "):"
+      buf += "\n\n"
+      buf += msg_list_to_string(search_results, verbose=verbose)
 
    return send_msg(msg, buf)
 
@@ -291,7 +328,9 @@ def cmd_help(substr, msg):
       buf += "\n\n`/mentions search [options]` or `/mb s [options]` - Search mentions."
       buf += "\noption: `--privmsg` or `-p` - Send mentions via PM instead."
       buf += "\noption: `--ch=[channel]` - Channel to search (this channel by default)."
-      buf += "\noption: `--max=[num]` - Number of mentions to search for."
+      buf += "\noption: `--m=[num]` - Number of mentions to search for."
+      buf += "\noption: `--r=[num]` - Number of messages to be searched through."
+      buf += "\noption: `--verbose` or `-v` - Include extra information."
 
       # buf += "\n\n`/#[channel] [num]` - Searches channel for num latest mentions."
 
@@ -460,7 +499,7 @@ class MentionSummaryCache:
    # Output is not NL-terminated.
    def user_data_to_string(self, user_ID, verbose=False): # TYPE: String
 
-      return mention_list_to_string(self.get_user_latest(user_ID), verbose=verbose)
+      return msg_list_to_string(self.get_user_latest(user_ID), verbose=verbose)
    def user_has_mentions(self, user_ID): #TYPE: Boolean
       for i in self._mention_list:
          if i[0] == user_ID:
@@ -468,7 +507,7 @@ class MentionSummaryCache:
       return False
 
 
-def mention_list_to_string(mentions, verbose=False): # TYPE: String
+def msg_list_to_string(mentions, verbose=False): # TYPE: String
    now = datetime.datetime.now()
    buf = "" # FORMAT: String
    for i in mentions:
