@@ -8,14 +8,22 @@ import time
 import re
 import os
 
+LOGIN_DETAILS_FILENAME = "../mentionbot_botlogin1" # This file is used to login. Only contains two lines. Line 1 is email, line 2 is password.
 MESSAGE_MAX_LEN = 2000
 LOCALTIMEZONE_HOUR_OFFSET = 11 # Timestamps are either in GMT or the system timezone.
 LOCALTIMEZONE_ABBR = "AEDT" # Name of system timezone
 BOTOWNER_ID = str(119384097473822727) # User ID of the owner of this bot
 INITIAL_GAME_STATUS = "INFP is master race"
-LOGIN_DETAILS_FILENAME = "discord_bot_login1" # This file is used to login. Only contains two lines. Line 1 is email, line 2 is password.
 
 def initialize_global_variables():
+   global re_alldigits
+   global re_mentionstr
+   global re_chmentionstr
+
+   re_alldigits = re.compile("\d+")
+   re_mentionstr = re.compile("<@\d+>")
+   re_chmentionstr = re.compile("<#\d+>")
+
    global mentionSummaryCache
    global bot_mention
    global bot_name
@@ -28,17 +36,7 @@ def initialize_global_variables():
    botowner_mention = get_mention_str(BOTOWNER_ID)
    botowner = get_user_object(BOTOWNER_ID)
    initialization_timestamp = datetime.datetime.now()
-
-   ### Regex Objects ###
-
-   global re_alldigits
-   global re_mentionstr
-   global re_chmentionstr
-
-   re_alldigits = re.compile("\d+")
-   re_mentionstr = re.compile("<@\d+>")
-   re_chmentionstr = re.compile("<#\d+>")
-
+   
    return
 
 ###########################################################################################
@@ -64,12 +62,12 @@ def on_ready():
    initialize_global_variables()
    set_game_status(INITIAL_GAME_STATUS)
    print("")
+   print("LOGIN_DETAILS_FILENAME = '{}'".format(LOGIN_DETAILS_FILENAME))
    print("MESSAGE_MAX_LEN = '{}'".format(MESSAGE_MAX_LEN))
    print("LOCALTIMEZONE_HOUR_OFFSET = '{}'".format(LOCALTIMEZONE_HOUR_OFFSET))
    print("LOCALTIMEZONE_ABBR = '{}'".format(LOCALTIMEZONE_ABBR))
    print("BOTOWNER_ID = '{}'".format(BOTOWNER_ID))
    print("INITIAL_GAME_STATUS = '{}'".format(INITIAL_GAME_STATUS))
-   print("LOGIN_DETAILS_FILENAME = '{}'".format(LOGIN_DETAILS_FILENAME))
    print("")
    print("Bot owner: " + botowner.name)
    print("Bot name: " + bot_name)
