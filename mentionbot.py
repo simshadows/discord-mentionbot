@@ -116,7 +116,7 @@ def on_message(msg):
          cmd1(text[1:].strip(), msg, no_default=True)
 
       elif left == "$mb":
-         cmd1(right, msg, no_default=False)
+         cmd1_mentions(right, msg, no_default=False)
 
       # EASTER EGG REPLY.
       elif left == "$blame" and bot_mention in text:
@@ -271,14 +271,27 @@ def cmd1_mentions_search(substr, msg):
    search_results = []
    searched = 0 # Used for feedback on how many messages were searched.
    mentions_left = mentions_to_get
-   for retrieved_msg in client.logs_from(channel, limit=search_range):
-      searched += 1
-      if msg.author in retrieved_msg.mentions:
-         search_results.append(retrieved_msg)
-         mentions_left -= 1
-         if mentions_left == 0:
+   search_before = None # Used for generating more logs after the limit is reached.
+   while True:
+      # TODO: Make this more efficient.
+      print("RETRIEVING 100 MESSAGES FROM " + channel.name + "...")
+      more_left_to_search = False
+      for retrieved_msg in client.logs_from(channel, limit=search_range, before=search_before):
+         if searched >= search_range:
             break
+         searched += 1
+         prev_retrieved_msg = retrieved_msg # Used for generating more logs after the limit is reached.
+         more_left_to_search = True # Used for generating more logs after the limit is reached.
+         if msg.author in retrieved_msg.mentions:
+            search_results.append(retrieved_msg)
+            mentions_left -= 1
+            if mentions_left == 0:
+               break
+      if (searched >= search_range) or not (more_left_to_search and (mentions_left > 0)):
+         break
+      search_before = prev_retrieved_msg
    
+   # Report search results
    if len(search_results) == 0:
       buf = "No results found."
       buf += "\nLooked through " + str(searched) + " messages in <#" + channel.id + ">."
@@ -342,13 +355,14 @@ def cmd_help(substr, msg):
    
    # For displaying additional information for privileged users.
    if (normal_help_printed == True) and is_privileged_user(msg.author.id):
-      buf += "\n\n`/db say [text]` - Echos following text."
-      buf += "\n`/db iam [@user] [cmd]` - Execute a command as a user."
-      buf += "\n`/db gettime` - Get bot system time."
-      buf += "\n`/db setgame [text]` - Set/clear game status."
-      buf += "\n`/db setusername [text]` - Set bot username."
-      buf += "\n`/db getemail` - Get bot account's email."
-      buf += "\n`/db throwexception` - Throw an exception."
+      buf += "\n\n`/db say [text]`"
+      buf += "\n`/db iam [@user] [cmd]`"
+      buf += "\n`/db gettime`"
+      buf += "\n`/db setgame [text]`"
+      buf += "\n`/db setusername [text]`"
+      buf += "\n`/db getemail`"
+      buf += "\n`/db printhistory`"
+      buf += "\n`/db throwexception`"
 
    send_msg(msg, buf)
    return
