@@ -16,16 +16,20 @@ BOTOWNER_ID = str(119384097473822727) # User ID of the owner of this bot
 INITIAL_GAME_STATUS = "INFP is master race"
 
 def initialize_global_variables():
-   
-   # global email
 
    global re_alldigits
    global re_mentionstr
    global re_chmentionstr
+   global re_option_ch
+   global re_option_max
 
    re_alldigits = re.compile("\d+")
    re_mentionstr = re.compile("<@\d+>")
    re_chmentionstr = re.compile("<#\d+>")
+
+   # For matching command options.
+   re_option_ch = re.compile("ch=\S+") # e.g. "ch=<#124672134>"
+   re_option_max = re.compile("max=\d+") # e.g. "max=100"
 
    global mentionSummaryCache
    global bot_mention
@@ -181,7 +185,6 @@ def cmd1_mentions_summary(substr, msg, add_extra_help=False):
    verbose = False
 
    # Parse substring for options. Return on invalid option.
-   args = substr.split(" ")
    flags = parse_flags(substr)
    for flag in flags:
       if (send_as_pm == False) and ((flag == "p") or (flag == "privmsg")):
@@ -217,7 +220,39 @@ def cmd1_mentions_summary(substr, msg, add_extra_help=False):
 
 
 def cmd1_mentions_search(substr, msg):
-   buf = "Not yet implemented."
+   send_as_pm = False
+   ch = None # TYPE: String
+   searchmax = None # TYPE: Int. Should be named "max", but it's already a reserved word.
+
+   # re_option_max re_option_ch
+
+   flags = parse_flags(substr)
+   for flag in flags:
+      print("FLAG: " + flag)
+      if (send_as_pm == False) and ((flag == "p") or (flag == "privmsg")):
+         send_as_pm = True
+      elif (ch == None) and re_option_ch.fullmatch(flag):
+         ch = flag[3:]
+      elif (searchmax == None) and re_option_max.fullmatch(flag):
+         searchmax = int(flag[4:])
+      else: # Invalid flag!
+         return cmd_badargs(msg)
+
+   # Get channel object (and handle the default value)
+   if ch is None:
+      channel = msg.channel
+   else:
+      server_to_search = msg.server
+      if server_to_search == None:
+         return send_msg(msg, "Sorry, the --ch option is unusable in private channels.")
+      channel = search_for_channel(ch, enablenamesearch=True, serverrestriction=server_to_search)
+      if channel is None:
+         return send_msg(msg, "Channel not found. Search failed.")
+   # Handle max's default value
+   if searchmax == None:
+      searchmax = 3
+
+   buf = "Soz, I ain't implemented. But your options are " + channel.name + " and " + str(searchmax)
 
    return send_msg(msg, buf)
 
@@ -226,7 +261,7 @@ def cmd1_avatar(substr, msg):
    (left, right) = separate_left_word(substr)
    user = None
    if len(left) > 0:
-      user = search_for_user(left, enablenamesearch=True)
+      user = search_for_user(left, enablenamesearch=True, serverrestriction=msg.server)
       if user is None:
          return send_msg(msg, left + " doesn't even exist m8")
    else:
@@ -255,7 +290,7 @@ def cmd_help(substr, msg):
       
       buf += "\n\n`/mentions search [options]` or `/mb s [options]` - Search mentions."
       buf += "\noption: `--privmsg` or `-p` - Send mentions via PM instead."
-      buf += "\noption: `--ch=[channel]` - Scope. Searches same channel by default."
+      buf += "\noption: `--ch=[channel]` - Channel to search (this channel by default)."
       buf += "\noption: `--max=[num]` - Number of mentions to search for."
 
       # buf += "\n\n`/#[channel] [num]` - Searches channel for num latest mentions."
@@ -270,9 +305,10 @@ def cmd_help(substr, msg):
    if (normal_help_printed == True) and is_privileged_user(msg.author.id):
       buf += "\n\n`/db say [text]` - Echos following text."
       buf += "\n`/db iam [@user] [cmd]` - Execute a command as a user."
-      buf += "\n`/db time` - Get bot system time."
-      buf += "\n`/db setgame [text]` - Set game status."
-      buf += "\n`/db clrgame` - Clear game status."
+      buf += "\n`/db gettime` - Get bot system time."
+      buf += "\n`/db setgame [text]` - Set/clear game status."
+      buf += "\n`/db setusername [text]` - Set bot username."
+      buf += "\n`/db getemail` - Get bot account's email."
       buf += "\n`/db throwexception` - Throw an exception."
 
    send_msg(msg, buf)
@@ -280,7 +316,8 @@ def cmd_help(substr, msg):
 
 
 def cmd_source(msg):
-   buf = "https://github.com/simshadows/discord-mentionbot"
+   # buf = "https://github.com/simshadows/discord-mentionbot"
+   buf = "idk, ask sim."
    return send_msg(msg, buf)
 
 
@@ -301,16 +338,20 @@ def cmd_debugging(substr, msg):
       elif left == "iam":
          cmd1_debugging_iam(right, msg)
 
-      elif left == "time":
+      elif left == "gettime":
          send_msg(msg, datetime.datetime.now().strftime("My current system time: %c " + LOCALTIMEZONE_ABBR))
 
       elif left == "setgame":
          set_game_status(right)
          send_msg(msg, "Game set to: " + right)
 
-      elif left == "clrgame":
-         set_game_status(None)
-         send_msg(msg, "Game cleared.")
+      elif left == "setusername":
+         client.edit_profile(password, username=right)
+         bot_name = right # TODO: Consider making this a function. Or stop using bot_name...
+         send_msg(msg, "Username set to: " + right)
+
+      elif left == "getemail":
+         send_msg(msg, "My email is: " + email)
 
       elif left == "throwexception":
          raise Exception
@@ -478,6 +519,8 @@ def seconds_to_string(seconds):
 #     A valid username (only exact matches)
 # Note: Multiple users may be using the same username. This function will only return one.
 # Note: only guaranteed to work if input has no leading/trailing whitespace (i.e. stripped).
+# PARAMETER: enablenamesearch - True -> this function may also search by name.
+#                               False -> this function will not search by name.
 # PARAMETER: serverrestriction - TYPE: Server, None
 #                                If None, search occurs over all reachable searchers.
 #                                If it's a valid server, the search is done on only that server.
@@ -509,6 +552,8 @@ def search_for_user(text, enablenamesearch=False, serverrestriction=None): # TYP
 #     A valid channel mention string (e.g. "<@12345>")
 #     A valid channel name (only exact matches)
 # PRECONDITION: Input has no leading/trailing whitespace (i.e. stripped).
+# PARAMETER: enablenamesearch - True -> this function may also search by name.
+#                               False -> this function will not search by name.
 # PARAMETER: serverrestriction - TYPE: Server, None
 #                                If None, search occurs over all reachable searchers.
 #                                If it's a valid server, the search is done on only that server.
