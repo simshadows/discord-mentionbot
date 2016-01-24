@@ -226,6 +226,7 @@ def cmd1_mentions_summary(substr, msg, add_extra_help=False):
 
 
 def cmd1_mentions_search(substr, msg):
+   # return send_msg(msg, "This command is temporarily unavailable due to possible abuse.") # TEMPORARY.
    send_as_pm = False # TYPE: Boolean
    verbose = False # TYPE: Boolean
    ch = None # TYPE: String, or None. This is a channel name, channel mention, or channel ID.
@@ -267,8 +268,6 @@ def cmd1_mentions_search(substr, msg):
    elif search_range == 0:
       return cmd_badargs(msg)
 
-   send_msg(msg, "Hang on while I search through messages...")
-
    # Search
    search_results = []
    searched = 0 # Used for feedback on how many messages were searched.
@@ -277,6 +276,7 @@ def cmd1_mentions_search(substr, msg):
    while True:
       # TODO: Make this more efficient.
       print("RETRIEVING 100 MESSAGES FROM " + channel.name + "...")
+      client.send_typing(msg.channel) # Feedback that the bot is still running.
       more_left_to_search = False
       for retrieved_msg in client.logs_from(channel, limit=search_range, before=search_before):
          if searched >= search_range:
@@ -466,13 +466,17 @@ class MentionSummaryCache:
       return
 
    # Adds a message to the collection (and removes redundant data).
-   def add_message(self, message):
+   def add_message(self, msg):
 
-      all_users_mentioned = getAllUsersMentioned(message.content) # FORMAT: list<userID's>
-      for user_mentioned in all_users_mentioned:
+      # Get all users mentioned.
+      user_ids_mentioned = [] # TYPE: List<String>
+      for user in msg.mentions:
+         user_ids_mentioned.append(user.id)
+
+      for user_mentioned in user_ids_mentioned:
          
          # Check if the message's sender is in the list
-         user_tuple = None # FORMAT: tuple<userID, list<messageObject> >
+         user_tuple = None # FORMAT: Tuple<userID, List<messageObject> >
          for j in self._mention_list:
             if j[0] == user_mentioned:
                user_tuple = j
@@ -484,15 +488,14 @@ class MentionSummaryCache:
             user_tuple = (user_mentioned, [])
             self._mention_list.append(user_tuple)
          else:
-            # user_tuple[1] = [x in user_tuple[1] if x[0] != message.channel.id]
             for i in user_tuple[1]:
-               if i.channel.id == message.channel.id:
+               if i.channel.id == msg.channel.id:
                   user_tuple[1].remove(i)
                   print("An older MentionSummaryCache entry was removed!")
                   break
 
          # Append new message
-         user_tuple[1].append(message)
+         user_tuple[1].append(msg)
 
       return
 
@@ -540,16 +543,6 @@ def msg_list_to_string(mentions, verbose=False): # TYPE: String
    if buf != "":
       buf = buf[:-2]
    return buf
-
-
-# Returns a list of user ID's of all users mentioned in a block of text.
-# TODO: Or maybe use that neat feature in the API that does this for me...
-def getAllUsersMentioned(text): # TYPE: List<String>
-   mention_strings = re_mentionstr.findall(text)
-   user_IDs = []
-   for mention_string in mention_strings:
-      user_IDs.append(mention_string[2:-1])
-   return user_IDs
 
 
 # Returns a string that:
