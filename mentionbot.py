@@ -329,46 +329,64 @@ def cmd1_avatar(substr, msg):
 
 
 def cmd_help(substr, msg):
-   normal_help_printed = False
+   include_privileged_commands = is_privileged_user(msg.author.id)
 
-   if (substr == "get"): # TODO: This is a placeholder.
-      buf = "uwotm8"
+   (left1, right1) = separate_left_word(substr)
+   if (left1 == "mentions") or (left1 == "mb") or (left1 == "mentionbot"): # TODO: This is a placeholder.
+      (left2, right2) = separate_left_word(right1)
+      if left2 == "summary":
+         buf = "`/mentions summary [options]` or `/mb summary` - Get summary of all latest mentions."
+         buf += "\noption: `--privmsg` or `-p` - Send mentions via PM instead."
+         buf += "\noption: `--preservedata` or `-k` - Cache entries will not be deleted."
+         buf += "\noption: `--verbose` or `-v` - Include extra information."
+      elif (left2 == "search") or (left2 == "s"):
+         buf = "`/mentions search [options]` or `/mb s [options]` - Search mentions."
+         buf += "\noption: `--privmsg` or `-p` - Send mentions via PM instead."
+         buf += "\noption: `--ch=[channel]` - Channel to search (this channel by default)."
+         buf += "\noption: `--m=[num]` - Number of mentions to search for."
+         buf += "\noption: `--r=[num]` - Number of messages to be searched through."
+         buf += "\noption: `--verbose` or `-v` - Include extra information."
+      # elif (left2 == "notify") or (left2 == "n"):
+      #    buf = "`/mentions notify` or `/mb n` - View and change settings of PM notification system."
+      #    buf += "\noption: `--ch=[channel]` - Channel to search (this channel by default)."
+      #    buf += "\noption: `--m=[num]` - Number of mentions to search for."
+      #    buf += "\noption: `--r=[num]` - Number of messages to be searched through."
+      #    buf += "\noption: `--verbose` or `-v` - Include extra information."
+      else:
+         return cmd_invalidcmd(msg)
+   elif (left1 == "admin") or (left1 == "a"):
+      if include_privileged_commands:
+         buf = "`/a say [text]`"
+         buf += "\n`/a iam [@user] [cmd]`"
+         buf += "\n`/a gettime`"
+         buf += "\n`/a setgame [text]`"
+         buf += "\n`/a setusername [text]`"
+         buf += "\n`/a getemail`"
+         buf += "\n`/a printhistory`"
+         buf += "\n`/a throwexception`"
+      else:
+         return cmd_badprivileges(msg)
    else:
       buf = "**The following commands are available:**"
 
       buf += "\n\n`/mentions summary [options]` or `/mb summary` - Get summary of all latest mentions."
-      buf += "\noption: `--privmsg` or `-p` - Send mentions via PM instead."
-      buf += "\noption: `--preservedata` or `-k` - Cache entries will not be deleted."
-      buf += "\noption: `--verbose` or `-v` - Include extra information."
+      buf += "\n(For help on usage, type `/help mentions summary`.)"
       
       buf += "\n\n`/mentions search [options]` or `/mb s [options]` - Search mentions."
-      buf += "\noption: `--privmsg` or `-p` - Send mentions via PM instead."
-      buf += "\noption: `--ch=[channel]` - Channel to search (this channel by default)."
-      buf += "\noption: `--m=[num]` - Number of mentions to search for."
-      buf += "\noption: `--r=[num]` - Number of messages to be searched through."
-      buf += "\noption: `--verbose` or `-v` - Include extra information."
+      buf += "\n(For help on usage, type `/help mentions search`.)"
 
-      # buf += "\n\n`/#[channel] [num]` - Searches channel for num latest mentions."
+      # buf += "\n\n`/mentions notify` or `/mb n` - View and change settings of PM notification system."
+      # buf += "\n(For help on usage, type `/help mentions notify`.)"
 
       buf += "\n\n`/avatar [usermention]` - Get the avatar URL of the user."
 
       buf += "\n\n`/source` - Where to get source code."
 
-      normal_help_printed = True
-   
-   # For displaying additional information for privileged users.
-   if (normal_help_printed == True) and is_privileged_user(msg.author.id):
-      buf += "\n\n`/a say [text]`"
-      buf += "\n`/a iam [@user] [cmd]`"
-      buf += "\n`/a gettime`"
-      buf += "\n`/a setgame [text]`"
-      buf += "\n`/a setusername [text]`"
-      buf += "\n`/a getemail`"
-      buf += "\n`/a printhistory`"
-      buf += "\n`/a throwexception`"
+      if include_privileged_commands:
+         buf += "\n\n`/admin [cmd]` or `/a [cmd]` - Bot admin commands. Must have permission to use."
+         buf += "\n(Type `/help admin` for more information.)"
 
-   send_msg(msg, buf)
-   return
+   return send_msg(msg, buf)
 
 
 def cmd_source(msg):
