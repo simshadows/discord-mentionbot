@@ -157,8 +157,8 @@ def cmd1(substr, msg, no_default=False):
       elif left == "rip":
          send_msg(msg, "doesnt even deserve a funeral")
 
-      elif (left == "debugging") or (left == "db"):
-         cmd_debugging(right, msg)
+      elif (left == "admin") or (left == "a"):
+         cmd_admin(right, msg)
       
       # else:
       #    cmd_invalidcmd(msg)
@@ -267,6 +267,8 @@ def cmd1_mentions_search(substr, msg):
    elif search_range == 0:
       return cmd_badargs(msg)
 
+   send_msg(msg, "Hang on while I search through messages...")
+
    # Search
    search_results = []
    searched = 0 # Used for feedback on how many messages were searched.
@@ -305,6 +307,7 @@ def cmd1_mentions_search(substr, msg):
       buf += msg_list_to_string(search_results, verbose=verbose)
 
    return send_msg(msg, buf)
+
 
 
 def cmd1_avatar(substr, msg):
@@ -355,14 +358,14 @@ def cmd_help(substr, msg):
    
    # For displaying additional information for privileged users.
    if (normal_help_printed == True) and is_privileged_user(msg.author.id):
-      buf += "\n\n`/db say [text]`"
-      buf += "\n`/db iam [@user] [cmd]`"
-      buf += "\n`/db gettime`"
-      buf += "\n`/db setgame [text]`"
-      buf += "\n`/db setusername [text]`"
-      buf += "\n`/db getemail`"
-      buf += "\n`/db printhistory`"
-      buf += "\n`/db throwexception`"
+      buf += "\n\n`/a say [text]`"
+      buf += "\n`/a iam [@user] [cmd]`"
+      buf += "\n`/a gettime`"
+      buf += "\n`/a setgame [text]`"
+      buf += "\n`/a setusername [text]`"
+      buf += "\n`/a getemail`"
+      buf += "\n`/a printhistory`"
+      buf += "\n`/a throwexception`"
 
    send_msg(msg, buf)
    return
@@ -374,7 +377,7 @@ def cmd_source(msg):
    return send_msg(msg, buf)
 
 
-def cmd_debugging(substr, msg):
+def cmd_admin(substr, msg):
    if not is_privileged_user(msg.author.id):
       cmd_badprivileges(msg)
       return
@@ -389,7 +392,7 @@ def cmd_debugging(substr, msg):
          send_msg(msg, right)
 
       elif left == "iam":
-         cmd1_debugging_iam(right, msg)
+         cmd_admin_iam(right, msg)
 
       elif left == "gettime":
          send_msg(msg, datetime.datetime.now().strftime("My current system time: %c " + LOCALTIMEZONE_ABBR))
@@ -414,7 +417,7 @@ def cmd_debugging(substr, msg):
    return
 
 
-def cmd1_debugging_iam(substr, msg):
+def cmd_admin_iam(substr, msg):
    substr = substr.strip()
    (left, right) = separate_left_word(substr)
    
