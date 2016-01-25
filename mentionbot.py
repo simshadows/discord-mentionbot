@@ -15,6 +15,8 @@ LOCALTIMEZONE_ABBR = "AEDT" # Name of system timezone
 BOTOWNER_ID = str(119384097473822727) # User ID of the owner of this bot
 INITIAL_GAME_STATUS = "INFP is master race"
 
+INITIAL_GLOBALENABLED_MENTIONS_NOTIFY = False
+
 def initialize_global_variables():
 
    global re_alldigits
@@ -37,6 +39,11 @@ def initialize_global_variables():
    else:
       print("FAIL WHALE")
 
+   # Global enabled/disabled
+   global globalenabled_mentions_notify
+   globalenabled_mentions_notify = INITIAL_GLOBALENABLED_MENTIONS_NOTIFY
+
+   # The others
    global mentionSummaryCache
    global bot_mention
    global bot_name
@@ -82,20 +89,13 @@ def on_ready():
    print("BOTOWNER_ID = '{}'".format(BOTOWNER_ID))
    print("INITIAL_GAME_STATUS = '{}'".format(INITIAL_GAME_STATUS))
    print("")
+   print("INITIAL_GLOBALENABLED_MENTIONS_NOTIFY = '{}'".format(INITIAL_GLOBALENABLED_MENTIONS_NOTIFY))
+   print("")
    print("Bot owner: " + botowner.name)
    print("Bot name: " + bot_name)
    print("")
    print("Initialization complete.")
    print("")
-
-   # print("Running quick unit tests.")
-   # print(seconds_to_string(4))
-   # print(seconds_to_string(59))
-   # print(seconds_to_string(60))
-   # print(seconds_to_string(164))
-   # print(seconds_to_string(3599))
-   # print(seconds_to_string(3600))
-   # print(seconds_to_string(18000))
 
    
 @client.event
@@ -156,6 +156,12 @@ def cmd1(substr, msg, no_default=False):
 
       elif left == "rip":
          send_msg(msg, "doesnt even deserve a funeral")
+
+      elif left == "status":
+         buf = "**Status:**"
+         buf += "\nBot current uptime: {}. ".format(seconds_to_string(get_bot_uptime()))
+         buf += "\nNotification system enabled = " + str(globalenabled_mentions_notify)
+         send_msg(msg, buf)
 
       elif (left == "admin") or (left == "a"):
          cmd_admin(right, msg)
@@ -274,7 +280,6 @@ def cmd1_mentions_search(substr, msg):
    mentions_left = mentions_to_get
    search_before = None # Used for generating more logs after the limit is reached.
    while True:
-      # TODO: Make this more efficient.
       print("RETRIEVING 100 MESSAGES FROM " + channel.name + "...")
       client.send_typing(msg.channel) # Feedback that the bot is still running.
       more_left_to_search = False
@@ -332,7 +337,7 @@ def cmd_help(substr, msg):
    include_privileged_commands = is_privileged_user(msg.author.id)
 
    (left1, right1) = separate_left_word(substr)
-   if (left1 == "mentions") or (left1 == "mb") or (left1 == "mentionbot"): # TODO: This is a placeholder.
+   if (left1 == "mentions") or (left1 == "mb") or (left1 == "mentionbot"):
       (left2, right2) = separate_left_word(right1)
       if left2 == "summary":
          buf = "`/mentions summary [options]` or `/mb summary` - Get summary of all latest mentions."
@@ -352,17 +357,19 @@ def cmd_help(substr, msg):
       #    buf += "\noption: `--m=[num]` - Number of mentions to search for."
       #    buf += "\noption: `--r=[num]` - Number of messages to be searched through."
       #    buf += "\noption: `--verbose` or `-v` - Include extra information."
+      #    if include_privileged_commands:
+      #       buf += "\n\n`/a toggle mentions notify` (The short version does not work.)"
       else:
          return cmd_invalidcmd(msg)
    elif (left1 == "admin") or (left1 == "a"):
       if include_privileged_commands:
          buf = "`/a say [text]`"
          buf += "\n`/a iam [@user] [cmd]`"
+         buf += "\n`/a toggle mentions notify` (The short version does not work.)"
          buf += "\n`/a gettime`"
          buf += "\n`/a setgame [text]`"
          buf += "\n`/a setusername [text]`"
          buf += "\n`/a getemail`"
-         buf += "\n`/a printhistory`"
          buf += "\n`/a throwexception`"
       else:
          return cmd_badprivileges(msg)
@@ -381,6 +388,10 @@ def cmd_help(substr, msg):
       buf += "\n\n`/avatar [usermention]` - Get the avatar URL of the user."
 
       buf += "\n\n`/source` - Where to get source code."
+
+      buf += "\n\n`/rip` - Rest in pieces."
+
+      buf += "\n\n`/status` - Get bot's current status."
 
       if include_privileged_commands:
          buf += "\n\n`/admin [cmd]` or `/a [cmd]` - Bot admin commands. Must have permission to use."
@@ -404,30 +415,43 @@ def cmd_admin(substr, msg):
    if substr == "" and not no_default:
       cmd_invalidcmd(msg)
    else:
-      (left, right) = separate_left_word(substr)
+      (left1, right1) = separate_left_word(substr)
 
-      if left == "say":
-         send_msg(msg, right)
+      if left1 == "say":
+         send_msg(msg, right1)
 
-      elif left == "iam":
-         cmd_admin_iam(right, msg)
+      elif left1 == "iam":
+         cmd_admin_iam(right1, msg)
 
-      elif left == "gettime":
+      elif left1 == "toggle":
+         (left2, right2) = separate_left_word(right1)
+         if (left2 == "mentions") or (left2 == "mb") or (left2 == "mentionbot"):
+            (left3, right3) = separate_left_word(right2)
+            if (left3 == "notify") or (left3 == "n"):
+               global globalenabled_mentions_notify # TODO: Is this actually needed?
+               globalenabled_mentions_notify = not globalenabled_mentions_notify
+               send_msg(msg, "Notification system enabled = " + str(globalenabled_mentions_notify))
+            else:
+               cmd_invalidcmd(msg)
+         else:
+            cmd_invalidcmd(msg)
+
+      elif left1 == "gettime":
          send_msg(msg, datetime.datetime.now().strftime("My current system time: %c " + LOCALTIMEZONE_ABBR))
 
-      elif left == "setgame":
-         set_game_status(right)
-         send_msg(msg, "Game set to: " + right)
+      elif left1 == "setgame":
+         set_game_status(right1)
+         send_msg(msg, "Game set to: " + right1)
 
-      elif left == "setusername":
-         client.edit_profile(password, username=right)
-         bot_name = right # TODO: Consider making this a function. Or stop using bot_name...
-         send_msg(msg, "Username set to: " + right)
+      elif left1 == "setusername":
+         client.edit_profile(password, username=right1)
+         bot_name = right1 # TODO: Consider making this a function. Or stop using bot_name...
+         send_msg(msg, "Username set to: " + right1)
 
-      elif left == "getemail":
+      elif left1 == "getemail":
          send_msg(msg, "My email is: " + email)
 
-      elif left == "throwexception":
+      elif left1 == "throwexception":
          raise Exception
       
       else:
@@ -469,7 +493,7 @@ def cmd_invalidcmd(msg):
 
 def simple_easter_egg_replies(msg):
    if msg.content.startswith("$blame " + botowner_mention) or msg.content.startswith("$blame " + botowner.name):
-      send_msg(msg, "he didnt do shit")
+      send_msg(msg, "he didnt do shit m8")
    return
 
 
