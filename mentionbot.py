@@ -120,7 +120,7 @@ def on_message(msg):
          cmd1_mentions(right, msg, no_default=False)
 
       # EASTER EGG REPLY.
-      elif left == "$blame" and bot_mention in text:
+      elif (left == "$blame") and (bot_mention in text):
          send_msg(msg, "no fk u")
 
       elif (bot_mention in text or text == client.user.name + " pls"):
@@ -382,6 +382,8 @@ def cmd_help(substr, msg):
          buf += "\n`/a setgame [text]`"
          buf += "\n`/a setusername [text]`"
          buf += "\n`/a getemail`"
+         buf += "\n`/a joinserver [invitelink]`"
+         buf += "\n`/a leaveserver`"
          buf += "\n`/a throwexception`"
       else:
          return cmd_badprivileges(msg)
@@ -464,6 +466,17 @@ def cmd_admin(substr, msg):
 
       elif left1 == "getemail":
          send_msg(msg, "My email is: " + email)
+
+      elif left1 == "joinserver":
+         try:
+            client.accept_invite(right1)
+            send_msg(msg, "Successfully joined a new server.")
+         except discord.InvalidArgument:
+            send_msg(msg, "Failed to join a new server.")
+
+      elif left1 == "leaveserver":
+         send_msg(msg, "Bye!")
+         client.leave_server(msg.channel.server)
 
       elif left1 == "throwexception":
          raise Exception
