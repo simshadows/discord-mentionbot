@@ -131,7 +131,7 @@ def on_message(msg):
 
    else:
       send_msg(msg, "sry m8 im not programmed to do anything fancy with pms yet")
-      print("private msg rcv from" + msg.author + ": " + text)
+      print("private msg rcv from" + msg.author.name + ": " + text)
    return
 
 
@@ -184,6 +184,9 @@ def cmd1_mentions(substr, msg, no_default=False):
 
       elif (left == "search") or (left == "s"):
          cmd1_mentions_search(right, msg)
+
+      elif (left == "notify") or (left == "n"):
+         cmd1_mentions_notify(right, msg)
       
       else:
          cmd_invalidcmd(msg)
@@ -314,6 +317,9 @@ def cmd1_mentions_search(substr, msg):
    return send_msg(msg, buf)
 
 
+def cmd1_mentions_notify(substr, msg):
+   return send_msg(msg, "This feature has not yet been implemented.")
+
 
 def cmd1_avatar(substr, msg):
    (left, right) = separate_left_word(substr)
@@ -353,10 +359,6 @@ def cmd_help(substr, msg):
          buf += "\noption: `--verbose` or `-v` - Include extra information."
       # elif (left2 == "notify") or (left2 == "n"):
       #    buf = "`/mentions notify` or `/mb n` - View and change settings of PM notification system."
-      #    buf += "\noption: `--ch=[channel]` - Channel to search (this channel by default)."
-      #    buf += "\noption: `--m=[num]` - Number of mentions to search for."
-      #    buf += "\noption: `--r=[num]` - Number of messages to be searched through."
-      #    buf += "\noption: `--verbose` or `-v` - Include extra information."
       #    if include_privileged_commands:
       #       buf += "\n\n`/a toggle mentions notify` (The short version does not work.)"
       else:
