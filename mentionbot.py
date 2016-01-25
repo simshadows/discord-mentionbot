@@ -7,6 +7,7 @@ import copy
 import time
 import re
 import os
+import random
 
 LOGIN_DETAILS_FILENAME = "../mentionbot_botlogin1" # This file is used to login. Only contains two lines. Line 1 is email, line 2 is password.
 MESSAGE_MAX_LEN = 2000
@@ -150,6 +151,15 @@ def cmd1(substr, msg, no_default=False):
 
       elif left == "avatar":
          cmd1_avatar(right, msg)
+
+      elif (left == "randomcolour") or (left == "randomcolor"):
+         # TODO: THIS IS TEMPORARY!!!
+         rand_int = random.randint(0,(16**6)-1)
+         rand = hex(rand_int)[2:] # Convert to hex
+         rand = rand.zfill(6)
+         buf = "{}, your random colour is {} (decimal: {})".format(msg.author.name, rand, rand_int)
+         buf += "\nhttp://www.colorhexa.com/{}.png".format(rand)
+         send_msg(msg, buf)
 
       elif left == "source":
          cmd_source(msg)
@@ -388,6 +398,8 @@ def cmd_help(substr, msg):
       # buf += "\n(For help on usage, type `/help mentions notify`.)"
 
       buf += "\n\n`/avatar [usermention]` - Get the avatar URL of the user."
+
+      buf += "\n\n`/randomcolour`" # TODO: TEMPORARYYYYYY
 
       buf += "\n\n`/source` - Where to get source code."
 
