@@ -54,9 +54,9 @@ def initialize_global_variables():
    global botowner
    global initialization_timestamp
    mentionSummaryCache = MentionSummaryCache()
-   bot_mention = get_mention_str(client.user.id)
+   bot_mention = "<@{}>".format(client.user.id)
    bot_name = client.user.name
-   botowner_mention = get_mention_str(BOTOWNER_ID)
+   botowner_mention = "<@{}>".format(BOTOWNER_ID)
    botowner = client.search_for_user(BOTOWNER_ID)
    initialization_timestamp = datetime.datetime.now()
    
@@ -83,7 +83,7 @@ print(" success.")
 @client.event
 def on_ready():
    initialize_global_variables()
-   set_game_status(INITIAL_GAME_STATUS)
+   client.set_game_status(INITIAL_GAME_STATUS)
    print("")
    print("LOGIN_DETAILS_FILENAME = '{}'".format(LOGIN_DETAILS_FILENAME))
    print("MESSAGE_MAX_LEN = '{}'".format(MESSAGE_MAX_LEN))
@@ -123,7 +123,7 @@ def on_message(msg):
 
       # EASTER EGG REPLY.
       elif (left == "$blame") and (bot_mention in text):
-         send_msg(msg, "no fk u")
+         client.send_msg(msg, "no fk u")
 
       elif (bot_mention in text or text == client.user.name + " pls"):
          cmd1_mentions_summary("", msg, add_extra_help=True)
@@ -133,7 +133,7 @@ def on_message(msg):
          simple_easter_egg_replies(msg)
 
    else:
-      send_msg(msg, "sry m8 im not programmed to do anything fancy with pms yet")
+      client.send_msg(msg, "sry m8 im not programmed to do anything fancy with pms yet")
       print("private msg rcv from" + msg.author.name + ": " + text)
    return
 
@@ -161,19 +161,19 @@ def cmd1(substr, msg, no_default=False):
          rand = rand.zfill(6)
          buf = "{}, your random colour is {} (decimal: {})".format(msg.author.name, rand, rand_int)
          buf += "\nhttp://www.colorhexa.com/{}.png".format(rand)
-         send_msg(msg, buf)
+         client.send_msg(msg, buf)
 
       elif left == "source":
          cmd_source(msg)
 
       elif left == "rip":
-         send_msg(msg, "doesnt even deserve a funeral")
+         client.send_msg(msg, "doesnt even deserve a funeral")
 
       elif left == "status":
          buf = "**Status:**"
          buf += "\nBot current uptime: {}. ".format(seconds_to_string(get_bot_uptime()))
          buf += "\nNotification system enabled = " + str(globalenabled_mentions_notify)
-         send_msg(msg, buf)
+         client.send_msg(msg, buf)
 
       elif (left == "admin") or (left == "a"):
          cmd_admin(right, msg)
@@ -239,15 +239,15 @@ def cmd1_mentions_summary(substr, msg, add_extra_help=False):
          buf += " (`/help` for more commands.)".format(bot_name)
    
    if send_as_pm:
-      send_msg(msg.author, buf)
-      send_msg(msg, "List of mentions sent via PM.")
+      client.send_msg(msg.author, buf)
+      client.send_msg(msg, "List of mentions sent via PM.")
    else:
-      send_msg(msg, buf)
+      client.send_msg(msg, buf)
    return
 
 
 def cmd1_mentions_search(substr, msg):
-   # return send_msg(msg, "This command is temporarily unavailable due to possible abuse.") # TEMPORARY.
+   # return client.send_msg(msg, "This command is temporarily unavailable due to possible abuse.") # TEMPORARY.
    send_as_pm = False # TYPE: Boolean
    verbose = False # TYPE: Boolean
    ch = None # TYPE: String, or None. This is a channel name, channel mention, or channel ID.
@@ -275,10 +275,10 @@ def cmd1_mentions_search(substr, msg):
    else:
       server_to_search = msg.server
       if server_to_search == None:
-         return send_msg(msg, "Sorry, the --ch option is unusable in private channels.")
+         return client.send_msg(msg, "Sorry, the --ch option is unusable in private channels.")
       channel = client.search_for_channel(ch, enablenamesearch=True, serverrestriction=server_to_search)
       if channel is None:
-         return send_msg(msg, "Channel not found. Search failed.")
+         return client.send_msg(msg, "Channel not found. Search failed.")
    # Handle other default values or invalid inputs.
    if mentions_to_get == None:
       mentions_to_get = 3
@@ -326,11 +326,11 @@ def cmd1_mentions_search(substr, msg):
       buf += "\n\n"
       buf += msg_list_to_string(search_results, verbose=verbose)
 
-   return send_msg(msg, buf)
+   return client.send_msg(msg, buf)
 
 
 def cmd1_mentions_notify(substr, msg):
-   return send_msg(msg, "This feature has not yet been implemented.")
+   return client.send_msg(msg, "This feature has not yet been implemented.")
 
 
 def cmd1_avatar(substr, msg):
@@ -339,16 +339,16 @@ def cmd1_avatar(substr, msg):
    if len(left) > 0:
       user = client.search_for_user(left, enablenamesearch=True, serverrestriction=msg.server)
       if user is None:
-         return send_msg(msg, left + " doesn't even exist m8")
+         return client.send_msg(msg, left + " doesn't even exist m8")
    else:
       user = msg.author
 
    # Guaranteed to have a user.
    avatar = user.avatar_url()
    if avatar == "":
-      return send_msg(msg, left + " m8 get an avatar")
+      return client.send_msg(msg, left + " m8 get an avatar")
    else:
-      return send_msg(msg, avatar)
+      return client.send_msg(msg, avatar)
 
 
 def cmd_help(substr, msg):
@@ -415,13 +415,13 @@ def cmd_help(substr, msg):
          buf += "\n\n`/admin [cmd]` or `/a [cmd]` - Bot admin commands. Must have permission to use."
          buf += "\n(Type `/help admin` for more information.)"
 
-   return send_msg(msg, buf)
+   return client.send_msg(msg, buf)
 
 
 def cmd_source(msg):
    # buf = "https://github.com/simshadows/discord-mentionbot"
    buf = "idk, ask sim."
-   return send_msg(msg, buf)
+   return client.send_msg(msg, buf)
 
 
 def cmd_admin(substr, msg):
@@ -436,7 +436,7 @@ def cmd_admin(substr, msg):
       (left1, right1) = separate_left_word(substr)
 
       if left1 == "say":
-         send_msg(msg, right1)
+         client.send_msg(msg, right1)
 
       elif left1 == "iam":
          cmd_admin_iam(right1, msg)
@@ -448,36 +448,36 @@ def cmd_admin(substr, msg):
             if (left3 == "notify") or (left3 == "n"):
                global globalenabled_mentions_notify # TODO: Is this actually needed?
                globalenabled_mentions_notify = not globalenabled_mentions_notify
-               send_msg(msg, "Notification system enabled = " + str(globalenabled_mentions_notify))
+               client.send_msg(msg, "Notification system enabled = " + str(globalenabled_mentions_notify))
             else:
                cmd_invalidcmd(msg)
          else:
             cmd_invalidcmd(msg)
 
       elif left1 == "gettime":
-         send_msg(msg, datetime.datetime.now().strftime("My current system time: %c " + LOCALTIMEZONE_ABBR))
+         client.send_msg(msg, datetime.datetime.now().strftime("My current system time: %c " + LOCALTIMEZONE_ABBR))
 
       elif left1 == "setgame":
-         set_game_status(right1)
-         send_msg(msg, "Game set to: " + right1)
+         client.set_game_status(right1)
+         client.send_msg(msg, "Game set to: " + right1)
 
       elif left1 == "setusername":
          client.edit_profile(password, username=right1)
          bot_name = right1 # TODO: Consider making this a function. Or stop using bot_name...
-         send_msg(msg, "Username set to: " + right1)
+         client.send_msg(msg, "Username set to: " + right1)
 
       elif left1 == "getemail":
-         send_msg(msg, "My email is: " + email)
+         client.send_msg(msg, "My email is: " + email)
 
       elif left1 == "joinserver":
          try:
             client.accept_invite(right1)
-            send_msg(msg, "Successfully joined a new server.")
+            client.send_msg(msg, "Successfully joined a new server.")
          except discord.InvalidArgument:
-            send_msg(msg, "Failed to join a new server.")
+            client.send_msg(msg, "Failed to join a new server.")
 
       elif left1 == "leaveserver":
-         send_msg(msg, "Bye!")
+         client.send_msg(msg, "Bye!")
          client.leave_server(msg.channel.server)
 
       elif left1 == "throwexception":
@@ -497,32 +497,32 @@ def cmd_admin_iam(substr, msg):
       replacement_msg = copy.deepcopy(msg)
       replacement_msg.author = client.search_for_user(user_to_pose_as)
       if replacement_msg.author == None:
-         return send_msg(msg, "Unknown user.")
+         return client.send_msg(msg, "Unknown user.")
       replacement_msg.content = right
-      send_msg(msg, "Executing command as {}: {}".format(replacement_msg.author, replacement_msg.content))
-      send_msg(msg, "**WARNING: There are no guarantees of the safety of this operation.**")
+      client.send_msg(msg, "Executing command as {}: {}".format(replacement_msg.author, replacement_msg.content))
+      client.send_msg(msg, "**WARNING: There are no guarantees of the safety of this operation.**")
       on_message(replacement_msg)
    return
 
 
 # If bad arguments were entered for a command.
 def cmd_badargs(msg):
-   return send_msg(msg, "soz m8 one or more (or 8) arguments are invalid")
+   return client.send_msg(msg, "soz m8 one or more (or 8) arguments are invalid")
 
 
 # For attempts to use commands without sufficient privileges
 def cmd_badprivileges(msg):
-   return send_msg(msg, "im afraid im not allowed to do that for you m8")
+   return client.send_msg(msg, "im afraid im not allowed to do that for you m8")
 
 
 # For invalid commands.
 def cmd_invalidcmd(msg):
-   return send_msg(msg, "sry m8 idk what ur asking") # intentional typos. pls don't lynch me.
+   return client.send_msg(msg, "sry m8 idk what ur asking") # intentional typos. pls don't lynch me.
 
 
 def simple_easter_egg_replies(msg):
    if msg.content.startswith("$blame " + botowner_mention) or msg.content.startswith("$blame " + botowner.name):
-      send_msg(msg, "he didnt do shit m8")
+      client.send_msg(msg, "he didnt do shit m8")
    return
 
 
@@ -609,7 +609,7 @@ def msg_list_to_string(mentions, verbose=False): # TYPE: String
       if verbose:
          buf += "Message ID: " + i.id + "\n"
          # buf += "Timestamp: " + i.timestamp.strftime("%c UTC") + "\n" # Unnecessary
-      buf += "By " + i.author.name + " in " + get_chmention_str(i.channel.id) + ", " + seconds_to_string(seconds) + " ago\n"
+      buf += "By " + i.author.name + " in " + "<#{}>".format(i.channel.id) + ", " + seconds_to_string(seconds) + " ago\n"
       buf += i.content + "\n\n"
    if buf != "":
       buf = buf[:-2]
@@ -634,15 +634,6 @@ def seconds_to_string(seconds):
 
 def is_privileged_user(user_ID):
    return user_ID == BOTOWNER_ID
-
-
-# E.g. converts "123" into "<@123".
-def get_mention_str(user_ID): # TYPE: String
-   return "<@" + str(user_ID) + ">"
-
-
-def get_chmention_str(channel_ID): # TYPE: String
-   return "<#" + str(channel_ID) + ">"
 
 
 # E.g. "hi    how   r u" -> ("hi","how   r u")
@@ -686,28 +677,6 @@ def get_bot_uptime():
    timediff = datetime.datetime.now() - initialization_timestamp
    return timediff.seconds
 
-
-# Sets game status. Clears it if None is passed.
-def set_game_status(text):
-   if text is None:
-      client.change_status(game=None)
-   else:
-      client.change_status(discord.Game(name=text))
-   return
-
-
-# Send a message to a channel specified by a Channel, PrivateChannel, Server, or Message object.
-def send_msg(destination, text):
-   text = str(text)
-   if len(text) > 2000:
-      text_to_append = "\nSorry m8, can't send more than " + str(MESSAGE_MAX_LEN) + " characters."
-      content_len = MESSAGE_MAX_LEN - len(text_to_append)
-      text = text[:content_len] + text_to_append
-
-   if destination.__class__.__name__ is "Message":
-      destination = destination.channel
-
-   return client.send_message(destination, text)
 
 client.run() # let the games begin...
 
