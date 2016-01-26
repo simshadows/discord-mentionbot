@@ -1,6 +1,5 @@
 
 
-import discord # pip install --upgrade git+https://github.com/Rapptz/discord.py@legacy
 import datetime
 import sys
 import copy
@@ -9,8 +8,11 @@ import re
 import os
 import random
 
+import discord # pip install --upgrade git+https://github.com/Rapptz/discord.py@legacy
+
 import clientextended
 import mentionsummarycache
+import helpmessages
 
 LOGIN_DETAILS_FILENAME = "login_details" # This file is used to login. Only contains two lines. Line 1 is email, line 2 is password.
 MESSAGE_MAX_LEN = 2000
@@ -38,23 +40,20 @@ def initialize_global_variables():
    re_option_m = re.compile("m=\d+") # e.g. "m=100"
    re_option_r = re.compile("r=\d+") # e.g. "m=1000"
 
-   if re_option_ch.fullmatch("ch=<#23rcq2c>"):
-      print("SUCCESS!!!")
-   else:
-      print("FAIL WHALE")
-
    # Global enabled/disabled
    global globalenabled_mentions_notify
    globalenabled_mentions_notify = INITIAL_GLOBALENABLED_MENTIONS_NOTIFY
 
    # The others
    global mentionSummaryCache
+   global help_messages
    global bot_mention
    global bot_name
    global botowner_mention
    global botowner
    global initialization_timestamp
    mentionSummaryCache = mentionsummarycache.MentionSummaryCache()
+   help_messages = helpmessages.HelpMessages()
    bot_mention = "<@{}>".format(client.user.id)
    bot_name = client.user.name
    botowner_mention = "<@{}>".format(BOTOWNER_ID)
@@ -104,6 +103,7 @@ def on_ready():
    
 @client.event
 def on_message(msg):
+   global bot_mention
 
    if msg.author == client.user:
       return # never process own messages.
@@ -147,7 +147,16 @@ def cmd1(substr, msg, no_default=False):
       (left, right) = separate_left_word(substr)
 
       if left == "help":
-         cmd_help(right, msg)
+         global help_messages
+         if is_privileged_user(msg.author.id):
+            privilege_level = 1
+         else:
+            privilege_level = 0
+         buf = help_messages.get_message(right, privilegelevel=privilege_level)
+         if buf == None:
+            cmd_invalidcmd(msg)
+         else:
+            client.send_msg(msg, buf)
 
       elif (left == "mentions") or (left == "mb") or (left == "mentionbot"):
          cmd1_mentions(right, msg)
@@ -350,73 +359,6 @@ def cmd1_avatar(substr, msg):
       return client.send_msg(msg, left + " m8 get an avatar")
    else:
       return client.send_msg(msg, avatar)
-
-
-def cmd_help(substr, msg):
-   include_privileged_commands = is_privileged_user(msg.author.id)
-
-   (left1, right1) = separate_left_word(substr)
-   if (left1 == "mentions") or (left1 == "mb") or (left1 == "mentionbot"):
-      (left2, right2) = separate_left_word(right1)
-      if left2 == "summary":
-         buf = "`/mentions summary [options]` or `/mb summary` - Get summary of all latest mentions."
-         buf += "\noption: `--privmsg` or `-p` - Send mentions via PM instead."
-         buf += "\noption: `--preservedata` or `-k` - Cache entries will not be deleted."
-         buf += "\noption: `--verbose` or `-v` - Include extra information."
-      elif (left2 == "search") or (left2 == "s"):
-         buf = "`/mentions search [options]` or `/mb s [options]` - Search mentions."
-         buf += "\noption: `--privmsg` or `-p` - Send mentions via PM instead."
-         buf += "\noption: `--ch=[channel]` - Channel to search (this channel by default)."
-         buf += "\noption: `--m=[num]` - Number of mentions to search for."
-         buf += "\noption: `--r=[num]` - Number of messages to be searched through."
-         buf += "\noption: `--verbose` or `-v` - Include extra information."
-      # elif (left2 == "notify") or (left2 == "n"):
-      #    buf = "`/mentions notify` or `/mb n` - View and change settings of PM notification system."
-      #    if include_privileged_commands:
-      #       buf += "\n\n`/a toggle mentions notify` (The short version does not work.)"
-      else:
-         return cmd_invalidcmd(msg)
-   elif (left1 == "admin") or (left1 == "a"):
-      if include_privileged_commands:
-         buf = "`/a say [text]`"
-         buf += "\n`/a iam [@user] [cmd]`"
-         buf += "\n`/a toggle mentions notify` (The short version does not work.)"
-         buf += "\n`/a gettime`"
-         buf += "\n`/a setgame [text]`"
-         buf += "\n`/a setusername [text]`"
-         buf += "\n`/a getemail`"
-         buf += "\n`/a joinserver [invitelink]`"
-         buf += "\n`/a leaveserver`"
-         buf += "\n`/a throwexception`"
-      else:
-         return cmd_badprivileges(msg)
-   else:
-      buf = "**The following commands are available:**"
-
-      buf += "\n\n`/mentions summary [options]` or `/mb summary` - Get summary of all latest mentions."
-      buf += "\n(For help on usage, type `/help mentions summary`.)"
-      
-      buf += "\n\n`/mentions search [options]` or `/mb s [options]` - Search mentions."
-      buf += "\n(For help on usage, type `/help mentions search`.)"
-
-      # buf += "\n\n`/mentions notify` or `/mb n` - View and change settings of PM notification system."
-      # buf += "\n(For help on usage, type `/help mentions notify`.)"
-
-      buf += "\n\n`/avatar [usermention]` - Get the avatar URL of the user."
-
-      buf += "\n\n`/randomcolour`" # TODO: TEMPORARYYYYYY
-
-      buf += "\n\n`/source` - Where to get source code."
-
-      buf += "\n\n`/rip` - Rest in pieces."
-
-      buf += "\n\n`/status` - Get bot's current status."
-
-      if include_privileged_commands:
-         buf += "\n\n`/admin [cmd]` or `/a [cmd]` - Bot admin commands. Must have permission to use."
-         buf += "\n(Type `/help admin` for more information.)"
-
-   return client.send_msg(msg, buf)
 
 
 def cmd_source(msg):
