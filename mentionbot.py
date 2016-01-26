@@ -9,6 +9,8 @@ import re
 import os
 import random
 
+import clientextended
+
 LOGIN_DETAILS_FILENAME = "login_details" # This file is used to login. Only contains two lines. Line 1 is email, line 2 is password.
 MESSAGE_MAX_LEN = 2000
 LOCALTIMEZONE_HOUR_OFFSET = 11 # Timestamps are either in GMT or the system timezone.
@@ -55,7 +57,7 @@ def initialize_global_variables():
    bot_mention = get_mention_str(client.user.id)
    bot_name = client.user.name
    botowner_mention = get_mention_str(BOTOWNER_ID)
-   botowner = search_for_user(BOTOWNER_ID)
+   botowner = client.search_for_user(BOTOWNER_ID)
    initialization_timestamp = datetime.datetime.now()
    
    return
@@ -73,7 +75,7 @@ password = login_file.readline().strip()
 print("Email: " + email)
 print("Password: " + len(password) * "*")
 print("Logging in...", end="")
-client = discord.Client()
+client = clientextended.ClientExtended()
 client.login(email, password)
 print(" success.")
 
@@ -274,7 +276,7 @@ def cmd1_mentions_search(substr, msg):
       server_to_search = msg.server
       if server_to_search == None:
          return send_msg(msg, "Sorry, the --ch option is unusable in private channels.")
-      channel = search_for_channel(ch, enablenamesearch=True, serverrestriction=server_to_search)
+      channel = client.search_for_channel(ch, enablenamesearch=True, serverrestriction=server_to_search)
       if channel is None:
          return send_msg(msg, "Channel not found. Search failed.")
    # Handle other default values or invalid inputs.
@@ -335,7 +337,7 @@ def cmd1_avatar(substr, msg):
    (left, right) = separate_left_word(substr)
    user = None
    if len(left) > 0:
-      user = search_for_user(left, enablenamesearch=True, serverrestriction=msg.server)
+      user = client.search_for_user(left, enablenamesearch=True, serverrestriction=msg.server)
       if user is None:
          return send_msg(msg, left + " doesn't even exist m8")
    else:
@@ -493,7 +495,7 @@ def cmd_admin_iam(substr, msg):
    if re_mentionstr.fullmatch(left):
       user_to_pose_as = left[2:-1]
       replacement_msg = copy.deepcopy(msg)
-      replacement_msg.author = search_for_user(user_to_pose_as)
+      replacement_msg.author = client.search_for_user(user_to_pose_as)
       if replacement_msg.author == None:
          return send_msg(msg, "Unknown user.")
       replacement_msg.content = right
@@ -628,73 +630,6 @@ def seconds_to_string(seconds):
          return str(round(seconds/(60*60), 2)) + " hours"
    else:
       return str(seconds) + " seconds (uhh... I don't think this should be negative.)"
-
-
-# Search for a Member object.
-# Strings that may yield a Member object:
-#     A valid user ID
-#     A valid user mention string (e.g. "<@12345>")
-#     A valid username (only exact matches)
-# Note: Multiple users may be using the same username. This function will only return one.
-# Note: only guaranteed to work if input has no leading/trailing whitespace (i.e. stripped).
-# PARAMETER: enablenamesearch - True -> this function may also search by name.
-#                               False -> this function will not search by name.
-# PARAMETER: serverrestriction - TYPE: Server, None
-#                                If None, search occurs over all reachable searchers.
-#                                If it's a valid server, the search is done on only that server.
-def search_for_user(text, enablenamesearch=False, serverrestriction=None): # TYPE: User
-   if re_mentionstr.fullmatch(text):
-      searchkey = lambda user : user.id == str(text[2:-1])
-   elif re_alldigits.fullmatch(text):
-      searchkey = lambda user : user.id == str(text)
-   elif enablenamesearch:
-      searchkey = lambda user : user.name == str(text)
-   else:
-      return None
-
-   if serverrestriction is None:
-      servers = client.servers
-   else:
-      servers = [serverrestriction]
-
-   for server in servers:
-      for user in server.members:
-         if searchkey(user):
-            return user
-   return None
-
-
-# Search for a Channel object.
-# Strings that may yield a Channel object:
-#     A valid channel ID
-#     A valid channel mention string (e.g. "<@12345>")
-#     A valid channel name (only exact matches)
-# PRECONDITION: Input has no leading/trailing whitespace (i.e. stripped).
-# PARAMETER: enablenamesearch - True -> this function may also search by name.
-#                               False -> this function will not search by name.
-# PARAMETER: serverrestriction - TYPE: Server, None
-#                                If None, search occurs over all reachable searchers.
-#                                If it's a valid server, the search is done on only that server.
-def search_for_channel(text, enablenamesearch=False, serverrestriction=None): # Type: Channel
-   if re_chmentionstr.fullmatch(text):
-      searchkey = lambda channel : channel.id == str(text[2:-1])
-   elif re_alldigits.fullmatch(text):
-      searchkey = lambda channel : channel.id == str(text)
-   elif enablenamesearch:
-      searchkey = lambda channel : channel.name == str(text)
-   else:
-      return None
-
-   if serverrestriction is None:
-      servers = client.servers
-   else:
-      servers = [serverrestriction]
-
-   for server in servers:
-      for channel in server.channels:
-         if searchkey(channel):
-            return channel
-   return None
 
 
 def is_privileged_user(user_ID):
