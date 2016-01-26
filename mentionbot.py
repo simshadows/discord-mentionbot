@@ -9,7 +9,7 @@ import re
 import os
 import random
 
-LOGIN_DETAILS_FILENAME = "../mentionbot_botlogin1" # This file is used to login. Only contains two lines. Line 1 is email, line 2 is password.
+LOGIN_DETAILS_FILENAME = "../mentionbot_login1" # This file is used to login. Only contains two lines. Line 1 is email, line 2 is password.
 MESSAGE_MAX_LEN = 2000
 LOCALTIMEZONE_HOUR_OFFSET = 11 # Timestamps are either in GMT or the system timezone.
 LOCALTIMEZONE_ABBR = "AEDT" # Name of system timezone
