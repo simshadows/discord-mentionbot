@@ -64,8 +64,8 @@ class MentionSummaryCache:
 
    # Output is not NL-terminated.
    def user_data_to_string(self, user_ID, verbose=False): # TYPE: String
-
       return msg_list_to_string(self.get_user_latest(user_ID), verbose=verbose)
+   
    def user_has_mentions(self, user_ID): #TYPE: Boolean
       for i in self._mention_list:
          if i[0] == user_ID:

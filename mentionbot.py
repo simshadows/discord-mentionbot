@@ -8,16 +8,13 @@ import random
 
 import discord # pip install --upgrade git+https://github.com/Rapptz/discord.py@legacy
 
-from utils import separate_left_word
-
+import utils # TODO: Figure out how to just import individual things...
 import clientextended
-import mentionsummarycache
+import mentions.mentionsummarycache
 import helpmessages.helpmessages
 
 LOGIN_DETAILS_FILENAME = "login_details" # This file is used to login. Only contains two lines. Line 1 is email, line 2 is password.
 MESSAGE_MAX_LEN = 2000
-LOCALTIMEZONE_HOUR_OFFSET = 11 # Timestamps are either in GMT or the system timezone.
-LOCALTIMEZONE_ABBR = "AEDT" # Name of system timezone
 BOTOWNER_ID = str(119384097473822727) # User ID of the owner of this bot
 INITIAL_GAME_STATUS = "hello thar"
 
@@ -52,7 +49,7 @@ def initialize_global_variables():
    global botowner_mention
    global botowner
    global initialization_timestamp
-   mentionSummaryCache = mentionsummarycache.MentionSummaryCache()
+   mentionSummaryCache = mentions.mentionsummarycache.MentionSummaryCache()
    help_messages = helpmessages.helpmessages.HelpMessages()
    bot_mention = "<@{}>".format(client.user.id)
    bot_name = client.user.name
@@ -63,6 +60,7 @@ def initialize_global_variables():
    return
 
 ###########################################################################################
+
 
 # Log in to discord
 print("\nAttempting to log in using file '" + LOGIN_DETAILS_FILENAME + "'.")
@@ -88,8 +86,6 @@ def on_ready():
    print("")
    print("LOGIN_DETAILS_FILENAME = '{}'".format(LOGIN_DETAILS_FILENAME))
    print("MESSAGE_MAX_LEN = '{}'".format(MESSAGE_MAX_LEN))
-   print("LOCALTIMEZONE_HOUR_OFFSET = '{}'".format(LOCALTIMEZONE_HOUR_OFFSET))
-   print("LOCALTIMEZONE_ABBR = '{}'".format(LOCALTIMEZONE_ABBR))
    print("BOTOWNER_ID = '{}'".format(BOTOWNER_ID))
    print("INITIAL_GAME_STATUS = '{}'".format(INITIAL_GAME_STATUS))
    print("")
@@ -110,7 +106,7 @@ def on_message(msg):
       return # never process own messages.
 
    text = msg.content.strip()
-   (left, right) = separate_left_word(text)
+   (left, right) = utils.separate_left_word(text)
    if msg.channel.__class__.__name__ is "Channel":
       try:
          print("msg rcv #" + msg.channel.name + ": " + str(text.encode("unicode_escape")))
@@ -145,7 +141,7 @@ def cmd1(substr, msg, no_default=False):
    if substr == "" and not no_default:
       cmd1_mentions_summary("", msg, add_extra_help=False)
    else:
-      (left, right) = separate_left_word(substr)
+      (left, right) = utils.separate_left_word(substr)
 
       if left == "help":
          global help_messages
@@ -182,7 +178,7 @@ def cmd1(substr, msg, no_default=False):
 
       elif left == "status":
          buf = "**Status:**"
-         buf += "\nBot current uptime: {}. ".format(seconds_to_string(get_bot_uptime()))
+         buf += "\nBot current uptime: {}. ".format(utils.seconds_to_string(get_bot_uptime()))
          buf += "\nNotification system enabled = " + str(globalenabled_mentions_notify)
          client.send_msg(msg, buf)
 
@@ -200,7 +196,7 @@ def cmd1_mentions(substr, msg, no_default=False):
    if substr == "" and not no_default:
       cmd1_mentions_summary("", msg, add_extra_help=False)
    else:
-      (left, right) = separate_left_word(substr)
+      (left, right) = utils.separate_left_word(substr)
 
       if left == "summary":
          cmd1_mentions_summary(right, msg)
@@ -223,7 +219,7 @@ def cmd1_mentions_summary(substr, msg, add_extra_help=False):
    verbose = False
 
    # Parse substring for options. Return on invalid option.
-   flags = parse_flags(substr)
+   flags = utils.parse_flags(substr)
    for flag in flags:
       if (send_as_pm == False) and ((flag == "p") or (flag == "privmsg")):
          send_as_pm = True
@@ -237,15 +233,15 @@ def cmd1_mentions_summary(substr, msg, add_extra_help=False):
 
    if mentionSummaryCache.user_has_mentions(msg.author.id):
       buf = "Here's a summary of your recent mentions."
-      buf += "\nBot current uptime: {}. ".format(seconds_to_string(get_bot_uptime()))
+      buf += "\nBot current uptime: {}. ".format(utils.seconds_to_string(get_bot_uptime()))
       if add_extra_help:
          buf += " (`/help` for more commands.)".format(bot_name)
-      buf += "\n\n" + mentionSummaryCache.user_data_to_string(msg.author.id, verbose=verbose)
+      buf += "\n\n" + msg_list_to_string(mentionSummaryCache.get_user_latest(msg.author.id), verbose=verbose)
       if not preserve_data:
          mentionSummaryCache.delete_user_data(msg.author.id)
    else:
       buf = "sry m8 no mentions to see"
-      buf += "\nBot current uptime: {}".format(seconds_to_string(get_bot_uptime()))
+      buf += "\nBot current uptime: {}".format(utils.seconds_to_string(get_bot_uptime()))
       if add_extra_help:
          buf += " (`/help` for more commands.)".format(bot_name)
    
@@ -265,7 +261,7 @@ def cmd1_mentions_search(substr, msg):
    mentions_to_get = None # TYPE: Int, or None. This is the number of mentions this function will try to fetch.
    search_range = None # TYPE: Int, or None. This is the number of messages the function will search through.
 
-   flags = parse_flags(substr)
+   flags = utils.parse_flags(substr)
    for flag in flags:
       if (send_as_pm == False) and ((flag == "p") or (flag == "privmsg")):
          send_as_pm = True
@@ -345,7 +341,7 @@ def cmd1_mentions_notify(substr, msg):
 
 
 def cmd1_avatar(substr, msg):
-   (left, right) = separate_left_word(substr)
+   (left, right) = utils.separate_left_word(substr)
    user = None
    if len(left) > 0:
       user = client.search_for_user(left, enablenamesearch=True, serverrestriction=msg.server)
@@ -377,7 +373,7 @@ def cmd_admin(substr, msg):
    if substr == "" and not no_default:
       cmd_invalidcmd(msg)
    else:
-      (left1, right1) = separate_left_word(substr)
+      (left1, right1) = utils.separate_left_word(substr)
 
       if left1 == "say":
          client.send_msg(msg, right1)
@@ -386,9 +382,9 @@ def cmd_admin(substr, msg):
          cmd_admin_iam(right1, msg)
 
       elif left1 == "toggle":
-         (left2, right2) = separate_left_word(right1)
+         (left2, right2) = utils.separate_left_word(right1)
          if (left2 == "mentions") or (left2 == "mb") or (left2 == "mentionbot"):
-            (left3, right3) = separate_left_word(right2)
+            (left3, right3) = utils.separate_left_word(right2)
             if (left3 == "notify") or (left3 == "n"):
                global globalenabled_mentions_notify # TODO: Is this actually needed?
                globalenabled_mentions_notify = not globalenabled_mentions_notify
@@ -399,7 +395,7 @@ def cmd_admin(substr, msg):
             cmd_invalidcmd(msg)
 
       elif left1 == "gettime":
-         client.send_msg(msg, datetime.datetime.now().strftime("My current system time: %c " + LOCALTIMEZONE_ABBR))
+         client.send_msg(msg, datetime.datetime.utcnow().strftime("My current system time: %c UTC"))
 
       elif left1 == "setgame":
          client.set_game_status(right1)
@@ -434,7 +430,7 @@ def cmd_admin(substr, msg):
 
 def cmd_admin_iam(substr, msg):
    substr = substr.strip()
-   (left, right) = separate_left_word(substr)
+   (left, right) = utils.separate_left_word(substr)
    
    if re_mentionstr.fullmatch(left):
       user_to_pose_as = left[2:-1]
@@ -470,84 +466,30 @@ def simple_easter_egg_replies(msg):
    return
 
 
-def msg_list_to_string(mentions, verbose=False): # TYPE: String
-   now = datetime.datetime.now()
-   buf = "" # FORMAT: String
-   for i in mentions:
-      
-      timediff = now - i.timestamp
-      seconds = timediff.seconds - (LOCALTIMEZONE_HOUR_OFFSET*60*60)
-      
-      if verbose:
-         buf += "Message ID: " + i.id + "\n"
-         # buf += "Timestamp: " + i.timestamp.strftime("%c UTC") + "\n" # Unnecessary
-      buf += "By " + i.author.name + " in " + "<#{}>".format(i.channel.id) + ", " + seconds_to_string(seconds) + " ago\n"
-      buf += i.content + "\n\n"
-   if buf != "":
-      buf = buf[:-2]
-   return buf
-
-
-# Returns a string that:
-#     is the time in seconds if time is <1 minute (e.g. "36 seconds ago"),
-#     is the time in minutes if time is <1 hour (e.g. "8 minutes ago"), or
-#     is the time in hours (e.g. "12 hours ago").
-def seconds_to_string(seconds):
-   if seconds >= 0:
-      if seconds < 60:
-         return str(seconds) + " seconds"
-      elif seconds < (60*60):
-         return str(round(seconds/60, 2)) + " minutes"
-      else:
-         return str(round(seconds/(60*60), 2)) + " hours"
-   else:
-      return str(seconds) + " seconds (uhh... I don't think this should be negative.)"
-
-
 def is_privileged_user(user_ID):
    return user_ID == BOTOWNER_ID
-
-
-# E.g. "hi    how   r u" -> ("hi","how   r u")
-#      "hi"              -> ("hi","")
-def separate_left_word(text): # TYPE: Tuple<String>
-   substrings = text.split(maxsplit=1) # "how r u?" -> ["how", "r u?"]
-   if len(substrings) == 0:
-      return ("","")
-   elif len(substrings) == 1:
-      substrings.append("")
-   return tuple(substrings)
-
-
-# Parses a block of text, returns a list of flags.
-# For every non-flag, "invalid" is instead appended.
-# E.g. "-l hello --flag" -> ["l","invalid","flag"]
-# E.g. "--flag" -> ["flag"]
-# E.g. "-flag" -> ["f","l","a","g"]
-# E.g. "flag" -> ["invalid"]
-# E.g. "" -> []
-# PARAMETER: text = String
-# RETURNS: List of flags as strings (without the leading hyphens)
-def parse_flags(text):
-   flags = []
-   args = text.split(" ")
-   for arg in args:
-      if (len(arg) > 1) and (arg[0] == "-"):
-         if (len(arg) > 2) and (arg[1] == "-"):
-            flags.append(arg[2:])
-         else:
-            # Append all characters as separate flags.
-            for i in arg[1:]:
-               flags.append(i)
-      elif arg != "":
-         flags.append("invalid")
-   return flags
 
 
 # RETURNS: Bot's current uptime in seconds
 def get_bot_uptime():
    timediff = datetime.datetime.now() - initialization_timestamp
    return timediff.seconds
+
+
+# TODO: There already is a copy of this function in mentionbot.py...
+def msg_list_to_string(mentions, verbose=False): # TYPE: String
+   now = datetime.datetime.utcnow()
+   buf = "" # FORMAT: String
+   for i in mentions:
+      timediff = now - i.timestamp
+      if verbose:
+         buf += "Message ID: " + i.id + "\n"
+         # buf += "Timestamp: " + i.timestamp.strftime("%c UTC") + "\n" # Unnecessary
+      buf += "By " + i.author.name + " in " + "<#{}>".format(i.channel.id) + ", " + utils.seconds_to_string(timediff.seconds) + " ago\n"
+      buf += i.content + "\n\n"
+   if buf != "":
+      buf = buf[:-2]
+   return buf
 
 
 client.run() # let the games begin...
