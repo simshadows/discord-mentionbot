@@ -1,0 +1,5 @@
+(NOTE: The notify feature has not yet been implemented.)
+`/mentions notify` or `/mb n` - View and change settings of PM notification system.
+>>> PRIVILEGE LEVEL 1 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+`/a toggle mentions notify` (The short version does not work.)

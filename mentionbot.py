@@ -1,5 +1,3 @@
-
-
 import datetime
 import sys
 import copy
@@ -10,16 +8,18 @@ import random
 
 import discord # pip install --upgrade git+https://github.com/Rapptz/discord.py@legacy
 
+from utils import separate_left_word
+
 import clientextended
 import mentionsummarycache
-import helpmessages
+import helpmessages.helpmessages
 
 LOGIN_DETAILS_FILENAME = "login_details" # This file is used to login. Only contains two lines. Line 1 is email, line 2 is password.
 MESSAGE_MAX_LEN = 2000
 LOCALTIMEZONE_HOUR_OFFSET = 11 # Timestamps are either in GMT or the system timezone.
 LOCALTIMEZONE_ABBR = "AEDT" # Name of system timezone
 BOTOWNER_ID = str(119384097473822727) # User ID of the owner of this bot
-INITIAL_GAME_STATUS = "INFP is master race"
+INITIAL_GAME_STATUS = "hello thar"
 
 INITIAL_GLOBALENABLED_MENTIONS_NOTIFY = False
 
@@ -53,7 +53,7 @@ def initialize_global_variables():
    global botowner
    global initialization_timestamp
    mentionSummaryCache = mentionsummarycache.MentionSummaryCache()
-   help_messages = helpmessages.HelpMessages()
+   help_messages = helpmessages.helpmessages.HelpMessages()
    bot_mention = "<@{}>".format(client.user.id)
    bot_name = client.user.name
    botowner_mention = "<@{}>".format(BOTOWNER_ID)
@@ -72,6 +72,7 @@ if not os.path.isfile(LOGIN_DETAILS_FILENAME):
 login_file = open(LOGIN_DETAILS_FILENAME, "r")
 email = login_file.readline().strip()
 password = login_file.readline().strip()
+login_file.close()
 print("Email: " + email)
 print("Password: " + len(password) * "*")
 print("Logging in...", end="")
@@ -510,11 +511,11 @@ def is_privileged_user(user_ID):
 # E.g. "hi    how   r u" -> ("hi","how   r u")
 #      "hi"              -> ("hi","")
 def separate_left_word(text): # TYPE: Tuple<String>
-   substrings = text.split(" ", maxsplit=1)
-   if len(substrings) == 1:
+   substrings = text.split(maxsplit=1) # "how r u?" -> ["how", "r u?"]
+   if len(substrings) == 0:
+      return ("","")
+   elif len(substrings) == 1:
       substrings.append("")
-   else:
-      substrings[1] = substrings[1].strip()
    return tuple(substrings)
 
 

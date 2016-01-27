@@ -1,0 +1,6 @@
+`/mentions search [options]` or `/mb s [options]` - Search mentions.
+option: `--privmsg` or `-p` - Send mentions via PM instead.
+option: `--ch=[channel]` - Channel to search (this channel by default).
+option: `--m=[num]` - Number of mentions to search for.
+option: `--r=[num]` - Number of messages to be searched through.
+option: `--verbose` or `-v` - Include extra information.

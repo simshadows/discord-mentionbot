@@ -1,0 +1,25 @@
+**The following commands are available:**
+
+`/mentions summary [options]` or `/mb summary` - Get summary of all latest mentions.
+(For help on usage, type `/help mentions summary`.)
+
+`/mentions search [options]` or `/mb s [options]` - Search mentions.
+(For help on usage, type `/help mentions search`.)
+
+(NOTE: The notify feature has not yet been implemented.)
+`/mentions notify` or `/mb n` - View and change settings of PM notification system.
+(For help on usage, type `/help mentions notify`.)
+
+`/avatar [usermention]` - Get the avatar URL of the user.
+
+`/randomcolour`
+
+`/source` - Where to get source code.
+
+`/rip` - Rest in pieces.
+
+`/status` - Get bot's current status.
+
+>>> PRIVILEGE LEVEL 1 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+`/admin [cmd]` or `/a [cmd]` - Bot admin commands. Must have permission to use.
+(Type `/help admin` for more information.)
