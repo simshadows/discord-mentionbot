@@ -8,9 +8,12 @@ import random
 
 import discord # pip install --upgrade git+https://github.com/Rapptz/discord.py@legacy
 
-import utils # TODO: Figure out how to just import individual things...
+import utils
+import errors
+
 import clientextended
-import mentions.mentionsummarycache
+import mentions.summary
+import mentions.search
 import helpmessages.helpmessages
 
 LOGIN_DETAILS_FILENAME = "login_details" # This file is used to login. Only contains two lines. Line 1 is email, line 2 is password.
@@ -29,27 +32,21 @@ def initialize_global_variables():
    re_mentionstr = re.compile("<@\d+>")
    re_chmentionstr = re.compile("<#\d+>")
 
-   # For matching command options.
-   global re_option_ch
-   global re_option_m
-   global re_option_r
-   re_option_ch = re.compile("ch=[\w\W]+") # e.g. "ch=<#124672134>"
-   re_option_m = re.compile("m=\d+") # e.g. "m=100"
-   re_option_r = re.compile("r=\d+") # e.g. "m=1000"
-
    # Global enabled/disabled
    global globalenabled_mentions_notify
    globalenabled_mentions_notify = INITIAL_GLOBALENABLED_MENTIONS_NOTIFY
 
    # The others
    global mentionSummaryCache
+   global mentionSearchModule
    global help_messages
    global bot_mention
    global bot_name
    global botowner_mention
    global botowner
    global initialization_timestamp
-   mentionSummaryCache = mentions.mentionsummarycache.MentionSummaryCache()
+   mentionSummaryCache = mentions.summary.MentionSummaryCache()
+   mentionSearchModule = mentions.search.MentionSearchModule(client)
    help_messages = helpmessages.helpmessages.HelpMessages()
    bot_mention = "<@{}>".format(client.user.id)
    bot_name = client.user.name
@@ -105,34 +102,45 @@ def on_message(msg):
    if msg.author == client.user:
       return # never process own messages.
 
-   text = msg.content.strip()
-   (left, right) = utils.separate_left_word(text)
-   if msg.channel.__class__.__name__ is "Channel":
-      try:
-         print("msg rcv #" + msg.channel.name + ": " + str(text.encode("unicode_escape")))
-      except Exception:
-         print("msg rcv (UNKNOWN DISPLAY ERROR)")
+   try:
+      text = msg.content.strip()
+      (left, right) = utils.separate_left_word(text)
+      if msg.channel.__class__.__name__ is "Channel":
+         try:
+            print("msg rcv #" + msg.channel.name + ": " + str(text.encode("unicode_escape")))
+         except Exception:
+            print("msg rcv (UNKNOWN DISPLAY ERROR)")
 
-      if text.startswith("/"): 
-         cmd1(text[1:].strip(), msg, no_default=True)
+         if text.startswith("/"): 
+            cmd1(text[1:].strip(), msg, no_default=True)
 
-      elif left == "$mb":
-         cmd1_mentions(right, msg, no_default=False)
+         elif left == "$mb":
+            cmd1_mentions(right, msg, no_default=False)
 
-      # EASTER EGG REPLY.
-      elif (left == "$blame") and (bot_mention in text):
-         client.send_msg(msg, "no fk u")
+         # EASTER EGG REPLY.
+         elif (left == "$blame") and (bot_mention in text):
+            client.send_msg(msg, "no fk u")
 
-      elif (bot_mention in text or text == client.user.name + " pls"):
-         cmd1_mentions_summary("", msg, add_extra_help=True)
-      
+         elif (bot_mention in text or text == client.user.name + " pls"):
+            cmd1_mentions_summary("", msg, add_extra_help=True)
+         
+         else:
+            mentionSummaryCache.add_message(msg)
+            simple_easter_egg_replies(msg)
+
       else:
-         mentionSummaryCache.add_message(msg)
-         simple_easter_egg_replies(msg)
-
-   else:
-      client.send_msg(msg, "sry m8 im not programmed to do anything fancy with pms yet")
-      print("private msg rcv from" + msg.author.name + ": " + text)
+         client.send_msg(msg, "sry m8 im not programmed to do anything fancy with pms yet")
+         print("private msg rcv from" + msg.author.name + ": " + text)
+   except errors.UnknownCommandError:
+      print("Caught UnknownCommandError.")
+      client.send_msg(msg, "sry m8 idk what ur asking") # intentional typos. pls don't lynch me.
+   except errors.InvalidCommandArgumentsError:
+      print("Caught InvalidCommandArgumentsError.")
+      client.send_msg(msg, "soz m8 one or more (or 8) arguments are invalid")
+   except errors.CommandPrivilegeError:
+      print("Caught CommandPrivilegeError.")
+      client.send_msg(msg, "im afraid im not allowed to do that for you m8")
+   
    return
 
 
@@ -151,7 +159,7 @@ def cmd1(substr, msg, no_default=False):
             privilege_level = 0
          buf = help_messages.get_message(right, privilegelevel=privilege_level)
          if buf == None:
-            cmd_invalidcmd(msg)
+            raise errors.UnknownCommandError
          else:
             client.send_msg(msg, buf)
 
@@ -186,7 +194,7 @@ def cmd1(substr, msg, no_default=False):
          cmd_admin(right, msg)
       
       # else:
-      #    cmd_invalidcmd(msg)
+      #    raise CommandArgumentsError
    
    return
 
@@ -202,13 +210,13 @@ def cmd1_mentions(substr, msg, no_default=False):
          cmd1_mentions_summary(right, msg)
 
       elif (left == "search") or (left == "s"):
-         cmd1_mentions_search(right, msg)
+         mentionSearchModule.process_cmd(right, msg)
 
       elif (left == "notify") or (left == "n"):
          cmd1_mentions_notify(right, msg)
       
       else:
-         cmd_invalidcmd(msg)
+         raise errors.UnknownCommandError
    
    return
 
@@ -229,7 +237,7 @@ def cmd1_mentions_summary(substr, msg, add_extra_help=False):
       elif (verbose == False) and ((flag == "v") or (flag == "verbose")):
          verbose = True
       else: # Invalid flag!
-         return cmd_badargs(msg)
+         raise errors.InvalidCommandArgumentsError
 
    if mentionSummaryCache.user_has_mentions(msg.author.id):
       buf = "Here's a summary of your recent mentions."
@@ -253,87 +261,7 @@ def cmd1_mentions_summary(substr, msg, add_extra_help=False):
    return
 
 
-def cmd1_mentions_search(substr, msg):
-   # return client.send_msg(msg, "This command is temporarily unavailable due to possible abuse.") # TEMPORARY.
-   send_as_pm = False # TYPE: Boolean
-   verbose = False # TYPE: Boolean
-   ch = None # TYPE: String, or None. This is a channel name, channel mention, or channel ID.
-   mentions_to_get = None # TYPE: Int, or None. This is the number of mentions this function will try to fetch.
-   search_range = None # TYPE: Int, or None. This is the number of messages the function will search through.
 
-   flags = utils.parse_flags(substr)
-   for flag in flags:
-      if (send_as_pm == False) and ((flag == "p") or (flag == "privmsg")):
-         send_as_pm = True
-      elif (verbose == False) and ((flag == "v") or (flag == "verbose")):
-         verbose = True
-      elif (ch is None) and re_option_ch.fullmatch(flag):
-         ch = flag[3:]
-      elif (mentions_to_get == None) and re_option_m.fullmatch(flag):
-         mentions_to_get = int(flag[2:])
-      elif (search_range == None) and re_option_r.fullmatch(flag):
-         search_range = int(flag[2:])
-      else: # Invalid flag!
-         return cmd_badargs(msg)
-
-   # Get channel object from ch (and handle the default value)
-   if ch is None:
-      channel = msg.channel
-   else:
-      server_to_search = msg.server
-      if server_to_search == None:
-         return client.send_msg(msg, "Sorry, the --ch option is unusable in private channels.")
-      channel = client.search_for_channel(ch, enablenamesearch=True, serverrestriction=server_to_search)
-      if channel is None:
-         return client.send_msg(msg, "Channel not found. Search failed.")
-   # Handle other default values or invalid inputs.
-   if mentions_to_get == None:
-      mentions_to_get = 3
-   elif mentions_to_get == 0:
-      return cmd_badargs(msg)
-   if search_range == None:
-      search_range = 2000
-   elif search_range == 0:
-      return cmd_badargs(msg)
-
-   # Search
-   search_results = []
-   searched = 0 # Used for feedback on how many messages were searched.
-   mentions_left = mentions_to_get
-   search_before = None # Used for generating more logs after the limit is reached.
-   while True:
-      print("RETRIEVING 100 MESSAGES FROM " + channel.name + "...")
-      client.send_typing(msg.channel) # Feedback that the bot is still running.
-      more_left_to_search = False
-      for retrieved_msg in client.logs_from(channel, limit=search_range, before=search_before):
-         if searched >= search_range:
-            break
-         searched += 1
-         prev_retrieved_msg = retrieved_msg # Used for generating more logs after the limit is reached.
-         more_left_to_search = True # Used for generating more logs after the limit is reached.
-         if msg.author in retrieved_msg.mentions:
-            search_results.append(retrieved_msg)
-            mentions_left -= 1
-            if mentions_left == 0:
-               break
-      if (searched >= search_range) or not (more_left_to_search and (mentions_left > 0)):
-         break
-      search_before = prev_retrieved_msg
-   
-   # Report search results
-   if len(search_results) == 0:
-      buf = "No results found."
-      buf += "\nLooked through " + str(searched) + " messages in <#" + channel.id + ">."
-      buf += "\n(mentions_to_get=" + str(mentions_to_get) + ", range=" + str(search_range) + ")"
-   else:
-      mentions_found = mentions_to_get - mentions_left
-      buf = "Here are your " + str(mentions_found) + " latest mentions in <#" + channel.id + ">."
-      buf += "\n(mentions_to_get=" + str(mentions_to_get) + ", range=" 
-      buf += str(search_range) + ", searched=" + str(searched) + "):"
-      buf += "\n\n"
-      buf += msg_list_to_string(search_results, verbose=verbose)
-
-   return client.send_msg(msg, buf)
 
 
 def cmd1_mentions_notify(substr, msg):
@@ -366,12 +294,11 @@ def cmd_source(msg):
 
 def cmd_admin(substr, msg):
    if not is_privileged_user(msg.author.id):
-      cmd_badprivileges(msg)
-      return
+      raise errors.CommandPrivilegeError
 
    substr = substr.strip()
    if substr == "" and not no_default:
-      cmd_invalidcmd(msg)
+      raise errors.UnknownCommandError
    else:
       (left1, right1) = utils.separate_left_word(substr)
 
@@ -390,9 +317,9 @@ def cmd_admin(substr, msg):
                globalenabled_mentions_notify = not globalenabled_mentions_notify
                client.send_msg(msg, "Notification system enabled = " + str(globalenabled_mentions_notify))
             else:
-               cmd_invalidcmd(msg)
+               raise errors.UnknownCommandError
          else:
-            cmd_invalidcmd(msg)
+            raise errors.UnknownCommandError
 
       elif left1 == "gettime":
          client.send_msg(msg, datetime.datetime.utcnow().strftime("My current system time: %c UTC"))
@@ -424,7 +351,7 @@ def cmd_admin(substr, msg):
          raise Exception
       
       else:
-         cmd_invalidcmd(msg)
+         raise errors.UnknownCommandError
    return
 
 
@@ -445,21 +372,6 @@ def cmd_admin_iam(substr, msg):
    return
 
 
-# If bad arguments were entered for a command.
-def cmd_badargs(msg):
-   return client.send_msg(msg, "soz m8 one or more (or 8) arguments are invalid")
-
-
-# For attempts to use commands without sufficient privileges
-def cmd_badprivileges(msg):
-   return client.send_msg(msg, "im afraid im not allowed to do that for you m8")
-
-
-# For invalid commands.
-def cmd_invalidcmd(msg):
-   return client.send_msg(msg, "sry m8 idk what ur asking") # intentional typos. pls don't lynch me.
-
-
 def simple_easter_egg_replies(msg):
    if msg.content.startswith("$blame " + botowner_mention) or msg.content.startswith("$blame " + botowner.name):
       client.send_msg(msg, "he didnt do shit m8")
@@ -476,7 +388,6 @@ def get_bot_uptime():
    return timediff.seconds
 
 
-# TODO: There already is a copy of this function in mentionbot.py...
 def msg_list_to_string(mentions, verbose=False): # TYPE: String
    now = datetime.datetime.utcnow()
    buf = "" # FORMAT: String

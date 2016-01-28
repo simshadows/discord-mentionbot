@@ -8,7 +8,6 @@ class MentionSummaryCache:
    
    def __init__(self):
       self._mention_list = [] # FORMAT: list<tuple<userID, list<messageObject> >>
-      print("MentionSummaryCache initialized.")
       return
 
    # Adds a message to the collection (and removes redundant data).
