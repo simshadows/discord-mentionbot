@@ -1,5 +1,8 @@
-(NOTE: The notify feature has not yet been implemented.)
+**The mentions notification system:**
+
+This module notifies users of mentions via PM when they're offline.
+
 `/mentions notify` or `/mb n` - View and change settings of PM notification system.
 >>> PRIVILEGE LEVEL 1 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-`/a toggle mentions notify` (The short version does not work.)
+`/a toggle mentions notify`

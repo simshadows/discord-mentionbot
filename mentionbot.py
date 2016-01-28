@@ -12,8 +12,9 @@ import utils
 import errors
 
 import clientextended
-import mentions.summary
+import mentions.notify
 import mentions.search
+import mentions.summary
 import helpmessages.helpmessages
 
 LOGIN_DETAILS_FILENAME = "login_details" # This file is used to login. Only contains two lines. Line 1 is email, line 2 is password.
@@ -37,16 +38,18 @@ def initialize_global_variables():
    globalenabled_mentions_notify = INITIAL_GLOBALENABLED_MENTIONS_NOTIFY
 
    # The others
-   global mentionSummaryModule
+   global mentionNotifyModule
    global mentionSearchModule
+   global mentionSummaryModule
    global help_messages
    global bot_mention
    global bot_name
    global botowner_mention
    global botowner
    global initialization_timestamp
-   mentionSummaryModule = mentions.summary.MentionSummaryModule(client)
+   mentionNotifyModule = mentions.notify.MentionNotifyModule(client, enabled=INITIAL_GLOBALENABLED_MENTIONS_NOTIFY)
    mentionSearchModule = mentions.search.MentionSearchModule(client)
+   mentionSummaryModule = mentions.summary.MentionSummaryModule(client)
    help_messages = helpmessages.helpmessages.HelpMessages()
    bot_mention = "<@{}>".format(client.user.id)
    bot_name = client.user.name
@@ -102,6 +105,9 @@ def on_message(msg):
    if msg.author == client.user:
       return # never process own messages.
 
+   mentionNotifyModule.on_message(msg)
+   mentionSummaryModule.on_message(msg)
+
    try:
       text = msg.content.strip()
       (left, right) = utils.separate_left_word(text)
@@ -125,12 +131,12 @@ def on_message(msg):
             mentionSummaryModule.process_cmd("", msg, add_extra_help=True)
          
          else:
-            mentionSummaryModule.on_message(msg)
             simple_easter_egg_replies(msg)
 
       else:
          client.send_msg(msg, "sry m8 im not programmed to do anything fancy with pms yet")
          print("private msg rcv from" + msg.author.name + ": " + text)
+   
    except errors.UnknownCommandError:
       print("Caught UnknownCommandError.")
       client.send_msg(msg, "sry m8 idk what ur asking") # intentional typos. pls don't lynch me.
@@ -179,7 +185,7 @@ def cmd1(substr, msg, no_default=False):
          client.send_msg(msg, buf)
 
       elif left == "source":
-         cmd_source(msg)
+         client.send_msg(msg, "idk, ask sim.")
 
       elif left == "rip":
          client.send_msg(msg, "doesnt even deserve a funeral")
@@ -187,7 +193,7 @@ def cmd1(substr, msg, no_default=False):
       elif left == "status":
          buf = "**Status:**"
          buf += "\nBot current uptime: {}. ".format(utils.seconds_to_string(get_bot_uptime()))
-         buf += "\nNotification system enabled = " + str(globalenabled_mentions_notify)
+         buf += "\nNotification system enabled = " + str(mentionNotifyModule.is_enabled())
          client.send_msg(msg, buf)
 
       elif (left == "admin") or (left == "a"):
@@ -213,16 +219,11 @@ def cmd1_mentions(substr, msg, no_default=False):
          mentionSearchModule.process_cmd(right, msg)
 
       elif (left == "notify") or (left == "n"):
-         cmd1_mentions_notify(right, msg)
+         mentionNotifyModule.process_cmd(right, msg)
       
       else:
          raise errors.UnknownCommandError
-   
    return
-
-
-def cmd1_mentions_notify(substr, msg):
-   return client.send_msg(msg, "This feature has not yet been implemented.")
 
 
 def cmd1_avatar(substr, msg):
@@ -241,12 +242,6 @@ def cmd1_avatar(substr, msg):
       return client.send_msg(msg, left + " m8 get an avatar")
    else:
       return client.send_msg(msg, avatar)
-
-
-def cmd_source(msg):
-   # buf = "https://github.com/simshadows/discord-mentionbot"
-   buf = "idk, ask sim."
-   return client.send_msg(msg, buf)
 
 
 def cmd_admin(substr, msg):
@@ -270,9 +265,11 @@ def cmd_admin(substr, msg):
          if (left2 == "mentions") or (left2 == "mb") or (left2 == "mentionbot"):
             (left3, right3) = utils.separate_left_word(right2)
             if (left3 == "notify") or (left3 == "n"):
-               global globalenabled_mentions_notify # TODO: Is this actually needed?
-               globalenabled_mentions_notify = not globalenabled_mentions_notify
-               client.send_msg(msg, "Notification system enabled = " + str(globalenabled_mentions_notify))
+               if mentionNotifyModule.is_enabled():
+                  mentionNotifyModule.disable()
+               else:
+                  mentionNotifyModule.enable()
+               client.send_msg(msg, "Notification system enabled = " + str(mentionNotifyModule.is_enabled()))
             else:
                raise errors.UnknownCommandError
          else:
