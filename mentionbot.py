@@ -37,7 +37,7 @@ def initialize_global_variables():
    globalenabled_mentions_notify = INITIAL_GLOBALENABLED_MENTIONS_NOTIFY
 
    # The others
-   global mentionSummaryCache
+   global mentionSummaryModule
    global mentionSearchModule
    global help_messages
    global bot_mention
@@ -45,14 +45,14 @@ def initialize_global_variables():
    global botowner_mention
    global botowner
    global initialization_timestamp
-   mentionSummaryCache = mentions.summary.MentionSummaryCache()
+   mentionSummaryModule = mentions.summary.MentionSummaryModule(client)
    mentionSearchModule = mentions.search.MentionSearchModule(client)
    help_messages = helpmessages.helpmessages.HelpMessages()
    bot_mention = "<@{}>".format(client.user.id)
    bot_name = client.user.name
    botowner_mention = "<@{}>".format(BOTOWNER_ID)
    botowner = client.search_for_user(BOTOWNER_ID)
-   initialization_timestamp = datetime.datetime.now()
+   initialization_timestamp = datetime.datetime.utcnow()
    
    return
 
@@ -122,10 +122,10 @@ def on_message(msg):
             client.send_msg(msg, "no fk u")
 
          elif (bot_mention in text or text == client.user.name + " pls"):
-            cmd1_mentions_summary("", msg, add_extra_help=True)
+            mentionSummaryModule.process_cmd("", msg, add_extra_help=True)
          
          else:
-            mentionSummaryCache.add_message(msg)
+            mentionSummaryModule.on_message(msg)
             simple_easter_egg_replies(msg)
 
       else:
@@ -147,7 +147,7 @@ def on_message(msg):
 def cmd1(substr, msg, no_default=False):
    substr = substr.strip()
    if substr == "" and not no_default:
-      cmd1_mentions_summary("", msg, add_extra_help=False)
+      mentionSummaryModule.process_cmd("", msg, add_extra_help=False)
    else:
       (left, right) = utils.separate_left_word(substr)
 
@@ -202,12 +202,12 @@ def cmd1(substr, msg, no_default=False):
 def cmd1_mentions(substr, msg, no_default=False):
    substr = substr.strip()
    if substr == "" and not no_default:
-      cmd1_mentions_summary("", msg, add_extra_help=False)
+      mentionSummaryModule.process_cmd("", msg, add_extra_help=False)
    else:
       (left, right) = utils.separate_left_word(substr)
 
       if left == "summary":
-         cmd1_mentions_summary(right, msg)
+         mentionSummaryModule.process_cmd(right, msg)
 
       elif (left == "search") or (left == "s"):
          mentionSearchModule.process_cmd(right, msg)
@@ -219,49 +219,6 @@ def cmd1_mentions(substr, msg, no_default=False):
          raise errors.UnknownCommandError
    
    return
-
-
-def cmd1_mentions_summary(substr, msg, add_extra_help=False):
-   send_as_pm = False
-   preserve_data = False
-   verbose = False
-
-   # Parse substring for options. Return on invalid option.
-   flags = utils.parse_flags(substr)
-   for flag in flags:
-      if (send_as_pm == False) and ((flag == "p") or (flag == "privmsg")):
-         send_as_pm = True
-         add_extra_help = False # Never attach extra help message if sent via PM.
-      elif (preserve_data == False) and ((flag == "k") or (flag == "preservedata")):
-         preserve_data = True
-      elif (verbose == False) and ((flag == "v") or (flag == "verbose")):
-         verbose = True
-      else: # Invalid flag!
-         raise errors.InvalidCommandArgumentsError
-
-   if mentionSummaryCache.user_has_mentions(msg.author.id):
-      buf = "Here's a summary of your recent mentions."
-      buf += "\nBot current uptime: {}. ".format(utils.seconds_to_string(get_bot_uptime()))
-      if add_extra_help:
-         buf += " (`/help` for more commands.)".format(bot_name)
-      buf += "\n\n" + msg_list_to_string(mentionSummaryCache.get_user_latest(msg.author.id), verbose=verbose)
-      if not preserve_data:
-         mentionSummaryCache.delete_user_data(msg.author.id)
-   else:
-      buf = "sry m8 no mentions to see"
-      buf += "\nBot current uptime: {}".format(utils.seconds_to_string(get_bot_uptime()))
-      if add_extra_help:
-         buf += " (`/help` for more commands.)".format(bot_name)
-   
-   if send_as_pm:
-      client.send_msg(msg.author, buf)
-      client.send_msg(msg, "List of mentions sent via PM.")
-   else:
-      client.send_msg(msg, buf)
-   return
-
-
-
 
 
 def cmd1_mentions_notify(substr, msg):
@@ -384,7 +341,7 @@ def is_privileged_user(user_ID):
 
 # RETURNS: Bot's current uptime in seconds
 def get_bot_uptime():
-   timediff = datetime.datetime.now() - initialization_timestamp
+   timediff = datetime.datetime.utcnow() - initialization_timestamp
    return timediff.seconds
 
 

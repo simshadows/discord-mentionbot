@@ -13,9 +13,14 @@ class MentionSearchModule:
       self.re_option_m = re.compile("m=\d+") # e.g. "m=100"
       self.re_option_r = re.compile("r=\d+") # e.g. "m=1000"
 
-      self.client = client
+      self._client = client
       return
 
+   # Call this every time a message is received.
+   def on_message(msg):
+      pass
+
+   # Call this to process a command.
    def process_cmd(self, substr, msg):
       send_as_pm = False # TYPE: Boolean
       verbose = False # TYPE: Boolean
@@ -44,10 +49,10 @@ class MentionSearchModule:
       else:
          server_to_search = msg.server
          if server_to_search == None:
-            return self.client.send_msg(msg, "Sorry, the --ch option is unusable in private channels.")
-         channel = self.client.search_for_channel(ch, enablenamesearch=True, serverrestriction=server_to_search)
+            return self._client.send_msg(msg, "Sorry, the --ch option is unusable in private channels.")
+         channel = self._client.search_for_channel(ch, enablenamesearch=True, serverrestriction=server_to_search)
          if channel is None:
-            return self.client.send_msg(msg, "Channel not found. Search failed.")
+            return self._client.send_msg(msg, "Channel not found. Search failed.")
       # Handle other default values or invalid inputs.
       if mentions_to_get == None:
          mentions_to_get = 3
@@ -65,9 +70,9 @@ class MentionSearchModule:
       search_before = None # Used for generating more logs after the limit is reached.
       while True:
          print("RETRIEVING 100 MESSAGES FROM " + channel.name + "...")
-         self.client.send_typing(msg.channel) # Feedback that the bot is still running.
+         self._client.send_typing(msg.channel) # Feedback that the bot is still running.
          more_left_to_search = False
-         for retrieved_msg in self.client.logs_from(channel, limit=search_range, before=search_before):
+         for retrieved_msg in self._client.logs_from(channel, limit=search_range, before=search_before):
             if searched >= search_range:
                break
             searched += 1
@@ -93,13 +98,13 @@ class MentionSearchModule:
          buf += "\n(mentions_to_get=" + str(mentions_to_get) + ", range=" 
          buf += str(search_range) + ", searched=" + str(searched) + "):"
          buf += "\n\n"
-         buf += msg_list_to_string(search_results, verbose=verbose)
+         buf += _msg_list_to_string(search_results, verbose=verbose)
 
-      return self.client.send_msg(msg, buf)
+      return self._client.send_msg(msg, buf)
 
 
 # TODO: There already is a copy of this function in mentionbot.py...
-def msg_list_to_string(mentions, verbose=False): # TYPE: String
+def _msg_list_to_string(mentions, verbose=False): # TYPE: String
    now = datetime.datetime.utcnow()
    buf = "" # FORMAT: String
    for i in mentions:
