@@ -89,7 +89,8 @@ class ClientExtended(discord.Client):
 
    # Send a message to a channel specified by a Channel, PrivateChannel, Server, or Message object.
    # TODO: Consider renaming this. It's kinda awkward to have both send_msg() and send_message().
-   def send_msg(self, destination, text, mentions=True, tts=False):
+   # TODO: self.send_message has other optional parameters. Pls include them somehow...
+   def send_msg(self, destination, text):
       text = str(text)
       if len(text) > 2000:
          text_to_append = "\nSorry m8, can't send more than " + str(MESSAGE_MAX_LEN) + " characters."
@@ -99,7 +100,8 @@ class ClientExtended(discord.Client):
       if destination.__class__.__name__ is "Message":
          destination = destination.channel
 
-      return self.send_message(destination, text, mentions, tts)
+      print("SENDING MESSAGE...")
+      return self.send_message(destination, text)
 
 
 

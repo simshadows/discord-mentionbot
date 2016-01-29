@@ -6,7 +6,7 @@ import re
 import os
 import random
 
-import discord # pip install --upgrade git+https://github.com/Rapptz/discord.py@legacy
+import discord # pip install git+https://github.com/Rapptz/discord.py@async
 
 import utils
 import errors
@@ -23,6 +23,8 @@ BOTOWNER_ID = str(119384097473822727) # User ID of the owner of this bot
 INITIAL_GAME_STATUS = "hello thar"
 
 INITIAL_GLOBALENABLED_MENTIONS_NOTIFY = False
+
+client = clientextended.ClientExtended()
 
 def initialize_global_variables():
 
@@ -62,24 +64,7 @@ def initialize_global_variables():
 ###########################################################################################
 
 
-# Log in to discord
-print("\nAttempting to log in using file '" + LOGIN_DETAILS_FILENAME + "'.")
-if not os.path.isfile(LOGIN_DETAILS_FILENAME):
-   print("File does not exist. Terminating.")
-   sys.exit()
-login_file = open(LOGIN_DETAILS_FILENAME, "r")
-email = login_file.readline().strip()
-password = login_file.readline().strip()
-login_file.close()
-print("Email: " + email)
-print("Password: " + len(password) * "*")
-print("Logging in...", end="")
-client = clientextended.ClientExtended()
-client.login(email, password)
-print(" success.")
-
-
-@client.event
+@client.async_event
 def on_ready():
    initialize_global_variables()
    client.set_game_status(INITIAL_GAME_STATUS)
@@ -98,7 +83,7 @@ def on_ready():
    print("")
 
    
-@client.event
+@client.async_event
 def on_message(msg):
    global bot_mention
 
@@ -130,8 +115,9 @@ def on_message(msg):
          elif (bot_mention in text or text == client.user.name + " pls"):
             mentionSummaryModule.process_cmd("", msg, add_extra_help=True)
          
-         else:
-            simple_easter_egg_replies(msg)
+         # EASTER EGG REPLY
+         elif msg.content.startswith("$blame " + botowner_mention) or msg.content.startswith("$blame " + botowner.name):
+            client.send_msg(msg, "he didnt do shit m8")
 
       else:
          client.send_msg(msg, "sry m8 im not programmed to do anything fancy with pms yet")
@@ -326,12 +312,6 @@ def cmd_admin_iam(substr, msg):
    return
 
 
-def simple_easter_egg_replies(msg):
-   if msg.content.startswith("$blame " + botowner_mention) or msg.content.startswith("$blame " + botowner.name):
-      client.send_msg(msg, "he didnt do shit m8")
-   return
-
-
 def is_privileged_user(user_ID):
    return user_ID == BOTOWNER_ID
 
@@ -357,4 +337,19 @@ def msg_list_to_string(mentions, verbose=False): # TYPE: String
    return buf
 
 
-client.run() # let the games begin...
+# Log in to discord
+print("\nAttempting to log in using file '" + LOGIN_DETAILS_FILENAME + "'.")
+if not os.path.isfile(LOGIN_DETAILS_FILENAME):
+   print("File does not exist. Terminating.")
+   sys.exit()
+login_file = open(LOGIN_DETAILS_FILENAME, "r")
+email = login_file.readline().strip()
+password = login_file.readline().strip()
+login_file.close()
+print("Email: " + email)
+print("Password: " + len(password) * "*")
+print("Logging in...", end="")
+
+client.run(email, password)
+print(" success.")
+
