@@ -1,4 +1,4 @@
-
+import asyncio
 import re
 import datetime
 
@@ -17,11 +17,11 @@ class MentionSearchModule:
       return
 
    # Call this every time a message is received.
-   def on_message(msg):
+   async def on_message(msg):
       pass
 
    # Call this to process a command.
-   def process_cmd(self, substr, msg):
+   async def process_cmd(self, substr, msg):
       send_as_pm = False # TYPE: Boolean
       verbose = False # TYPE: Boolean
       ch = None # TYPE: String, or None. This is a channel name, channel mention, or channel ID.
@@ -49,10 +49,10 @@ class MentionSearchModule:
       else:
          server_to_search = msg.server
          if server_to_search == None:
-            return self._client.send_msg(msg, "Sorry, the --ch option is unusable in private channels.")
+            return await self._client.send_msg(msg, "Sorry, the --ch option is unusable in private channels.")
          channel = self._client.search_for_channel(ch, enablenamesearch=True, serverrestriction=server_to_search)
          if channel is None:
-            return self._client.send_msg(msg, "Channel not found. Search failed.")
+            return await self._client.send_msg(msg, "Channel not found. Search failed.")
       # Handle other default values or invalid inputs.
       if mentions_to_get == None:
          mentions_to_get = 3
@@ -69,15 +69,18 @@ class MentionSearchModule:
       mentions_left = mentions_to_get
       search_before = None # Used for generating more logs after the limit is reached.
       while True:
-         print("RETRIEVING 100 MESSAGES FROM " + channel.name + "...")
-         self._client.send_typing(msg.channel) # Feedback that the bot is still running.
+         print("RETRIEVING " + str(search_range - searched) + " MESSAGES FROM " + channel.name + "...")
+         await self._client.send_typing(msg.channel) # Feedback that the bot is still running.
          more_left_to_search = False
-         for retrieved_msg in self._client.logs_from(channel, limit=search_range, before=search_before):
+         async for retrieved_msg in self._client.logs_from(channel, limit=(search_range - searched), before=search_before):
             if searched >= search_range:
                break
             searched += 1
+            print(str(searched))
             prev_retrieved_msg = retrieved_msg # Used for generating more logs after the limit is reached.
             more_left_to_search = True # Used for generating more logs after the limit is reached.
+            # print("MSG: " + str(retrieved_msg))
+            # TODO: _client._logs_from() is a private method. Consider removing dependence from it. or lol jk maybe not.
             if msg.author in retrieved_msg.mentions:
                search_results.append(retrieved_msg)
                mentions_left -= 1
@@ -100,7 +103,7 @@ class MentionSearchModule:
          buf += "\n\n"
          buf += _msg_list_to_string(search_results, verbose=verbose)
 
-      return self._client.send_msg(msg, buf)
+      return await self._client.send_msg(msg, buf)
 
 
 # TODO: There already is a copy of this function in mentionbot.py...

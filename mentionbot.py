@@ -18,7 +18,6 @@ import mentions.summary
 import helpmessages.helpmessages
 
 LOGIN_DETAILS_FILENAME = "login_details" # This file is used to login. Only contains two lines. Line 1 is email, line 2 is password.
-MESSAGE_MAX_LEN = 2000
 BOTOWNER_ID = str(119384097473822727) # User ID of the owner of this bot
 INITIAL_GAME_STATUS = "hello thar"
 
@@ -70,7 +69,6 @@ async def on_ready():
    await client.set_game_status(INITIAL_GAME_STATUS)
    print("")
    print("LOGIN_DETAILS_FILENAME = '{}'".format(LOGIN_DETAILS_FILENAME))
-   print("MESSAGE_MAX_LEN = '{}'".format(MESSAGE_MAX_LEN))
    print("BOTOWNER_ID = '{}'".format(BOTOWNER_ID))
    print("INITIAL_GAME_STATUS = '{}'".format(INITIAL_GAME_STATUS))
    print("")
@@ -157,7 +155,7 @@ async def cmd1(substr, msg, no_default=False):
             await client.send_msg(msg, buf)
 
       elif (left == "mentions") or (left == "mb") or (left == "mentionbot"):
-         cmd1_mentions(right, msg)
+         await cmd1_mentions(right, msg)
 
       elif left == "avatar":
          await cmd1_avatar(right, msg)
@@ -208,7 +206,7 @@ async def cmd1_mentions(substr, msg, no_default=False):
          mentionSummaryModule.process_cmd(right, msg)
 
       elif (left == "search") or (left == "s"):
-         mentionSearchModule.process_cmd(right, msg)
+         await mentionSearchModule.process_cmd(right, msg)
 
       elif (left == "notify") or (left == "n"):
          await mentionNotifyModule.process_cmd(right, msg)

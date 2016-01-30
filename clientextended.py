@@ -8,6 +8,7 @@ class ClientExtended(discord.Client):
 
    def __init__(self, **kwargs):
       super(ClientExtended, self).__init__(**kwargs)
+      self._MESSAGE_MAX_LEN = 2000
       self._re_alldigits = re.compile("\d+")
       self._re_mentionstr = re.compile("<@\d+>")
       self._re_chmentionstr = re.compile("<#\d+>")
@@ -93,8 +94,8 @@ class ClientExtended(discord.Client):
    async def send_msg(self, destination, text):
       text = str(text)
       if len(text) > 2000:
-         text_to_append = "\nSorry m8, can't send more than " + str(MESSAGE_MAX_LEN) + " characters."
-         content_len = MESSAGE_MAX_LEN - len(text_to_append)
+         text_to_append = "\nSorry m8, can't send more than " + str(self._MESSAGE_MAX_LEN) + " characters."
+         content_len = self._MESSAGE_MAX_LEN - len(text_to_append)
          text = text[:content_len] + text_to_append
 
       if destination.__class__.__name__ is "Message":

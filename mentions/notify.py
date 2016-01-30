@@ -18,7 +18,6 @@ class MentionNotifyModule:
          return
       
       for member in msg.mentions:
-         print("Checking user up... " + member.name + " " + str(member.status))
          if str(member.status) != "offline":
             continue
          buf = "Hello! <@" + msg.author.id + "> mentioned you in <#" + msg.channel.id + "> while you were offline."
