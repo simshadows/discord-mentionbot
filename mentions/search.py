@@ -65,30 +65,17 @@ class MentionSearchModule:
 
       # Search
       search_results = []
-      searched = 0 # Used for feedback on how many messages were searched.
+      searched = 0
       mentions_left = mentions_to_get
-      search_before = None # Used for generating more logs after the limit is reached.
-      while True:
-         print("RETRIEVING " + str(search_range - searched) + " MESSAGES FROM " + channel.name + "...")
-         await self._client.send_typing(msg.channel) # Feedback that the bot is still running.
-         more_left_to_search = False
-         async for retrieved_msg in self._client.logs_from(channel, limit=(search_range - searched), before=search_before):
-            if searched >= search_range:
+      print("MENTIONS SEARCH IS RETRIEVING {} MESSAGES.".format(str(search_range)))
+      async for retrieved_msg in self._client.logs_from(channel, limit=search_range):
+         searched += 1
+         if msg.author in retrieved_msg.mentions:
+            search_results.append(retrieved_msg)
+            mentions_left -= 1
+            if mentions_left == 0:
                break
-            searched += 1
-            print(str(searched))
-            prev_retrieved_msg = retrieved_msg # Used for generating more logs after the limit is reached.
-            more_left_to_search = True # Used for generating more logs after the limit is reached.
-            # print("MSG: " + str(retrieved_msg))
-            # TODO: _client._logs_from() is a private method. Consider removing dependence from it. or lol jk maybe not.
-            if msg.author in retrieved_msg.mentions:
-               search_results.append(retrieved_msg)
-               mentions_left -= 1
-               if mentions_left == 0:
-                  break
-         if (searched >= search_range) or not (more_left_to_search and (mentions_left > 0)):
-            break
-         search_before = prev_retrieved_msg
+      print("MENTIONS SEARCH LOOKED THROUGH {} MESSAGES.".format(str(searched)))
       
       # Report search results
       if len(search_results) == 0:
