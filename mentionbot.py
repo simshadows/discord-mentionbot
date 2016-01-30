@@ -65,9 +65,9 @@ def initialize_global_variables():
 
 
 @client.async_event
-def on_ready():
+async def on_ready():
    initialize_global_variables()
-   client.set_game_status(INITIAL_GAME_STATUS)
+   await client.set_game_status(INITIAL_GAME_STATUS)
    print("")
    print("LOGIN_DETAILS_FILENAME = '{}'".format(LOGIN_DETAILS_FILENAME))
    print("MESSAGE_MAX_LEN = '{}'".format(MESSAGE_MAX_LEN))
@@ -84,13 +84,13 @@ def on_ready():
 
    
 @client.async_event
-def on_message(msg):
+async def on_message(msg):
    global bot_mention
 
    if msg.author == client.user:
       return # never process own messages.
 
-   mentionNotifyModule.on_message(msg)
+   await mentionNotifyModule.on_message(msg)
    mentionSummaryModule.on_message(msg)
 
    try:
@@ -103,40 +103,41 @@ def on_message(msg):
             print("msg rcv (UNKNOWN DISPLAY ERROR)")
 
          if text.startswith("/"): 
-            cmd1(text[1:].strip(), msg, no_default=True)
+            await cmd1(text[1:].strip(), msg, no_default=True)
+
 
          elif left == "$mb":
-            cmd1_mentions(right, msg, no_default=False)
+            await cmd1_mentions(right, msg, no_default=False)
 
          # EASTER EGG REPLY.
          elif (left == "$blame") and (bot_mention in text):
-            client.send_msg(msg, "no fk u")
+            await client.send_msg(msg, "no fk u")
 
          elif (bot_mention in text or text == client.user.name + " pls"):
             mentionSummaryModule.process_cmd("", msg, add_extra_help=True)
          
          # EASTER EGG REPLY
          elif msg.content.startswith("$blame " + botowner_mention) or msg.content.startswith("$blame " + botowner.name):
-            client.send_msg(msg, "he didnt do shit m8")
+            await client.send_msg(msg, "he didnt do shit m8")
 
       else:
-         client.send_msg(msg, "sry m8 im not programmed to do anything fancy with pms yet")
+         await client.send_msg(msg, "sry m8 im not programmed to do anything fancy with pms yet")
          print("private msg rcv from" + msg.author.name + ": " + text)
    
    except errors.UnknownCommandError:
       print("Caught UnknownCommandError.")
-      client.send_msg(msg, "sry m8 idk what ur asking") # intentional typos. pls don't lynch me.
+      await client.send_msg(msg, "sry m8 idk what ur asking") # intentional typos. pls don't lynch me.
    except errors.InvalidCommandArgumentsError:
       print("Caught InvalidCommandArgumentsError.")
-      client.send_msg(msg, "soz m8 one or more (or 8) arguments are invalid")
+      await client.send_msg(msg, "soz m8 one or more (or 8) arguments are invalid")
    except errors.CommandPrivilegeError:
       print("Caught CommandPrivilegeError.")
-      client.send_msg(msg, "im afraid im not allowed to do that for you m8")
+      await client.send_msg(msg, "im afraid im not allowed to do that for you m8")
    
    return
 
 
-def cmd1(substr, msg, no_default=False):
+async def cmd1(substr, msg, no_default=False):
    substr = substr.strip()
    if substr == "" and not no_default:
       mentionSummaryModule.process_cmd("", msg, add_extra_help=False)
@@ -153,13 +154,13 @@ def cmd1(substr, msg, no_default=False):
          if buf == None:
             raise errors.UnknownCommandError
          else:
-            client.send_msg(msg, buf)
+            await client.send_msg(msg, buf)
 
       elif (left == "mentions") or (left == "mb") or (left == "mentionbot"):
          cmd1_mentions(right, msg)
 
       elif left == "avatar":
-         cmd1_avatar(right, msg)
+         await cmd1_avatar(right, msg)
 
       elif (left == "randomcolour") or (left == "randomcolor"):
          # TODO: THIS IS TEMPORARY!!!
@@ -168,22 +169,27 @@ def cmd1(substr, msg, no_default=False):
          rand = rand.zfill(6)
          buf = "{}, your random colour is {} (decimal: {})".format(msg.author.name, rand, rand_int)
          buf += "\nhttp://www.colorhexa.com/{}.png".format(rand)
-         client.send_msg(msg, buf)
+         await client.send_msg(msg, buf)
 
       elif left == "source":
-         client.send_msg(msg, "idk, ask sim.")
+         await client.send_msg(msg, "idk, ask sim.")
 
       elif left == "rip":
-         client.send_msg(msg, "doesnt even deserve a funeral")
+         await client.send_msg(msg, "doesnt even deserve a funeral")
 
       elif left == "status":
          buf = "**Status:**"
          buf += "\nBot current uptime: {}. ".format(utils.seconds_to_string(get_bot_uptime()))
          buf += "\nNotification system enabled = " + str(mentionNotifyModule.is_enabled())
-         client.send_msg(msg, buf)
+         await client.send_msg(msg, buf)
 
       elif (left == "admin") or (left == "a"):
-         cmd_admin(right, msg)
+         await cmd_admin(right, msg)
+
+      # USED FOR DEBUGGING
+      elif left == "test":
+         buf = "I hear ya " + msg.author.name + "!"
+         await client.send_msg(msg, buf)
       
       # else:
       #    raise CommandArgumentsError
@@ -191,7 +197,7 @@ def cmd1(substr, msg, no_default=False):
    return
 
 
-def cmd1_mentions(substr, msg, no_default=False):
+async def cmd1_mentions(substr, msg, no_default=False):
    substr = substr.strip()
    if substr == "" and not no_default:
       mentionSummaryModule.process_cmd("", msg, add_extra_help=False)
@@ -205,32 +211,32 @@ def cmd1_mentions(substr, msg, no_default=False):
          mentionSearchModule.process_cmd(right, msg)
 
       elif (left == "notify") or (left == "n"):
-         mentionNotifyModule.process_cmd(right, msg)
+         await mentionNotifyModule.process_cmd(right, msg)
       
       else:
          raise errors.UnknownCommandError
    return
 
 
-def cmd1_avatar(substr, msg):
+async def cmd1_avatar(substr, msg):
    (left, right) = utils.separate_left_word(substr)
    user = None
    if len(left) > 0:
       user = client.search_for_user(left, enablenamesearch=True, serverrestriction=msg.server)
       if user is None:
-         return client.send_msg(msg, left + " doesn't even exist m8")
+         return await client.send_msg(msg, left + " doesn't even exist m8")
    else:
       user = msg.author
 
    # Guaranteed to have a user.
    avatar = user.avatar_url()
    if avatar == "":
-      return client.send_msg(msg, left + " m8 get an avatar")
+      return await client.send_msg(msg, left + " m8 get an avatar")
    else:
-      return client.send_msg(msg, avatar)
+      return await client.send_msg(msg, avatar)
 
 
-def cmd_admin(substr, msg):
+async def cmd_admin(substr, msg):
    if not is_privileged_user(msg.author.id):
       raise errors.CommandPrivilegeError
 
@@ -241,10 +247,10 @@ def cmd_admin(substr, msg):
       (left1, right1) = utils.separate_left_word(substr)
 
       if left1 == "say":
-         client.send_msg(msg, right1)
+         await client.send_msg(msg, right1)
 
       elif left1 == "iam":
-         cmd_admin_iam(right1, msg)
+         await cmd_admin_iam(right1, msg)
 
       elif left1 == "toggle":
          (left2, right2) = utils.separate_left_word(right1)
@@ -255,37 +261,37 @@ def cmd_admin(substr, msg):
                   mentionNotifyModule.disable()
                else:
                   mentionNotifyModule.enable()
-               client.send_msg(msg, "Notification system enabled = " + str(mentionNotifyModule.is_enabled()))
+               await client.send_msg(msg, "Notification system enabled = " + str(mentionNotifyModule.is_enabled()))
             else:
                raise errors.UnknownCommandError
          else:
             raise errors.UnknownCommandError
 
       elif left1 == "gettime":
-         client.send_msg(msg, datetime.datetime.utcnow().strftime("My current system time: %c UTC"))
+         await client.send_msg(msg, datetime.datetime.utcnow().strftime("My current system time: %c UTC"))
 
       elif left1 == "setgame":
-         client.set_game_status(right1)
-         client.send_msg(msg, "Game set to: " + right1)
+         await client.set_game_status(right1)
+         await client.send_msg(msg, "Game set to: " + right1)
 
       elif left1 == "setusername":
-         client.edit_profile(password, username=right1)
+         await client.edit_profile(password, username=right1)
          bot_name = right1 # TODO: Consider making this a function. Or stop using bot_name...
-         client.send_msg(msg, "Username set to: " + right1)
+         await client.send_msg(msg, "Username set to: " + right1)
 
       elif left1 == "getemail":
-         client.send_msg(msg, "My email is: " + email)
+         await client.send_msg(msg, "My email is: " + email)
 
       elif left1 == "joinserver":
          try:
-            client.accept_invite(right1)
-            client.send_msg(msg, "Successfully joined a new server.")
+            await client.accept_invite(right1)
+            await client.send_msg(msg, "Successfully joined a new server.")
          except discord.InvalidArgument:
-            client.send_msg(msg, "Failed to join a new server.")
+            await client.send_msg(msg, "Failed to join a new server.")
 
       elif left1 == "leaveserver":
-         client.send_msg(msg, "Bye!")
-         client.leave_server(msg.channel.server)
+         await client.send_msg(msg, "Bye!")
+         await client.leave_server(msg.channel.server)
 
       elif left1 == "throwexception":
          raise Exception
@@ -295,7 +301,7 @@ def cmd_admin(substr, msg):
    return
 
 
-def cmd_admin_iam(substr, msg):
+async def cmd_admin_iam(substr, msg):
    substr = substr.strip()
    (left, right) = utils.separate_left_word(substr)
    
@@ -304,10 +310,10 @@ def cmd_admin_iam(substr, msg):
       replacement_msg = copy.deepcopy(msg)
       replacement_msg.author = client.search_for_user(user_to_pose_as)
       if replacement_msg.author == None:
-         return client.send_msg(msg, "Unknown user.")
+         return await client.send_msg(msg, "Unknown user.")
       replacement_msg.content = right
-      client.send_msg(msg, "Executing command as {}: {}".format(replacement_msg.author, replacement_msg.content))
-      client.send_msg(msg, "**WARNING: There are no guarantees of the safety of this operation.**")
+      await client.send_msg(msg, "Executing command as {}: {}".format(replacement_msg.author, replacement_msg.content))
+      await client.send_msg(msg, "**WARNING: There are no guarantees of the safety of this operation.**")
       on_message(replacement_msg)
    return
 

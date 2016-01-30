@@ -1,4 +1,4 @@
-
+import asyncio
 import re
 
 import discord
@@ -58,9 +58,9 @@ class ClientExtended(discord.Client):
    #                                If it's a valid server, the search is done on only that server.
    def search_for_channel(self, text, enablenamesearch=False, serverrestriction=None): # Type: Channel
       if self._re_chmentionstr.fullmatch(text):
-         searchkey = lambda channel : channel.id == str(text[2:-1])
+         return get_channel(text[2:-1])
       elif self._re_alldigits.fullmatch(text):
-         searchkey = lambda channel : channel.id == str(text)
+         return get_channel(text)
       elif enablenamesearch:
          searchkey = lambda channel : channel.name == str(text)
       else:
@@ -79,18 +79,18 @@ class ClientExtended(discord.Client):
 
 
    # Sets game status. Clears it if None is passed.
-   def set_game_status(self, text):
+   async def set_game_status(self, text):
       if text is None:
-         self.change_status(game=None)
+         await self.change_status(game=None)
       else:
-         self.change_status(discord.Game(name=text))
+         await self.change_status(discord.Game(name=text))
       return
 
 
    # Send a message to a channel specified by a Channel, PrivateChannel, Server, or Message object.
    # TODO: Consider renaming this. It's kinda awkward to have both send_msg() and send_message().
    # TODO: self.send_message has other optional parameters. Pls include them somehow...
-   def send_msg(self, destination, text):
+   async def send_msg(self, destination, text):
       text = str(text)
       if len(text) > 2000:
          text_to_append = "\nSorry m8, can't send more than " + str(MESSAGE_MAX_LEN) + " characters."
@@ -101,7 +101,8 @@ class ClientExtended(discord.Client):
          destination = destination.channel
 
       print("SENDING MESSAGE...")
-      return self.send_message(destination, text)
+      await self.send_message(destination, text)
+      return
 
 
 
