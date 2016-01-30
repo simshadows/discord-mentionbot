@@ -89,7 +89,7 @@ async def on_message(msg):
       return # never process own messages.
 
    await mentionNotifyModule.on_message(msg)
-   mentionSummaryModule.on_message(msg)
+   await mentionSummaryModule.on_message(msg)
 
    try:
       text = msg.content.strip()
@@ -112,7 +112,7 @@ async def on_message(msg):
             await client.send_msg(msg, "no fk u")
 
          elif (bot_mention in text or text == client.user.name + " pls"):
-            mentionSummaryModule.process_cmd("", msg, add_extra_help=True)
+            await mentionSummaryModule.process_cmd("", msg, add_extra_help=True)
          
          # EASTER EGG REPLY
          elif msg.content.startswith("$blame " + botowner_mention) or msg.content.startswith("$blame " + botowner.name):
@@ -138,7 +138,7 @@ async def on_message(msg):
 async def cmd1(substr, msg, no_default=False):
    substr = substr.strip()
    if substr == "" and not no_default:
-      mentionSummaryModule.process_cmd("", msg, add_extra_help=False)
+      await mentionSummaryModule.process_cmd("", msg, add_extra_help=False)
    else:
       (left, right) = utils.separate_left_word(substr)
 
@@ -198,12 +198,12 @@ async def cmd1(substr, msg, no_default=False):
 async def cmd1_mentions(substr, msg, no_default=False):
    substr = substr.strip()
    if substr == "" and not no_default:
-      mentionSummaryModule.process_cmd("", msg, add_extra_help=False)
+      await mentionSummaryModule.process_cmd("", msg, add_extra_help=False)
    else:
       (left, right) = utils.separate_left_word(substr)
 
       if left == "summary":
-         mentionSummaryModule.process_cmd(right, msg)
+         await mentionSummaryModule.process_cmd(right, msg)
 
       elif (left == "search") or (left == "s"):
          await mentionSearchModule.process_cmd(right, msg)
@@ -226,8 +226,11 @@ async def cmd1_avatar(substr, msg):
    else:
       user = msg.author
 
+   print("OMG! " + user.__class__.__name__)
+   print("OMFG! " + user.avatar_url)
+
    # Guaranteed to have a user.
-   avatar = user.avatar_url()
+   avatar = user.avatar_url
    if avatar == "":
       return await client.send_msg(msg, left + " m8 get an avatar")
    else:
@@ -312,7 +315,7 @@ async def cmd_admin_iam(substr, msg):
       replacement_msg.content = right
       await client.send_msg(msg, "Executing command as {}: {}".format(replacement_msg.author, replacement_msg.content))
       await client.send_msg(msg, "**WARNING: There are no guarantees of the safety of this operation.**")
-      on_message(replacement_msg)
+      await on_message(replacement_msg)
    return
 
 

@@ -1,4 +1,4 @@
-
+import asyncio
 import datetime
 
 import discord
@@ -18,12 +18,12 @@ class MentionSummaryModule:
       return
 
    # Call this every time a message is received.
-   def on_message(self, msg):
+   async def on_message(self, msg):
       self._add_message(msg)
       return
 
    # Call this to process a command.
-   def process_cmd(self, substr, msg, add_extra_help=False):
+   async def process_cmd(self, substr, msg, add_extra_help=False):
       send_as_pm = False
       preserve_data = False
       verbose = False
@@ -56,10 +56,10 @@ class MentionSummaryModule:
             buf += " (`/help` for more commands.)"
       
       if send_as_pm:
-         self._client.send_msg(msg.author, buf)
-         self._client.send_msg(msg, "List of mentions sent via PM.")
+         await self._client.send_msg(msg.author, buf)
+         await self._client.send_msg(msg, "List of mentions sent via PM.")
       else:
-         self._client.send_msg(msg, buf)
+         await self._client.send_msg(msg, buf)
       return
 
    # Adds a message to the collection (and removes redundant data).
