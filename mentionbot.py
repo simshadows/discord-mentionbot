@@ -4,14 +4,14 @@ import copy
 import time
 import re
 import os
-import random
 
 import discord # pip install git+https://github.com/Rapptz/discord.py@async
 
 import utils
 import errors
-
 import clientextended
+
+import serverbotinstance
 import mentions.notify
 import mentions.search
 import mentions.summary
@@ -21,37 +21,21 @@ LOGIN_DETAILS_FILENAME = "login_details" # This file is used to login. Only cont
 BOTOWNER_ID = str(119384097473822727) # User ID of the owner of this bot
 INITIAL_GAME_STATUS = "hello thar"
 
-INITIAL_GLOBALENABLED_MENTIONS_NOTIFY = False
-
 client = clientextended.ClientExtended()
 
 def initialize_global_variables():
 
-   global re_alldigits
-   global re_mentionstr
-   global re_chmentionstr
-   re_alldigits = re.compile("\d+")
-   re_mentionstr = re.compile("<@\d+>")
-   re_chmentionstr = re.compile("<#\d+>")
-
-   # Global enabled/disabled
-   global globalenabled_mentions_notify
-   globalenabled_mentions_notify = INITIAL_GLOBALENABLED_MENTIONS_NOTIFY
+   global server_bot_instances
+   server_bot_instances = {}
+   for server in client.servers:
+      server_bot_instances[server] = serverbotinstance.ServerBotInstance(client, server)
 
    # The others
-   global mentionNotifyModule
-   global mentionSearchModule
-   global mentionSummaryModule
-   global help_messages
    global bot_mention
    global bot_name
    global botowner_mention
    global botowner
-   global initialization_timestamp
-   mentionNotifyModule = mentions.notify.MentionNotifyModule(client, enabled=INITIAL_GLOBALENABLED_MENTIONS_NOTIFY)
-   mentionSearchModule = mentions.search.MentionSearchModule(client)
-   mentionSummaryModule = mentions.summary.MentionSummaryModule(client)
-   help_messages = helpmessages.helpmessages.HelpMessages()
+   global initialization_timestamp   
    bot_mention = "<@{}>".format(client.user.id)
    bot_name = client.user.name
    botowner_mention = "<@{}>".format(BOTOWNER_ID)
@@ -69,10 +53,7 @@ async def on_ready():
    await client.set_game_status(INITIAL_GAME_STATUS)
    print("")
    print("LOGIN_DETAILS_FILENAME = '{}'".format(LOGIN_DETAILS_FILENAME))
-   print("BOTOWNER_ID = '{}'".format(BOTOWNER_ID))
    print("INITIAL_GAME_STATUS = '{}'".format(INITIAL_GAME_STATUS))
-   print("")
-   print("INITIAL_GLOBALENABLED_MENTIONS_NOTIFY = '{}'".format(INITIAL_GLOBALENABLED_MENTIONS_NOTIFY))
    print("")
    print("Bot owner: " + botowner.name)
    print("Bot name: " + bot_name)
@@ -88,8 +69,8 @@ async def on_message(msg):
    if msg.author == client.user:
       return # never process own messages.
 
-   await mentionNotifyModule.on_message(msg)
-   await mentionSummaryModule.on_message(msg)
+   for (server, server_bot_instance) in server_bot_instances.items():
+      server_bot_instance.on_message(msg)
 
    try:
       text = msg.content.strip()
@@ -100,19 +81,20 @@ async def on_message(msg):
          except Exception:
             print("msg rcv (UNKNOWN DISPLAY ERROR)")
 
-         if text.startswith("/"): 
-            await cmd1(text[1:].strip(), msg, no_default=True)
-
+         if text.startswith("/"):
+            await server_bot_instances[msg.server].process_cmd(text[1:].strip(), msg, no_default=True)
 
          elif left == "$mb":
-            await cmd1_mentions(right, msg, no_default=False)
+            # TODO: Make a better way of calling.
+            await server_bot_instances[msg.server]._cmd1_mentions(right, msg, no_default=False)
 
          # EASTER EGG REPLY.
          elif (left == "$blame") and (bot_mention in text):
             await client.send_msg(msg, "no fk u")
 
          elif (bot_mention in text or text == client.user.name + " pls"):
-            await mentionSummaryModule.process_cmd("", msg, add_extra_help=True)
+            # TODO: Make a better way of calling.
+            await server_bot_instances[msg.server]._mbSummaryModule.process_cmd("", msg, add_extra_help=True)
          
          # EASTER EGG REPLY
          elif msg.content.startswith("$blame " + botowner_mention) or msg.content.startswith("$blame " + botowner.name):
@@ -132,216 +114,7 @@ async def on_message(msg):
       print("Caught CommandPrivilegeError.")
       await client.send_msg(msg, "im afraid im not allowed to do that for you m8")
    
-   return
-
-
-async def cmd1(substr, msg, no_default=False):
-   substr = substr.strip()
-   if substr == "" and not no_default:
-      await mentionSummaryModule.process_cmd("", msg, add_extra_help=False)
-   else:
-      (left, right) = utils.separate_left_word(substr)
-
-      if left == "help":
-         global help_messages
-         if is_privileged_user(msg.author.id):
-            privilege_level = 1
-         else:
-            privilege_level = 0
-         buf = help_messages.get_message(right, privilegelevel=privilege_level)
-         if buf == None:
-            raise errors.UnknownCommandError
-         else:
-            await client.send_msg(msg, buf)
-
-      elif (left == "mentions") or (left == "mb") or (left == "mentionbot"):
-         await cmd1_mentions(right, msg)
-
-      elif left == "avatar":
-         await cmd1_avatar(right, msg)
-
-      elif (left == "randomcolour") or (left == "randomcolor"):
-         # TODO: THIS IS TEMPORARY!!!
-         rand_int = random.randint(0,(16**6)-1)
-         rand = hex(rand_int)[2:] # Convert to hex
-         rand = rand.zfill(6)
-         buf = "{}, your random colour is {} (decimal: {})".format(msg.author.name, rand, rand_int)
-         buf += "\nhttp://www.colorhexa.com/{}.png".format(rand)
-         await client.send_msg(msg, buf)
-
-      elif left == "source":
-         await client.send_msg(msg, "idk, ask sim.")
-
-      elif left == "rip":
-         await client.send_msg(msg, "doesnt even deserve a funeral")
-
-      elif left == "status":
-         buf = "**Status:**"
-         buf += "\nBot current uptime: {}. ".format(utils.seconds_to_string(get_bot_uptime()))
-         buf += "\nNotification system enabled = " + str(mentionNotifyModule.is_enabled())
-         await client.send_msg(msg, buf)
-
-      elif (left == "admin") or (left == "a"):
-         await cmd_admin(right, msg)
-
-      # USED FOR DEBUGGING
-      elif left == "test":
-         buf = "I hear ya " + msg.author.name + "!"
-         await client.send_msg(msg, buf)
-      
-      # else:
-      #    raise CommandArgumentsError
-   
-   return
-
-
-async def cmd1_mentions(substr, msg, no_default=False):
-   substr = substr.strip()
-   if substr == "" and not no_default:
-      await mentionSummaryModule.process_cmd("", msg, add_extra_help=False)
-   else:
-      (left, right) = utils.separate_left_word(substr)
-
-      if left == "summary":
-         await mentionSummaryModule.process_cmd(right, msg)
-
-      elif (left == "search") or (left == "s"):
-         await mentionSearchModule.process_cmd(right, msg)
-
-      elif (left == "notify") or (left == "n"):
-         await mentionNotifyModule.process_cmd(right, msg)
-      
-      else:
-         raise errors.UnknownCommandError
-   return
-
-
-async def cmd1_avatar(substr, msg):
-   (left, right) = utils.separate_left_word(substr)
-   user = None
-   if len(left) > 0:
-      user = client.search_for_user(left, enablenamesearch=True, serverrestriction=msg.server)
-      if user is None:
-         return await client.send_msg(msg, left + " doesn't even exist m8")
-   else:
-      user = msg.author
-
-   print("OMG! " + user.__class__.__name__)
-   print("OMFG! " + user.avatar_url)
-
-   # Guaranteed to have a user.
-   avatar = user.avatar_url
-   if avatar == "":
-      return await client.send_msg(msg, left + " m8 get an avatar")
-   else:
-      return await client.send_msg(msg, avatar)
-
-
-async def cmd_admin(substr, msg):
-   if not is_privileged_user(msg.author.id):
-      raise errors.CommandPrivilegeError
-
-   substr = substr.strip()
-   if substr == "" and not no_default:
-      raise errors.UnknownCommandError
-   else:
-      (left1, right1) = utils.separate_left_word(substr)
-
-      if left1 == "say":
-         await client.send_msg(msg, right1)
-
-      elif left1 == "iam":
-         await cmd_admin_iam(right1, msg)
-
-      elif left1 == "toggle":
-         (left2, right2) = utils.separate_left_word(right1)
-         if (left2 == "mentions") or (left2 == "mb") or (left2 == "mentionbot"):
-            (left3, right3) = utils.separate_left_word(right2)
-            if (left3 == "notify") or (left3 == "n"):
-               if mentionNotifyModule.is_enabled():
-                  mentionNotifyModule.disable()
-               else:
-                  mentionNotifyModule.enable()
-               await client.send_msg(msg, "Notification system enabled = " + str(mentionNotifyModule.is_enabled()))
-            else:
-               raise errors.UnknownCommandError
-         else:
-            raise errors.UnknownCommandError
-
-      elif left1 == "gettime":
-         await client.send_msg(msg, datetime.datetime.utcnow().strftime("My current system time: %c UTC"))
-
-      elif left1 == "setgame":
-         await client.set_game_status(right1)
-         await client.send_msg(msg, "Game set to: " + right1)
-
-      elif left1 == "setusername":
-         await client.edit_profile(password, username=right1)
-         bot_name = right1 # TODO: Consider making this a function. Or stop using bot_name...
-         await client.send_msg(msg, "Username set to: " + right1)
-
-      elif left1 == "getemail":
-         await client.send_msg(msg, "My email is: " + email)
-
-      elif left1 == "joinserver":
-         try:
-            await client.accept_invite(right1)
-            await client.send_msg(msg, "Successfully joined a new server.")
-         except discord.InvalidArgument:
-            await client.send_msg(msg, "Failed to join a new server.")
-
-      elif left1 == "leaveserver":
-         await client.send_msg(msg, "Bye!")
-         await client.leave_server(msg.channel.server)
-
-      elif left1 == "throwexception":
-         raise Exception
-      
-      else:
-         raise errors.UnknownCommandError
-   return
-
-
-async def cmd_admin_iam(substr, msg):
-   substr = substr.strip()
-   (left, right) = utils.separate_left_word(substr)
-   
-   if re_mentionstr.fullmatch(left):
-      user_to_pose_as = left[2:-1]
-      replacement_msg = copy.deepcopy(msg)
-      replacement_msg.author = client.search_for_user(user_to_pose_as)
-      if replacement_msg.author == None:
-         return await client.send_msg(msg, "Unknown user.")
-      replacement_msg.content = right
-      await client.send_msg(msg, "Executing command as {}: {}".format(replacement_msg.author, replacement_msg.content))
-      await client.send_msg(msg, "**WARNING: There are no guarantees of the safety of this operation.**")
-      await on_message(replacement_msg)
-   return
-
-
-def is_privileged_user(user_ID):
-   return user_ID == BOTOWNER_ID
-
-
-# RETURNS: Bot's current uptime in seconds
-def get_bot_uptime():
-   timediff = datetime.datetime.utcnow() - initialization_timestamp
-   return timediff.seconds
-
-
-def msg_list_to_string(mentions, verbose=False): # TYPE: String
-   now = datetime.datetime.utcnow()
-   buf = "" # FORMAT: String
-   for i in mentions:
-      timediff = now - i.timestamp
-      if verbose:
-         buf += "Message ID: " + i.id + "\n"
-         # buf += "Timestamp: " + i.timestamp.strftime("%c UTC") + "\n" # Unnecessary
-      buf += "By " + i.author.name + " in " + "<#{}>".format(i.channel.id) + ", " + utils.seconds_to_string(timediff.seconds) + " ago\n"
-      buf += i.content + "\n\n"
-   if buf != "":
-      buf = buf[:-2]
-   return buf
+   return 
 
 
 # Log in to discord
