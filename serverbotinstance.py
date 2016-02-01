@@ -15,12 +15,11 @@ import mentions.search
 import mentions.summary
 import helpmessages.helpmessages
 
-# THE FOLLOWING CONSTANTS ARE COPIED FROM mentionbot.py. TODO: FIX THIS.
-BOTOWNER_ID = str(119384097473822727) # User ID of the owner of this bot
+# IMPORTANT: client is a MentionBot instance!!!
+
 INITIAL_GLOBALENABLED_MENTIONS_NOTIFY = False
 
 # ServerBotInstance manages everything to do with a particular server.
-# For example, a ser
 class ServerBotInstance:
    def __init__(self, client, server):
       self._re_mentionstr = re.compile("<@\d+>")
@@ -36,11 +35,6 @@ class ServerBotInstance:
       self._mbNotifyModule = mentions.notify.MentionNotifyModule(client, enabled=INITIAL_GLOBALENABLED_MENTIONS_NOTIFY)
       self._mbSearchModule = mentions.search.MentionSearchModule(client)
       self._mbSummaryModule = mentions.summary.MentionSummaryModule(client)
-
-      # TODO: Make mentionbot a class instead of doubly initializing these.
-      self._bot_mention = "<@{}>".format(client.user.id) 
-      self._botowner_mention = "<@{}>".format(BOTOWNER_ID)
-      self._botowner = client.search_for_user(BOTOWNER_ID)
       return
 
 
@@ -58,14 +52,14 @@ class ServerBotInstance:
          await self._cmd1_mentions(right, msg, no_default=False)
 
       # EASTER EGG REPLY.
-      elif (left == "$blame") and (self._bot_mention in substr):
+      elif (left == "$blame") and (self._client.bot_mention in substr):
          await self._client.send_msg(msg, "no fk u")
 
-      elif (self._bot_mention in substr or substr == self._client.user.name + " pls"):
+      elif (self._client.bot_mention in substr or substr == self._client.user.name + " pls"):
          await self._mbSummaryModule.process_cmd("", msg, add_extra_help=True)
       
       # EASTER EGG REPLY
-      elif msg.content.startswith("$blame " + self._botowner_mention) or msg.content.startswith("$blame " + self._botowner.name):
+      elif msg.content.startswith("$blame " + self._client.botowner_mention) or msg.content.startswith("$blame " + self._client.botowner.name):
          await self._client.send_msg(msg, "he didnt do shit m8")
       
       return 
@@ -227,6 +221,9 @@ class ServerBotInstance:
 
          elif left1 == "throwexception":
             raise Exception
+
+         elif left1 == "throwexception2":
+            await self._client.send_message(msg, "A" * 2001)
          
          else:
             raise errors.UnknownCommandError
@@ -258,7 +255,7 @@ class ServerBotInstance:
 
    # TODO: This method will need to be changed in the future.
    def _is_privileged_user(self, user_ID):
-      return user_ID == BOTOWNER_ID
+      return user_ID == self._client.BOTOWNER_ID
 
 
 # def msg_list_to_string(mentions, verbose=False): # TYPE: String
