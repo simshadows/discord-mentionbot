@@ -6,10 +6,12 @@ import discord
 import utils
 import errors
 
+import servermodules.servermodule as servermodule
+
 # TODO: Replace with better data structure, or integrate it into MentionLogger.
 #       This version is just horribly inefficient linear searching,
 #       , and operates on messages directly.
-class MentionSummaryModule:
+class MentionSummaryModule(servermodule.ServerModule):
    
    def __init__(self, client):
       self._client = client

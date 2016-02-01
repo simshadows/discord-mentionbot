@@ -7,7 +7,9 @@ import discord
 import utils
 import errors
 
-class MentionSearchModule:
+import servermodules.servermodule as servermodule
+
+class MentionSearchModule(servermodule.ServerModule):
    def __init__(self, client):
       self.re_option_ch = re.compile("ch=[\w\W]+") # e.g. "ch=<#124672134>"
       self.re_option_m = re.compile("m=\d+") # e.g. "m=100"

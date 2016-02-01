@@ -13,9 +13,6 @@ import errors
 import clientextended
 
 import serverbotinstance
-import mentions.notify
-import mentions.search
-import mentions.summary
 import helpmessages.helpmessages
 
 LOGIN_DETAILS_FILENAME = "login_details" # This file is used to login. Only contains two lines. Line 1 is email, line 2 is password.
@@ -116,8 +113,8 @@ password = login_file.readline().strip()
 login_file.close()
 print("Email: " + email)
 print("Password: " + len(password) * "*")
-print("Logging in...", end="")
+print("Logging in...") # print("Logging in...", end="")
 
 client.run(email, password)
-print(" success.")
+
 

@@ -10,9 +10,9 @@ import utils
 import errors
 import clientextended
 
-import mentions.notify
-import mentions.search
-import mentions.summary
+import servermodules.mentions.notify
+import servermodules.mentions.search
+import servermodules.mentions.summary
 import helpmessages.helpmessages
 
 # IMPORTANT: client is a MentionBot instance!!!
@@ -32,9 +32,9 @@ class ServerBotInstance:
 
       self._help_messages = helpmessages.helpmessages.HelpMessages()
 
-      self._mbNotifyModule = mentions.notify.MentionNotifyModule(client, enabled=INITIAL_GLOBALENABLED_MENTIONS_NOTIFY)
-      self._mbSearchModule = mentions.search.MentionSearchModule(client)
-      self._mbSummaryModule = mentions.summary.MentionSummaryModule(client)
+      self._mbNotifyModule = servermodules.mentions.notify.MentionNotifyModule(client, enabled=INITIAL_GLOBALENABLED_MENTIONS_NOTIFY)
+      self._mbSearchModule = servermodules.mentions.search.MentionSearchModule(client)
+      self._mbSummaryModule = servermodules.mentions.summary.MentionSummaryModule(client)
       return
 
 
@@ -89,7 +89,6 @@ class ServerBotInstance:
             await self._cmd1_avatar(right, msg)
 
          elif (left == "randomcolour") or (left == "randomcolor"):
-            # TODO: THIS IS TEMPORARY!!!
             rand_int = random.randint(0,(16**6)-1)
             rand = hex(rand_int)[2:] # Convert to hex
             rand = rand.zfill(6)

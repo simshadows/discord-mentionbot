@@ -2,9 +2,9 @@ import asyncio
 
 import discord
 
-import clientextended
+import servermodules.servermodule as servermodule
 
-class MentionNotifyModule:
+class MentionNotifyModule(servermodule.ServerModule):
 
    # PARAMETER: enabled - If false, the module is disabled.
    def __init__(self, client, enabled=True):
