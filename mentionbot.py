@@ -21,88 +21,57 @@ LOGIN_DETAILS_FILENAME = "login_details" # This file is used to login. Only cont
 BOTOWNER_ID = str(119384097473822727) # User ID of the owner of this bot
 INITIAL_GAME_STATUS = "hello thar"
 
+print("LOGIN_DETAILS_FILENAME = '{}'".format(LOGIN_DETAILS_FILENAME))
+print("INITIAL_GAME_STATUS = '{}'".format(INITIAL_GAME_STATUS))
+
 client = clientextended.ClientExtended()
 
-def initialize_global_variables():
 
-   global server_bot_instances
-   server_bot_instances = {}
+@client.async_event
+async def on_ready():
+   global bot_instances
+   bot_instances = {}
    for server in client.servers:
-      server_bot_instances[server] = serverbotinstance.ServerBotInstance(client, server)
+      bot_instances[server] = serverbotinstance.ServerBotInstance(client, server)
 
    # The others
    global bot_mention
    global bot_name
    global botowner_mention
    global botowner
-   global initialization_timestamp   
+   global initialization_timestamp
    bot_mention = "<@{}>".format(client.user.id)
    bot_name = client.user.name
    botowner_mention = "<@{}>".format(BOTOWNER_ID)
    botowner = client.search_for_user(BOTOWNER_ID)
    initialization_timestamp = datetime.datetime.utcnow()
-   
-   return
 
-###########################################################################################
-
-
-@client.async_event
-async def on_ready():
-   initialize_global_variables()
    await client.set_game_status(INITIAL_GAME_STATUS)
-   print("")
-   print("LOGIN_DETAILS_FILENAME = '{}'".format(LOGIN_DETAILS_FILENAME))
-   print("INITIAL_GAME_STATUS = '{}'".format(INITIAL_GAME_STATUS))
-   print("")
    print("Bot owner: " + botowner.name)
    print("Bot name: " + bot_name)
    print("")
    print("Initialization complete.")
-   print("")
 
-   
+
 @client.async_event
 async def on_message(msg):
-   global bot_mention
-
    if msg.author == client.user:
       return # never process own messages.
 
-   for (server, server_bot_instance) in server_bot_instances.items():
-      server_bot_instance.on_message(msg)
-
    try:
       text = msg.content.strip()
-      (left, right) = utils.separate_left_word(text)
-      if msg.channel.__class__.__name__ is "Channel":
+      if isinstance(msg.channel, discord.Channel):
+         await bot_instances[msg.server].process_text(text, msg)
          try:
             print("msg rcv #" + msg.channel.name + ": " + str(text.encode("unicode_escape")))
          except Exception:
-            print("msg rcv (UNKNOWN DISPLAY ERROR)")
-
-         if text.startswith("/"):
-            await server_bot_instances[msg.server].process_cmd(text[1:].strip(), msg, no_default=True)
-
-         elif left == "$mb":
-            # TODO: Make a better way of calling.
-            await server_bot_instances[msg.server]._cmd1_mentions(right, msg, no_default=False)
-
-         # EASTER EGG REPLY.
-         elif (left == "$blame") and (bot_mention in text):
-            await client.send_msg(msg, "no fk u")
-
-         elif (bot_mention in text or text == client.user.name + " pls"):
-            # TODO: Make a better way of calling.
-            await server_bot_instances[msg.server]._mbSummaryModule.process_cmd("", msg, add_extra_help=True)
-         
-         # EASTER EGG REPLY
-         elif msg.content.startswith("$blame " + botowner_mention) or msg.content.startswith("$blame " + botowner.name):
-            await client.send_msg(msg, "he didnt do shit m8")
-
-      else:
+            print("msg rcv (CAUGHT EXCEPTION; UNKNOWN DISPLAY ERROR)")
+      else: # Assumed to be a private message.
          await client.send_msg(msg, "sry m8 im not programmed to do anything fancy with pms yet")
-         print("private msg rcv from" + msg.author.name + ": " + text)
+         try:
+            print("private msg rcv from" + msg.author.name + ": " + text)
+         except Exception:
+            print("private msg rcv (CAUGHT EXCEPTION; UNKNOWN DISPLAY ERROR)")
    
    except errors.UnknownCommandError:
       print("Caught UnknownCommandError.")

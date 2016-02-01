@@ -36,19 +36,41 @@ class ServerBotInstance:
       self._mbNotifyModule = mentions.notify.MentionNotifyModule(client, enabled=INITIAL_GLOBALENABLED_MENTIONS_NOTIFY)
       self._mbSearchModule = mentions.search.MentionSearchModule(client)
       self._mbSummaryModule = mentions.summary.MentionSummaryModule(client)
+
+      # TODO: Make mentionbot a class instead of doubly initializing these.
+      self._bot_mention = "<@{}>".format(client.user.id) 
+      self._botowner_mention = "<@{}>".format(BOTOWNER_ID)
+      self._botowner = client.search_for_user(BOTOWNER_ID)
       return
 
 
-   # Call this every time a message from the server self._server is received.
-   async def on_message(self, msg):
+   # Call this to process text (to parse for commands).
+   async def process_text(self, substr, msg):
       await self._mbNotifyModule.on_message(msg)
       await self._mbSummaryModule.on_message(msg)
-      return
 
+      (left, right) = utils.separate_left_word(substr)
 
-   # Call this to process a command.
-   # FORMERLY: cmd1()
-   async def process_cmd(self, substr, msg, no_default=False):
+      if substr.startswith("/"):
+         await self._cmd1(substr[1:].strip(), msg, no_default=True)
+
+      elif left == "$mb":
+         await self._cmd1_mentions(right, msg, no_default=False)
+
+      # EASTER EGG REPLY.
+      elif (left == "$blame") and (self._bot_mention in substr):
+         await self._client.send_msg(msg, "no fk u")
+
+      elif (self._bot_mention in substr or substr == self._client.user.name + " pls"):
+         await self._mbSummaryModule.process_cmd("", msg, add_extra_help=True)
+      
+      # EASTER EGG REPLY
+      elif msg.content.startswith("$blame " + self._botowner_mention) or msg.content.startswith("$blame " + self._botowner.name):
+         await self._client.send_msg(msg, "he didnt do shit m8")
+      
+      return 
+
+   async def _cmd1(self, substr, msg, no_default=False):
       substr = substr.strip()
       if substr == "" and not no_default:
          await self._mbSummaryModule.process_cmd("", msg, add_extra_help=False)
