@@ -10,80 +10,96 @@ import utils
 import errors
 import clientextended
 
+import servermodules.servermodule as servermodule
 import servermodules.mentions.notify
 import servermodules.mentions.search
 import servermodules.mentions.summary
-import helpmessages.helpmessages
-
-# IMPORTANT: client is a MentionBot instance!!!
-
-INITIAL_GLOBALENABLED_MENTIONS_NOTIFY = False
 
 # ServerBotInstance manages everything to do with a particular server.
+# IMPORTANT: client is a MentionBot instance!!!
 class ServerBotInstance:
-   def __init__(self, client, server):
-      self._re_mentionstr = re.compile("<@\d+>")
+   _RE_MENTIONSTR = re.compile("<@\d+>")
 
+   INIT_MENTIONS_NOTIFY_ENABLED = False
+   DEFAULT_COMMAND_PREFIX = "/"
+
+   # IMPORTANT: This needs to be parsed with ServerModule._prepare_help_content()
+   # TODO: Figure out a neater way of doing this.
+   _HELP_SUMMARY_TO_BEGIN = """
+**The following commands are available:**
+`{pf}avatar [usermention]` - Get the avatar URL of the user.
+`{pf}randomcolour`
+`{pf}source` - Where to get source code.
+`{pf}rip` - Rest in pieces.
+`{pf}status` - Get bot's current status.
+>>> PRIVILEGE LEVEL 1 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+`{pf}admin [cmd]` or `{pf}a [cmd]` - Bot admin commands. Must have permission to use.
+   """.strip().splitlines()
+
+   def __init__(self, client, server):
       self._client = client
       self._server = server
 
+      self._cmd_prefix = self.DEFAULT_COMMAND_PREFIX
       self._bot_name = self._client.user.name # TODO: Move this somewhere else.
       self._initialization_timestamp = datetime.datetime.utcnow()
 
-      self._help_messages = helpmessages.helpmessages.HelpMessages()
-
-      self._mbNotifyModule = servermodules.mentions.notify.MentionNotifyModule(client, enabled=INITIAL_GLOBALENABLED_MENTIONS_NOTIFY)
-      self._mbSearchModule = servermodules.mentions.search.MentionSearchModule(client)
-      self._mbSummaryModule = servermodules.mentions.summary.MentionSummaryModule(client)
+      # Having two collections for modules may not be the best way of doing things...
+      # Dict for convenience of calling commands,
+      # and List for convenienve in iterating through all modules.
+      self._modules_cmd_dict = {}
+      self._modules_list = [
+         servermodules.mentions.notify.MentionNotifyModule(client, enabled=self.INIT_MENTIONS_NOTIFY_ENABLED),
+         servermodules.mentions.search.MentionSearchModule(client),
+         servermodules.mentions.summary.MentionSummaryModule(client)
+      ]
+      for module in self._modules_list:
+         for command_name in module.command_names:
+            self._modules_cmd_dict[command_name] = module
       return
 
 
    # Call this to process text (to parse for commands).
    async def process_text(self, substr, msg):
-      await self._mbNotifyModule.on_message(msg)
-      await self._mbSummaryModule.on_message(msg)
+      
+      # Handle on_message requirement for all modules.
+      for module in self._modules_list:
+         await module.on_message(msg)
 
       (left, right) = utils.separate_left_word(substr)
 
-      if substr.startswith("/"):
-         await self._cmd1(substr[1:].strip(), msg, no_default=True)
-
-      elif left == "$mb":
-         await self._cmd1_mentions(right, msg, no_default=False)
+      if substr.startswith(self._cmd_prefix):
+         await self._cmd1(substr[1:].strip(), msg, self._cmd_prefix, no_default=True)
 
       # EASTER EGG REPLY.
       elif (left == "$blame") and (self._client.bot_mention in substr):
          await self._client.send_msg(msg, "no fk u")
 
-      elif (self._client.bot_mention in substr or substr == self._client.user.name + " pls"):
-         await self._mbSummaryModule.process_cmd("", msg, add_extra_help=True)
+      # TODO: Fix this later.
+      # elif (self._client.bot_mention in substr or substr == self._client.user.name + " pls"):
+      #    await self._mbSummaryModule.process_cmd("", msg, add_extra_help=True)
       
       # EASTER EGG REPLY
       elif msg.content.startswith("$blame " + self._client.botowner_mention) or msg.content.startswith("$blame " + self._client.botowner.name):
          await self._client.send_msg(msg, "he didnt do shit m8")
       
-      return 
+      return
 
-   async def _cmd1(self, substr, msg, no_default=False):
+
+   async def _cmd1(self, substr, msg, cmd_prefix, no_default=False):
       substr = substr.strip()
       if substr == "" and not no_default:
          await self._mbSummaryModule.process_cmd("", msg, add_extra_help=False)
       else:
          (left, right) = utils.separate_left_word(substr)
-
+         print(left)
          if left == "help":
-            if self._is_privileged_user(msg.author.id):
-               privilege_level = 1
-            else:
-               privilege_level = 0
-            buf = self._help_messages.get_message(right, privilegelevel=privilege_level)
-            if buf == None:
-               raise errors.UnknownCommandError
-            else:
-               await self._client.send_msg(msg, buf)
+            help_content = self._get_help_content(right, msg, cmd_prefix)
+            await self._client.send_msg(msg, help_content)
 
-         elif (left == "mentions") or (left == "mb") or (left == "mentionbot"):
-            await self._cmd1_mentions(right, msg)
+         # TODO: Make mentions a module, and notify/search/summary submodules.
+         # elif (left == "mentions") or (left == "mb") or (left == "mentionbot"):
+         #    await self._cmd1_mentions(right, msg)
 
          elif left == "avatar":
             await self._cmd1_avatar(right, msg)
@@ -108,6 +124,7 @@ class ServerBotInstance:
             buf += "\nNotification system enabled = " + str(self._mbNotifyModule.is_enabled())
             await self._client.send_msg(msg, buf)
 
+         # TODO: rework admin command help.
          elif (left == "admin") or (left == "a"):
             await self._cmd_admin(right, msg)
 
@@ -115,6 +132,19 @@ class ServerBotInstance:
          elif left == "test":
             buf = "I hear ya " + msg.author.name + "!"
             await self._client.send_msg(msg, buf)
+
+         else:
+            # Handles the new module system.
+            # TODO: Make module invocation code consistent and neater.
+            # TODO: Make _get_privilege_level() method instead of this.
+            if self._is_privileged_user(msg.author.id):
+               privilege_level = 1
+            else:
+               privilege_level = 0
+            try:
+               await self._modules_cmd_dict[left].process_cmd(right, msg, privilegelevel=privilege_level)
+            except KeyError:
+               raise errors.NoHelpContentExists
          
          # else:
          #    raise CommandArgumentsError
@@ -122,25 +152,28 @@ class ServerBotInstance:
       return
 
 
-   async def _cmd1_mentions(self, substr, msg, no_default=False):
-      substr = substr.strip()
-      if substr == "" and not no_default:
-         await self._mbSummaryModule.process_cmd("", msg, add_extra_help=False)
+   def _get_help_content(self, substr, msg, cmd_prefix):
+      # TODO: Make _get_privilege_level() method instead of this.
+      if self._is_privileged_user(msg.author.id):
+         privilege_level = 1
       else:
+         privilege_level = 0
+
+      if substr == "":
+         # This serves a summary of commands.
+         buf = servermodule.ServerModule._prepare_help_content(self._HELP_SUMMARY_TO_BEGIN, cmd_prefix, privilege_level)
+         buf += "\n"
+         for module in self._modules_list:
+            buf += module.get_help_summary(cmd_prefix, privilegelevel=privilege_level) + "\n"
+         buf = buf[:-1] # Remove extra newline.
+      else:
+         # This serves detailed help content for a module.
          (left, right) = utils.separate_left_word(substr)
-
-         if left == "summary":
-            await self._mbSummaryModule.process_cmd(right, msg)
-
-         elif (left == "search") or (left == "s"):
-            await self._mbSearchModule.process_cmd(right, msg)
-
-         elif (left == "notify") or (left == "n"):
-            await self._mbNotifyModule.process_cmd(right, msg)
-         
-         else:
-            raise errors.UnknownCommandError
-      return
+         try:
+            buf = self._modules_cmd_dict[left].get_help_detail(right, cmd_prefix, privilege_level)
+         except KeyError:
+            raise errors.NoHelpContentExists
+      return buf
 
 
    async def _cmd1_avatar(self, substr, msg):
@@ -233,7 +266,7 @@ class ServerBotInstance:
       substr = substr.strip()
       (left, right) = utils.separate_left_word(substr)
       
-      if self._re_mentionstr.fullmatch(left):
+      if self._RE_MENTIONSTR.fullmatch(left):
          user_to_pose_as = left[2:-1]
          replacement_msg = copy.deepcopy(msg)
          replacement_msg.author = self._client.search_for_user(user_to_pose_as)

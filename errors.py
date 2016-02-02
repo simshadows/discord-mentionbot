@@ -14,6 +14,10 @@ class CommandPrivilegeError(MentionbotError):
    def __init__(self):
       return
 
+class NoHelpContentExists(MentionbotError):
+   def __init__(self):
+      return
+
 
 
 

@@ -1,4 +1,0 @@
-`/mentions summary [options]` or `/mb summary` - Get summary of all latest mentions.
-option: `--privmsg` or `-p` - Send mentions via PM instead.
-option: `--preservedata` or `-k` - Cache entries will not be deleted.
-option: `--verbose` or `-v` - Include extra information.

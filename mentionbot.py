@@ -13,20 +13,18 @@ import errors
 import clientextended
 
 import serverbotinstance
-import helpmessages.helpmessages
 
 LOGIN_DETAILS_FILENAME = "login_details" # This file is used to login. Only contains two lines. Line 1 is email, line 2 is password.
 
 class MentionBot(clientextended.ClientExtended):
+   BOTOWNER_ID = str(119384097473822727) # User ID of the owner of this bot
+   INITIAL_GAME_STATUS = "hello thar"
    
    def __init__(self, **kwargs):
       super(MentionBot, self).__init__(**kwargs)
 
-      self.BOTOWNER_ID = str(119384097473822727) # User ID of the owner of this bot
-      self.INITIAL_GAME_STATUS = "hello thar"
-
-      print("BOTOWNER_ID = '{}'".format(self.BOTOWNER_ID))
-      print("INITIAL_GAME_STATUS = '{}'".format(self.INITIAL_GAME_STATUS))
+      print("BOTOWNER_ID = '{}'".format(MentionBot.BOTOWNER_ID))
+      print("INITIAL_GAME_STATUS = '{}'".format(MentionBot.INITIAL_GAME_STATUS))
 
       self.bot_mention = None
       self.bot_name = None
@@ -40,14 +38,14 @@ class MentionBot(clientextended.ClientExtended):
    async def on_ready(self):
       self.bot_mention = "<@{}>".format(self.user.id)
       self.bot_name = self.user.name
-      self.botowner_mention = "<@{}>".format(self.BOTOWNER_ID)
-      self.botowner = self.search_for_user(self.BOTOWNER_ID)
+      self.botowner_mention = "<@{}>".format(MentionBot.BOTOWNER_ID)
+      self.botowner = self.search_for_user(MentionBot.BOTOWNER_ID)
 
       self._bot_instances = {}
       for server in self.servers:
          self._bot_instances[server] = serverbotinstance.ServerBotInstance(self, server)
 
-      await self.set_game_status(self.INITIAL_GAME_STATUS)
+      await self.set_game_status(MentionBot.INITIAL_GAME_STATUS)
       print("Bot owner: " + self.botowner.name)
       print("Bot name: " + self.bot_name)
       print("")
@@ -82,6 +80,9 @@ class MentionBot(clientextended.ClientExtended):
       except errors.CommandPrivilegeError:
          print("Caught CommandPrivilegeError.")
          await self.send_msg(msg, "im afraid im not allowed to do that for you m8")
+      except errors.NoHelpContentExists:
+         print("Caught NoHelpContentExists.")
+         await self.send_msg(msg, "No help content exists.")
       except Exception as e:
          # This is only for feedback. Exception will continue to propagate.
          buf = "**EXCEPTION**"

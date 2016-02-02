@@ -10,20 +10,49 @@ import errors
 import servermodules.servermodule as servermodule
 
 class MentionSearchModule(servermodule.ServerModule):
-   def __init__(self, client):
-      self.re_option_ch = re.compile("ch=[\w\W]+") # e.g. "ch=<#124672134>"
-      self.re_option_m = re.compile("m=\d+") # e.g. "m=100"
-      self.re_option_r = re.compile("r=\d+") # e.g. "m=1000"
 
+   _RE_OPTION_CH = re.compile("ch=[\w\W]+") # e.g. "ch=<#124672134>"
+   _RE_OPTION_M = re.compile("m=\d+") # e.g. "m=100"
+   _RE_OPTION_R = re.compile("r=\d+") # e.g. "m=1000"
+
+   _HELP_SUMMARY_LINES = """
+`{pf}mentions search [options]` or `{pf}mb s [options]` - Search mentions.
+   """.strip().splitlines()
+
+   _HELP_DETAIL_LINES = """
+`{pf}mentions search [options]` or `{pf}mb s [options]` - Search mentions.
+option: `--privmsg` or `-p` - Send mentions via PM instead.
+option: `--ch=[channel]` - Channel to search (this channel by default).
+option: `--m=[num]` - Number of mentions to search for.
+option: `--r=[num]` - Number of messages to be searched through.
+option: `--verbose` or `-v` - Include extra information.
+   """.strip().splitlines()
+
+   def __init__(self, client):
       self._client = client
+      self._command_names = ["s","search"]
       return
 
+   @property
+   def command_names(self):
+      return self._command_names
+
+   @command_names.setter
+   def command_names(self, value):
+      self._command_names = value
+
+   def get_help_summary(self, cmd_prefix, privilegelevel=0):
+      return self._prepare_help_content(self._HELP_SUMMARY_LINES, cmd_prefix, privilegelevel)
+
+   def get_help_detail(self, substr, cmd_prefix, privilegelevel=0):
+      return self._prepare_help_content(self._HELP_DETAIL_LINES, cmd_prefix, privilegelevel)
+
    # Call this every time a message is received.
-   async def on_message(msg):
+   async def on_message(self, msg):
       pass
 
    # Call this to process a command.
-   async def process_cmd(self, substr, msg):
+   async def process_cmd(self, substr, msg, privilegelevel=0):
       send_as_pm = False # TYPE: Boolean
       verbose = False # TYPE: Boolean
       ch = None # TYPE: String, or None. This is a channel name, channel mention, or channel ID.
@@ -36,11 +65,11 @@ class MentionSearchModule(servermodule.ServerModule):
             send_as_pm = True
          elif (verbose == False) and ((flag == "v") or (flag == "verbose")):
             verbose = True
-         elif (ch is None) and self.re_option_ch.fullmatch(flag):
+         elif (ch is None) and self._RE_OPTION_CH.fullmatch(flag):
             ch = flag[3:]
-         elif (mentions_to_get == None) and self.re_option_m.fullmatch(flag):
+         elif (mentions_to_get == None) and self._RE_OPTION_M.fullmatch(flag):
             mentions_to_get = int(flag[2:])
-         elif (search_range == None) and self.re_option_r.fullmatch(flag):
+         elif (search_range == None) and self._RE_OPTION_R.fullmatch(flag):
             search_range = int(flag[2:])
          else: # Invalid flag!
             raise InvalidCommandArgumentsError

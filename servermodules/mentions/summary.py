@@ -10,22 +10,48 @@ import servermodules.servermodule as servermodule
 
 # TODO: Replace with better data structure, or integrate it into MentionLogger.
 #       This version is just horribly inefficient linear searching,
-#       , and operates on messages directly.
+#       and operates on messages directly.
 class MentionSummaryModule(servermodule.ServerModule):
+
+   _HELP_SUMMARY_LINES = """
+`{pf}mentions summary [options]` or `{pf}mb summary` - Get summary of all latest mentions.
+   """.strip().splitlines()
+
+   _HELP_DETAIL_LINES = """
+`{pf}mentions summary [options]` or `{pf}mb summary` - Get summary of all latest mentions.
+option: `--privmsg` or `-p` - Send mentions via PM instead.
+option: `--preservedata` or `-k` - Cache entries will not be deleted.
+option: `--verbose` or `-v` - Include extra information.
+   """.strip().splitlines()
    
    def __init__(self, client):
       self._client = client
+      self._command_names = ["summary"]
+
       self._mention_list = [] # FORMAT: list<tuple<userID, list<messageObject> >>
       self._initialization_timestamp = datetime.datetime.utcnow()
+      
       return
 
-   # Call this every time a message is received.
+   @property
+   def command_names(self):
+      return self._command_names
+
+   @command_names.setter
+   def command_names(self, value):
+      self._command_names = value
+
+   def get_help_summary(self, cmd_prefix, privilegelevel=0):
+      return self._prepare_help_content(self._HELP_SUMMARY_LINES, cmd_prefix, privilegelevel)
+
+   def get_help_detail(self, substr, cmd_prefix, privilegelevel=0):
+      return self._prepare_help_content(self._HELP_DETAIL_LINES, cmd_prefix, privilegelevel)
+
    async def on_message(self, msg):
       self._add_message(msg)
       return
 
-   # Call this to process a command.
-   async def process_cmd(self, substr, msg, add_extra_help=False):
+   async def process_cmd(self, substr, msg, privilegelevel=0, add_extra_help=False):
       send_as_pm = False
       preserve_data = False
       verbose = False
