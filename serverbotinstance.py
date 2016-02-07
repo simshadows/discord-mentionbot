@@ -49,27 +49,19 @@ class ServerBotInstance:
 
       self._privileges = privilegemanager.PrivilegeManager(self._client)
 
-      # Having two collections for modules may not be the best way of doing things...
-      # Dict for convenience of calling commands,
-      # and List for convenienve in iterating through all modules.
-      self._modules_cmd_dict = {}
-      self._modules_list = [
+      modules = [
          notify.MentionNotifyModule(notify.MentionNotifyModule.RECOMMENDED_CMD_NAMES, client, enabled=self.INIT_MENTIONS_NOTIFY_ENABLED),
          search.MentionSearchModule(search.MentionSearchModule.RECOMMENDED_CMD_NAMES, client),
          summary.MentionSummaryModule(summary.MentionSummaryModule.RECOMMENDED_CMD_NAMES, client)
       ]
-      for module in self._modules_list:
-         for cmd_name in module.cmd_names:
-            self._modules_cmd_dict[cmd_name] = module
+      self._modules = servermodulegroup.ServerModuleGroup(initial_modules=modules)
       return
 
 
    # Call this to process text (to parse for commands).
    async def process_text(self, substr, msg):
       
-      # Handle on_message requirement for all modules.
-      for module in self._modules_list:
-         await module.on_message(msg)
+      await self._modules.on_message(msg)
 
       (left, right) = utils.separate_left_word(substr)
 
@@ -94,7 +86,8 @@ class ServerBotInstance:
    async def _cmd1(self, substr, msg, cmd_prefix, no_default=False):
       substr = substr.strip()
       if substr == "" and not no_default:
-         await self._mbSummaryModule.process_cmd("", msg, add_extra_help=False)
+         raise NotImplementedError # TODO !!!
+         # await self._mbSummaryModule.process_cmd("", msg, add_extra_help=False)
       else:
          (left, right) = utils.separate_left_word(substr)
          print(left)
@@ -123,11 +116,12 @@ class ServerBotInstance:
          elif left == "rip":
             await self._client.send_msg(msg, "doesnt even deserve a funeral")
 
-         elif left == "status":
-            buf = "**Status:**"
-            buf += "\nBot current uptime: {}. ".format(utils.seconds_to_string(self.get_presence_time()))
-            buf += "\nNotification system enabled = " + str(self._mbNotifyModule.is_enabled())
-            await self._client.send_msg(msg, buf)
+         # TODO: Make this useable.
+         # elif left == "status":
+         #    buf = "**Status:**"
+         #    buf += "\nBot current uptime: {}. ".format(utils.seconds_to_string(self.get_presence_time()))
+         #    buf += "\nNotification system enabled = " + str(self._mbNotifyModule.is_enabled())
+         #    await self._client.send_msg(msg, buf)
 
          # TODO: rework admin command help.
          elif (left == "admin") or (left == "a"):
@@ -140,11 +134,7 @@ class ServerBotInstance:
 
          else:
             privilege_level = self._privileges.get_privilege_level(msg.author.id)
-            try:
-               print("PROCESSING COMMAND " + left + " " + right)
-               await self._modules_cmd_dict[left].process_cmd(right, msg, privilegelevel=privilege_level)
-            except KeyError:
-               raise errors.UnknownCommandError
+            await self._modules.process_cmd(substr, msg, privilegelevel=privilege_level)
          
          # else:
          #    raise CommandArgumentsError
@@ -155,19 +145,11 @@ class ServerBotInstance:
    def _get_help_content(self, substr, msg, cmd_prefix):
       privilege_level = self._privileges.get_privilege_level(msg.author.id)
       if substr == "":
-         # This serves a summary of commands.
-         buf = servermodule.ServerModule._prepare_help_content(self._HELP_SUMMARY_TO_BEGIN, cmd_prefix, privilege_level)
+         buf = utils.prepare_help_content(self._HELP_SUMMARY_TO_BEGIN, cmd_prefix, privilegelevel=privilege_level)
          buf += "\n"
-         for module in self._modules_list:
-            buf += module.get_help_summary(cmd_prefix, privilegelevel=privilege_level) + "\n"
-         buf = buf[:-1] # Remove extra newline.
       else:
-         # This serves detailed help content for a module.
-         (left, right) = utils.separate_left_word(substr)
-         try:
-            buf = self._modules_cmd_dict[left].get_help_detail(right, cmd_prefix, privilege_level)
-         except KeyError:
-            raise errors.NoHelpContentExists
+         buf = ""
+      buf += self._modules.get_help_content(substr, msg, cmd_prefix, privilege_level=privilege_level)
       return buf
 
 
@@ -206,20 +188,21 @@ class ServerBotInstance:
          elif left1 == "iam":
             await self._cmd_admin_iam(right1, msg)
 
-         elif left1 == "toggle":
-            (left2, right2) = utils.separate_left_word(right1)
-            if (left2 == "mentions") or (left2 == "mb") or (left2 == "mentionbot"):
-               (left3, right3) = utils.separate_left_word(right2)
-               if (left3 == "notify") or (left3 == "n"):
-                  if mentionNotifyModule.is_enabled():
-                     self._mbNotifyModule.disable()
-                  else:
-                     self._mbNotifyModule.enable()
-                  await self._client.send_msg(msg, "Notification system enabled = " + str(self._mbNotifyModule.is_enabled()))
-               else:
-                  raise errors.UnknownCommandError
-            else:
-               raise errors.UnknownCommandError
+         # TODO: Reimplement this pls.
+         # elif left1 == "toggle":
+         #    (left2, right2) = utils.separate_left_word(right1)
+         #    if (left2 == "mentions") or (left2 == "mb") or (left2 == "mentionbot"):
+         #       (left3, right3) = utils.separate_left_word(right2)
+         #       if (left3 == "notify") or (left3 == "n"):
+         #          if mentionNotifyModule.is_enabled():
+         #             self._mbNotifyModule.disable()
+         #          else:
+         #             self._mbNotifyModule.enable()
+         #          await self._client.send_msg(msg, "Notification system enabled = " + str(self._mbNotifyModule.is_enabled()))
+         #       else:
+         #          raise errors.UnknownCommandError
+         #    else:
+         #       raise errors.UnknownCommandError
 
          elif left1 == "gettime":
             await self._client.send_msg(msg, datetime.datetime.utcnow().strftime("My current system time: %c UTC"))

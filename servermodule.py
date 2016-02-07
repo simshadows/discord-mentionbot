@@ -6,8 +6,6 @@ class ServerModule:
 
    RECOMMENDED_CMD_NAMES = NotImplemented
 
-   _RE_PRIVLVL_LINE = re.compile(">>> PRIVILEGE LEVEL \d+")
-
    # TODO: Is it possible or even practical to define a standard constructor?
    # def __init__(self, cmd_names, client):
 
@@ -44,22 +42,6 @@ class ServerModule:
    # This method is called if a command is to be handled by the module.
    async def process_cmd(self, substr, msg, privilegelevel=0):
       raise NotImplementedError
-
-   # A helper method for preparing help strings.
-   # Parses a list of lines, producing a single string with the lines
-   # combined, appropriate for the privilege level.
-   # TODO: Add examples on this method's usage.
-   @classmethod
-   def _prepare_help_content(cls, raw_lines, cmd_prefix, privilegelevel=0):
-      help_content = ""
-      line_privlvl = 0
-      for line in raw_lines:
-         match = ServerModule._RE_PRIVLVL_LINE.match(line) # TODO: Is there nicer class attribute syntax?
-         if match:
-            line_privlvl = int(match.group(0)[len(">>> PRIVILEGE LEVEL "):])
-         elif (privilegelevel >= line_privlvl):
-            help_content += line + "\n"
-      return help_content[:-1].format(pf=cmd_prefix)
 
 
 

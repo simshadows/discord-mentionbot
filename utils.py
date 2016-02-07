@@ -1,4 +1,7 @@
 import sys
+import re
+
+RE_PRIVLVL_LINE = re.compile(">>> PRIVILEGE LEVEL \d+")
 
 # E.g. "hi    how   r u" -> ("hi","how   r u")
 #      "hi"              -> ("hi","")
@@ -9,6 +12,22 @@ def separate_left_word(text): # TYPE: Tuple<String>
    elif len(substrings) == 1:
       substrings.append("")
    return tuple(substrings)
+
+
+# A helper method for preparing help strings.
+# Parses a list of lines, producing a single string with the lines
+# combined, appropriate for the privilege level.
+# TODO: Add examples on this method's usage.
+def prepare_help_content(raw_lines, cmd_prefix, privilegelevel=0):
+   help_content = ""
+   line_privlvl = 0
+   for line in raw_lines:
+      match = RE_PRIVLVL_LINE.match(line)
+      if match:
+         line_privlvl = int(match.group(0)[len(">>> PRIVILEGE LEVEL "):])
+      elif (privilegelevel >= line_privlvl):
+         help_content += line + "\n"
+   return help_content[:-1].format(pf=cmd_prefix)
 
 
 # Parses a block of text, returns a list of flags.

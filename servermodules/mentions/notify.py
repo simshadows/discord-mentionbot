@@ -1,8 +1,8 @@
 import asyncio
 
 import discord
-
 import servermodule
+import utils
 
 class MentionNotifyModule(servermodule.ServerModule):
 
@@ -36,10 +36,10 @@ This module notifies users of mentions via PM when they're offline.
       return self._cmd_names
 
    def get_help_summary(self, cmd_prefix, privilegelevel=0):
-      return self._prepare_help_content(self._HELP_SUMMARY_LINES, cmd_prefix, privilegelevel)
+      return utils.prepare_help_content(self._HELP_SUMMARY_LINES, cmd_prefix, privilegelevel)
 
    def get_help_detail(self, substr, cmd_prefix, privilegelevel=0):
-      return self._prepare_help_content(self._HELP_DETAIL_LINES, cmd_prefix, privilegelevel)
+      return utils.prepare_help_content(self._HELP_DETAIL_LINES, cmd_prefix, privilegelevel)
 
    # Call this every time a message is received.
    async def on_message(self, msg):
