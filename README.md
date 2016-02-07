@@ -9,6 +9,10 @@ One of the key features is its suite of mention-searching modules. You can:
 
 Currently, no other modules are available as the main program structure is being built and perfected. Check back later though!
 
+**Notes:**
+
+* `classdiagram.xml` is opened with [draw.io](https://www.draw.io/).
+
 **TODO:**
 
 * Reimplement abstract classes with the `abc` library.

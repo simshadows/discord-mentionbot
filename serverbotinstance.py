@@ -10,7 +10,10 @@ import utils
 import errors
 import clientextended
 
-import servermodules.servermodule as servermodule
+import servermodulegroup
+import privilegemanager
+
+# Modules
 import servermodules.mentions.notify as notify
 import servermodules.mentions.search as search
 import servermodules.mentions.summary as summary
@@ -43,6 +46,8 @@ class ServerBotInstance:
       self._cmd_prefix = self.DEFAULT_COMMAND_PREFIX
       self._bot_name = self._client.user.name # TODO: Move this somewhere else.
       self._initialization_timestamp = datetime.datetime.utcnow()
+
+      self._privileges = privilegemanager.PrivilegeManager(self._client)
 
       # Having two collections for modules may not be the best way of doing things...
       # Dict for convenience of calling commands,
@@ -134,13 +139,7 @@ class ServerBotInstance:
             await self._client.send_msg(msg, buf)
 
          else:
-            # Handles the new module system.
-            # TODO: Make module invocation code consistent and neater.
-            # TODO: Make _get_privilege_level() method instead of this.
-            if self._is_privileged_user(msg.author.id):
-               privilege_level = 1
-            else:
-               privilege_level = 0
+            privilege_level = self._privileges.get_privilege_level(msg.author.id)
             try:
                print("PROCESSING COMMAND " + left + " " + right)
                await self._modules_cmd_dict[left].process_cmd(right, msg, privilegelevel=privilege_level)
@@ -154,12 +153,7 @@ class ServerBotInstance:
 
 
    def _get_help_content(self, substr, msg, cmd_prefix):
-      # TODO: Make _get_privilege_level() method instead of this.
-      if self._is_privileged_user(msg.author.id):
-         privilege_level = 1
-      else:
-         privilege_level = 0
-
+      privilege_level = self._privileges.get_privilege_level(msg.author.id)
       if substr == "":
          # This serves a summary of commands.
          buf = servermodule.ServerModule._prepare_help_content(self._HELP_SUMMARY_TO_BEGIN, cmd_prefix, privilege_level)
@@ -196,7 +190,8 @@ class ServerBotInstance:
 
 
    async def _cmd_admin(self, substr, msg):
-      if not self._is_privileged_user(msg.author.id):
+      privilege_level = self._privileges.get_privilege_level(msg.author.id)
+      if privilege_level != 1:
          raise errors.CommandPrivilegeError
 
       substr = substr.strip()
@@ -284,11 +279,6 @@ class ServerBotInstance:
    def get_presence_time(self):
       timediff = datetime.datetime.utcnow() - initialization_timestamp
       return timediff.seconds
-
-
-   # TODO: This method will need to be changed in the future.
-   def _is_privileged_user(self, user_ID):
-      return user_ID == self._client.BOTOWNER_ID
 
 
 # def msg_list_to_string(mentions, verbose=False): # TYPE: String

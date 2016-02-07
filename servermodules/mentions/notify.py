@@ -2,7 +2,7 @@ import asyncio
 
 import discord
 
-import servermodules.servermodule as servermodule
+import servermodule
 
 class MentionNotifyModule(servermodule.ServerModule):
 

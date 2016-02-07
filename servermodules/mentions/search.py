@@ -7,7 +7,7 @@ import discord
 import utils
 import errors
 
-import servermodules.servermodule as servermodule
+import servermodule
 
 class MentionSearchModule(servermodule.ServerModule):
 

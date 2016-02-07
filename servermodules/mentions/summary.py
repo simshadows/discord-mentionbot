@@ -6,7 +6,7 @@ import discord
 import utils
 import errors
 
-import servermodules.servermodule as servermodule
+import servermodule
 
 # TODO: Replace with better data structure, or integrate it into MentionLogger.
 #       This version is just horribly inefficient linear searching,
