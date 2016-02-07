@@ -1,5 +1,3 @@
-import re
-
 # Abstract Class (would've been an interface...)
 # All server modules are subclasses of ServerModule.
 class ServerModule:
