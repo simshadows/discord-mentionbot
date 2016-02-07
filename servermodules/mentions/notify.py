@@ -6,6 +6,8 @@ import servermodules.servermodule as servermodule
 
 class MentionNotifyModule(servermodule.ServerModule):
 
+   RECOMMENDED_CMD_NAMES = ["notify", "n"]
+
    _HELP_SUMMARY_LINES = """
 `{pf}mentions notify` or `{pf}mb n` - View and change settings of PM notification system.
    """.strip().splitlines()
@@ -22,20 +24,16 @@ This module notifies users of mentions via PM when they're offline.
    """.strip().splitlines()
 
    # PARAMETER: enabled - If false, the module is disabled.
-   def __init__(self, client, enabled=True):
+   def __init__(self, cmd_names, client, enabled=True):
       self._client = client
-      self._command_names = ["n","notify"]
+      self._cmd_names = cmd_names
 
       self._enabled = enabled
       return
 
    @property
-   def command_names(self):
-      return self._command_names
-
-   @command_names.setter
-   def command_names(self, value):
-      self._command_names = value
+   def cmd_names(self):
+      return self._cmd_names
 
    def get_help_summary(self, cmd_prefix, privilegelevel=0):
       return self._prepare_help_content(self._HELP_SUMMARY_LINES, cmd_prefix, privilegelevel)

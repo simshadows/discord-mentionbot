@@ -11,6 +11,8 @@ import servermodules.servermodule as servermodule
 
 class MentionSearchModule(servermodule.ServerModule):
 
+   RECOMMENDED_CMD_NAMES = ["search", "s"]
+
    _RE_OPTION_CH = re.compile("ch=[\w\W]+") # e.g. "ch=<#124672134>"
    _RE_OPTION_M = re.compile("m=\d+") # e.g. "m=100"
    _RE_OPTION_R = re.compile("r=\d+") # e.g. "m=1000"
@@ -28,18 +30,14 @@ option: `--r=[num]` - Number of messages to be searched through.
 option: `--verbose` or `-v` - Include extra information.
    """.strip().splitlines()
 
-   def __init__(self, client):
+   def __init__(self, cmd_names, client):
       self._client = client
-      self._command_names = ["s","search"]
+      self._cmd_names = cmd_names
       return
 
    @property
-   def command_names(self):
-      return self._command_names
-
-   @command_names.setter
-   def command_names(self, value):
-      self._command_names = value
+   def cmd_names(self):
+      return self._cmd_names
 
    def get_help_summary(self, cmd_prefix, privilegelevel=0):
       return self._prepare_help_content(self._HELP_SUMMARY_LINES, cmd_prefix, privilegelevel)

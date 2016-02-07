@@ -13,6 +13,8 @@ import servermodules.servermodule as servermodule
 #       and operates on messages directly.
 class MentionSummaryModule(servermodule.ServerModule):
 
+   RECOMMENDED_CMD_NAMES = ["summary"]
+
    _HELP_SUMMARY_LINES = """
 `{pf}mentions summary [options]` or `{pf}mb summary` - Get summary of all latest mentions.
    """.strip().splitlines()
@@ -24,9 +26,9 @@ option: `--preservedata` or `-k` - Cache entries will not be deleted.
 option: `--verbose` or `-v` - Include extra information.
    """.strip().splitlines()
    
-   def __init__(self, client):
+   def __init__(self, cmd_names, client):
       self._client = client
-      self._command_names = ["summary"]
+      self._cmd_names = cmd_names
 
       self._mention_list = [] # FORMAT: list<tuple<userID, list<messageObject> >>
       self._initialization_timestamp = datetime.datetime.utcnow()
@@ -34,12 +36,8 @@ option: `--verbose` or `-v` - Include extra information.
       return
 
    @property
-   def command_names(self):
-      return self._command_names
-
-   @command_names.setter
-   def command_names(self, value):
-      self._command_names = value
+   def cmd_names(self):
+      return self._cmd_names
 
    def get_help_summary(self, cmd_prefix, privilegelevel=0):
       return self._prepare_help_content(self._HELP_SUMMARY_LINES, cmd_prefix, privilegelevel)

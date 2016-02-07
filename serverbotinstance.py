@@ -11,9 +11,9 @@ import errors
 import clientextended
 
 import servermodules.servermodule as servermodule
-import servermodules.mentions.notify
-import servermodules.mentions.search
-import servermodules.mentions.summary
+import servermodules.mentions.notify as notify
+import servermodules.mentions.search as search
+import servermodules.mentions.summary as summary
 
 # ServerBotInstance manages everything to do with a particular server.
 # IMPORTANT: client is a MentionBot instance!!!
@@ -49,13 +49,13 @@ class ServerBotInstance:
       # and List for convenienve in iterating through all modules.
       self._modules_cmd_dict = {}
       self._modules_list = [
-         servermodules.mentions.notify.MentionNotifyModule(client, enabled=self.INIT_MENTIONS_NOTIFY_ENABLED),
-         servermodules.mentions.search.MentionSearchModule(client),
-         servermodules.mentions.summary.MentionSummaryModule(client)
+         notify.MentionNotifyModule(notify.MentionNotifyModule.RECOMMENDED_CMD_NAMES, client, enabled=self.INIT_MENTIONS_NOTIFY_ENABLED),
+         search.MentionSearchModule(search.MentionSearchModule.RECOMMENDED_CMD_NAMES, client),
+         summary.MentionSummaryModule(summary.MentionSummaryModule.RECOMMENDED_CMD_NAMES, client)
       ]
       for module in self._modules_list:
-         for command_name in module.command_names:
-            self._modules_cmd_dict[command_name] = module
+         for cmd_name in module.cmd_names:
+            self._modules_cmd_dict[cmd_name] = module
       return
 
 
@@ -142,9 +142,10 @@ class ServerBotInstance:
             else:
                privilege_level = 0
             try:
+               print("PROCESSING COMMAND " + left + " " + right)
                await self._modules_cmd_dict[left].process_cmd(right, msg, privilegelevel=privilege_level)
             except KeyError:
-               raise errors.NoHelpContentExists
+               raise errors.UnknownCommandError
          
          # else:
          #    raise CommandArgumentsError

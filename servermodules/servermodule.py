@@ -4,7 +4,12 @@ import re
 # All server modules are subclasses of ServerModule.
 class ServerModule:
 
+   RECOMMENDED_CMD_NAMES = NotImplemented
+
    _RE_PRIVLVL_LINE = re.compile(">>> PRIVILEGE LEVEL \d+")
+
+   # TODO: Is it possible or even practical to define a standard constructor?
+   # def __init__(self, cmd_names, client):
 
    # Return a list of strings to be used to invoke a module command.
    # For example, if command_names=["foo","baz"], then subcommands
@@ -12,13 +17,7 @@ class ServerModule:
    # process_cmd() function to be called with substr="example".
    # TODO: Figure out a better way to define abstract attributes!!!
    @property
-   def command_names(self):
-      raise NotImplementedError
-
-   # Associated setter for command_names property.
-   # TODO: Figure out a better way to define abstract attributes!!!
-   @command_names.setter
-   def command_names(self, value):
+   def cmd_names(self):
       raise NotImplementedError
 
    # Get a help-message string summarising the module functionality,
