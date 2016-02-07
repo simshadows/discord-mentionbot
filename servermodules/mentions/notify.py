@@ -1,15 +1,17 @@
 import asyncio
 
 import discord
-import servermodule
-import utils
 
-class MentionNotifyModule(servermodule.ServerModule):
+import utils
+import errors
+from servermodule import ServerModule
+
+class Notify(ServerModule):
 
    RECOMMENDED_CMD_NAMES = ["notify", "n"]
 
    _HELP_SUMMARY_LINES = """
-`{pf}mentions notify` or `{pf}mb n` - View and change settings of PM notification system.
+`{pf}notify` - View and change settings of PM notification system.
    """.strip().splitlines()
 
    _HELP_DETAIL_LINES = """
@@ -17,10 +19,10 @@ class MentionNotifyModule(servermodule.ServerModule):
 
 This module notifies users of mentions via PM when they're offline.
 
-`{pf}mentions notify` or `{pf}mb n` - View and change settings of PM notification system.
+`{pf}notify` - View and change settings of PM notification system.
 >>> PRIVILEGE LEVEL 1 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-`{pf}a toggle mentions notify`
+TODO: PLS ADD HELP FOR TOGGLE FEATURE. THX M8
    """.strip().splitlines()
 
    # PARAMETER: enabled - If false, the module is disabled.

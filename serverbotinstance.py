@@ -14,9 +14,7 @@ import servermodulegroup
 import privilegemanager
 
 # Modules
-import servermodules.mentions.notify as notify
-import servermodules.mentions.search as search
-import servermodules.mentions.summary as summary
+from servermodules.mentions.mentions import Mentions
 
 # ServerBotInstance manages everything to do with a particular server.
 # IMPORTANT: client is a MentionBot instance!!!
@@ -50,9 +48,7 @@ class ServerBotInstance:
       self._privileges = privilegemanager.PrivilegeManager(self._client)
 
       modules = [
-         notify.MentionNotifyModule(notify.MentionNotifyModule.RECOMMENDED_CMD_NAMES, client, enabled=self.INIT_MENTIONS_NOTIFY_ENABLED),
-         search.MentionSearchModule(search.MentionSearchModule.RECOMMENDED_CMD_NAMES, client),
-         summary.MentionSummaryModule(summary.MentionSummaryModule.RECOMMENDED_CMD_NAMES, client)
+         Mentions(Mentions.RECOMMENDED_CMD_NAMES, client)
       ]
       self._modules = servermodulegroup.ServerModuleGroup(initial_modules=modules)
       return
@@ -149,7 +145,7 @@ class ServerBotInstance:
          buf += "\n"
       else:
          buf = ""
-      buf += self._modules.get_help_content(substr, msg, cmd_prefix, privilege_level=privilege_level)
+      buf += self._modules.get_help_content(substr, cmd_prefix, privilege_level=privilege_level)
       return buf
 
 

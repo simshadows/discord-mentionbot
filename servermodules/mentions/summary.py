@@ -5,22 +5,21 @@ import discord
 
 import utils
 import errors
-
-import servermodule
+from servermodule import ServerModule
 
 # TODO: Replace with better data structure, or integrate it into MentionLogger.
 #       This version is just horribly inefficient linear searching,
 #       and operates on messages directly.
-class MentionSummaryModule(servermodule.ServerModule):
+class Summary(ServerModule):
 
    RECOMMENDED_CMD_NAMES = ["summary"]
 
    _HELP_SUMMARY_LINES = """
-`{pf}mentions summary [options]` or `{pf}mb summary` - Get summary of all latest mentions.
+`{pf}summary [options]` - Get summary of all latest mentions.
    """.strip().splitlines()
 
    _HELP_DETAIL_LINES = """
-`{pf}mentions summary [options]` or `{pf}mb summary` - Get summary of all latest mentions.
+`{pf}summary [options]` - Get summary of all latest mentions.
 option: `--privmsg` or `-p` - Send mentions via PM instead.
 option: `--preservedata` or `-k` - Cache entries will not be deleted.
 option: `--verbose` or `-v` - Include extra information.

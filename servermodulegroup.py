@@ -44,7 +44,7 @@ class ServerModuleGroup:
    # If ServerBotInstance has additional functionality, it should append it
    # to the returned string. Depends on what ServerBotInstance wants to do.
    # PRECONDITION: The ServerModuleGroup object is filled with modules.
-   def get_help_content(self, substr, msg, cmd_prefix, privilege_level=0):
+   def get_help_content(self, substr, cmd_prefix, privilege_level=0):
       if substr == "":
          # This serves a summary of commands.
          buf = ""

@@ -6,10 +6,9 @@ import discord
 
 import utils
 import errors
+from servermodule import ServerModule
 
-import servermodule
-
-class MentionSearchModule(servermodule.ServerModule):
+class Search(ServerModule):
 
    RECOMMENDED_CMD_NAMES = ["search", "s"]
 
@@ -18,11 +17,11 @@ class MentionSearchModule(servermodule.ServerModule):
    _RE_OPTION_R = re.compile("r=\d+") # e.g. "m=1000"
 
    _HELP_SUMMARY_LINES = """
-`{pf}mentions search [options]` or `{pf}mb s [options]` - Search mentions.
+`{pf}search [options]` - Search mentions.
    """.strip().splitlines()
 
    _HELP_DETAIL_LINES = """
-`{pf}mentions search [options]` or `{pf}mb s [options]` - Search mentions.
+`{pf}search [options]` - Search mentions.
 option: `--privmsg` or `-p` - Send mentions via PM instead.
 option: `--ch=[channel]` - Channel to search (this channel by default).
 option: `--m=[num]` - Number of mentions to search for.

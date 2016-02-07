@@ -15,6 +15,7 @@ Currently, no other modules are available as the main program structure is being
 
 **TODO:**
 
+* Implement module enabling/disabling.
 * Reimplement abstract classes with the `abc` library.
 * Work a design that allows unified persistent data storage, shared message history caching, and shared user activity sensing.
 * Find and exterminate the many security flaws...
