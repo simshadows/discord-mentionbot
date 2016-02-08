@@ -64,3 +64,4 @@ target/
 # Project-specific ignores
 login_details
 notes.txt
+cache/
