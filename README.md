@@ -12,6 +12,7 @@ Currently, no other modules are available as the main program structure is being
 **Notes:**
 
 * `classdiagram.xml` is opened with [draw.io](https://www.draw.io/).
+* This does not poll to check who's the server owner. Must restart bot for changes to apply.
 
 **TODO:**
 

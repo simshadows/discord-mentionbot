@@ -7,11 +7,12 @@ import copy
 import discord
 
 import utils
+from enums import PrivilegeLevel
 import errors
 import clientextended
 
 import servermodulegroup
-import privilegemanager
+from privilegemanager import PrivilegeManager
 
 # Modules
 from servermodules.mentions.mentions import Mentions
@@ -45,7 +46,9 @@ class ServerBotInstance:
       self._bot_name = self._client.user.name # TODO: Move this somewhere else.
       self._initialization_timestamp = datetime.datetime.utcnow()
 
-      self._privileges = privilegemanager.PrivilegeManager(self._client)
+      botowner_ID = self._client.BOTOWNER_ID
+      serverowner_ID = self._server.owner.id
+      self._privileges = PrivilegeManager(botowner_ID, serverowner_ID)
 
       modules = [
          Mentions(Mentions.RECOMMENDED_CMD_NAMES, client)
@@ -129,7 +132,7 @@ class ServerBotInstance:
             await self._client.send_msg(msg, buf)
 
          else:
-            privilege_level = self._privileges.get_privilege_level(msg.author.id)
+            privilege_level = self._privileges.get_privilege_level(msg.author)
             await self._modules.process_cmd(substr, msg, privilegelevel=privilege_level)
          
          # else:
@@ -139,7 +142,7 @@ class ServerBotInstance:
 
 
    def _get_help_content(self, substr, msg, cmd_prefix):
-      privilege_level = self._privileges.get_privilege_level(msg.author.id)
+      privilege_level = self._privileges.get_privilege_level(msg.author)
       if substr == "":
          buf = utils.prepare_help_content(self._HELP_SUMMARY_TO_BEGIN, cmd_prefix, privilegelevel=privilege_level)
          buf += "\n"
@@ -168,8 +171,8 @@ class ServerBotInstance:
 
 
    async def _cmd_admin(self, substr, msg):
-      privilege_level = self._privileges.get_privilege_level(msg.author.id)
-      if privilege_level != 1:
+      privilege_level = self._privileges.get_privilege_level(msg.author)
+      if privilege_level != PrivilegeLevel.BOT_OWNER:
          raise errors.CommandPrivilegeError
 
       substr = substr.strip()
