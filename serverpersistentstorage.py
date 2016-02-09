@@ -9,10 +9,13 @@ class ServerPersistentStorage:
    # Note: "Server Name" is not really a data storage pair.
    #       Its purpose is for human convenience, making it immediately
    #       obvious what the server is when reading the json file.
+   # IMPORTANT: Changes to the data structure will need to be
+   #            applied 
    DEFAULT_SETTINGS = {
       "Server Name": "",
       "Installed Modules": [
          "Mentions",
+         "Random",
       ],
    }
 

@@ -77,9 +77,13 @@ class MentionBot(clientextended.ClientExtended):
       except errors.UnknownCommandError:
          print("Caught UnknownCommandError.")
          await self.send_msg(msg, "sry m8 idk what ur asking") # intentional typos. pls don't lynch me.
-      except errors.InvalidCommandArgumentsError:
+      except errors.InvalidCommandArgumentsError as e:
          print("Caught InvalidCommandArgumentsError.")
-         await self.send_msg(msg, "soz m8 one or more (or 8) arguments are invalid")
+         if str(e) == "":
+            buf = "soz m8 one or more (or 8) arguments are invalid"
+         else:
+            buf = str(e)
+         await self.send_msg(msg, buf)
       except errors.CommandPrivilegeError:
          print("Caught CommandPrivilegeError.")
          await self.send_msg(msg, "im afraid im not allowed to do that for you m8")

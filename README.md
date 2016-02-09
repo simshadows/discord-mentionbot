@@ -17,6 +17,9 @@ Currently, no other modules are available while the main program structure is be
 
 * `classdiagram.xml` is opened with [draw.io](https://www.draw.io/).
 * `design_notes.txt` is used by myself to reflect on my own design choices as this project is partly a learning exercise in object-oriented design.
+* To add a new module, make the following edits on `servermodulefactory.py`:
+	* add an import for the module's "main class", and
+	* add the module's class to `ServerModuleFactory._MODULE_LIST`.
 * This does not poll to check who's the server owner. Must restart bot to change the bot's registered bot owner. *(This might change in the future, but it's a low priority.)*
 
 **TODO:**

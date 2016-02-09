@@ -1,18 +1,20 @@
 # Modules
 from servermodules.mentions.mentions import Mentions
+from servermodules.random import Random
 
 class ServerModuleFactory:
+
+   # Please hard-code every module class into this list.
+   _MODULE_LIST = [
+      Mentions,
+      Random
+   ]
 
    def __init__(self, client):
       self._client = client
       self._modules = {}
 
-      # Please hard-code every module class into this list.
-      modules = [
-         Mentions,
-      ]
-
-      for module in modules:
+      for module in self._MODULE_LIST:
          self._modules[module.MODULE_NAME] = module
       return
 

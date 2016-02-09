@@ -101,25 +101,12 @@ class ServerBotInstance:
          # await self._mbSummaryModule.process_cmd("", msg, add_extra_help=False)
       else:
          (left, right) = utils.separate_left_word(substr)
-         print(left)
          if left == "help":
             help_content = self._get_help_content(right, msg, cmd_prefix)
             await self._client.send_msg(msg, help_content)
 
-         # TODO: Make mentions a module, and notify/search/summary submodules.
-         # elif (left == "mentions") or (left == "mb") or (left == "mentionbot"):
-         #    await self._cmd1_mentions(right, msg)
-
          elif left == "avatar":
             await self._cmd1_avatar(right, msg)
-
-         elif (left == "randomcolour") or (left == "randomcolor"):
-            rand_int = random.randint(0,(16**6)-1)
-            rand = hex(rand_int)[2:] # Convert to hex
-            rand = rand.zfill(6)
-            buf = "{}, your random colour is {} (decimal: {})".format(msg.author.name, rand, rand_int)
-            buf += "\nhttp://www.colorhexa.com/{}.png".format(rand)
-            await self._client.send_msg(msg, buf)
 
          elif left == "source":
             await self._client.send_msg(msg, "idk, ask sim.")

@@ -48,6 +48,10 @@ def separate_left_word(text): # TYPE: Tuple<String>
    return tuple(substrings)
 
 
+def remove_whitespace(text):
+   return "".join(text.split()) # TODO: Find a nicer implementation.
+
+
 # A helper method for preparing help strings.
 # Parses a list of lines, producing a single string with the lines
 # combined, appropriate for the privilege level.
