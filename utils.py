@@ -6,6 +6,24 @@ import json
 _RE_PRIVLVL_LINE = re.compile(">>> PRIVILEGE LEVEL \d+")
 
 #################################################################################
+# BASIC STRING OPERATIONS #######################################################
+#################################################################################
+
+# E.g. "hi    how   r u" -> ("hi","how   r u")
+#      "hi"              -> ("hi","")
+def separate_left_word(text): # TYPE: Tuple<String>
+   substrings = text.split(maxsplit=1) # "how r u?" -> ["how", "r u?"]
+   if len(substrings) == 0:
+      return ("","")
+   elif len(substrings) == 1:
+      substrings.append("")
+   return tuple(substrings)
+
+
+def remove_whitespace(text):
+   return "".join(text.split()) # TODO: Find a nicer implementation.
+
+#################################################################################
 # FILE I/O ######################################################################
 #################################################################################
 
@@ -32,25 +50,41 @@ def _mkdir_recursive(relfilepath):
       pass
    return
 
+
+#################################################################################
+# COMMAND PREPROCESSOR HELPER FUNCTIONS #########################################
+#################################################################################
+
+# E.g. add_base_command("/choose A;B;C", "/", "rnd")
+#      returns: "/rnd choose A;B;C"
+# The function automatically cuts off the original base command at the first
+# space.
+# E.g. add_base_command("/chooseA;B;C", "/", "rnd")
+#      returns: "/rnd" 
+# PRECONDITION: The function's inputs are guaranteed to produce a change such as
+#               above. Incorrect inputs (such as wrong prefix) are not handled.
+#               For example, behaviour when passing in an empty content parameter
+#               is not defined.
+def add_base_cmd(content, cmd_prefix, new_base_command):
+   return cmd_prefix + new_base_command + " " + content[len(cmd_prefix):]
+
+# E.g. change_base_command("/choose A;B;C", "/", "rnd")
+#      returns: "/rnd A;B;C"
+# Similarly to add_base_cmd(), this function also cuts off the original base
+# command at the first space.
+# PRECONDITION: same precondition as add_base_command().
+def change_base_cmd(content, cmd_prefix, new_base_command):
+   (left, right) = separate_left_word(content[len(cmd_prefix):])
+   return cmd_prefix + new_base_command + right
+
+# E.g. change_cmd_prefix("/choose A;B;C", old="/", new="$")
+#      returns: "$choose A;B;C"
+def change_cmd_prefix(content, old="/", new="$"):
+   return new + content[len(old):]
+
 #################################################################################
 # OTHERS ########################################################################
 #################################################################################
-
-
-# E.g. "hi    how   r u" -> ("hi","how   r u")
-#      "hi"              -> ("hi","")
-def separate_left_word(text): # TYPE: Tuple<String>
-   substrings = text.split(maxsplit=1) # "how r u?" -> ["how", "r u?"]
-   if len(substrings) == 0:
-      return ("","")
-   elif len(substrings) == 1:
-      substrings.append("")
-   return tuple(substrings)
-
-
-def remove_whitespace(text):
-   return "".join(text.split()) # TODO: Find a nicer implementation.
-
 
 # A helper method for preparing help strings.
 # Parses a list of lines, producing a single string with the lines
@@ -66,6 +100,10 @@ def prepare_help_content(raw_lines, cmd_prefix, privilegelevel=0):
       elif (privilegelevel >= line_privlvl):
          help_content += line + "\n"
    return help_content[:-1].format(pf=cmd_prefix)
+
+
+def remove_blank_strings(string_list):
+   return filter(None, string_list)
 
 
 # Parses a block of text, returns a list of flags.

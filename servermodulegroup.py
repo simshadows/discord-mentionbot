@@ -18,6 +18,11 @@ class ServerModuleGroup:
             self._modules_cmd_dict[cmd_name] = module
       return
 
+   async def msg_preprocessor(self, content, msg, default_cmd_prefix):
+      for module in self._modules_list:
+         content = await module.msg_preprocessor(content, msg, default_cmd_prefix)
+      return content
+
    async def on_message(self, msg):
       for module in self._modules_list:
          await module.on_message(msg)

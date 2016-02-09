@@ -24,7 +24,6 @@ Currently, no other modules are available while the main program structure is be
 
 **TODO:**
 
-* Implement "alternative commands" as an option. For example, instead of `/chcreate open <channelname>`, one could instead do `++<channelname>`.
 * Implement message caching (retrieving messages fromm the server is time-consuming).
 * Implement json data verification.
 	* (LOW PRIORITY) Implement json data repair.

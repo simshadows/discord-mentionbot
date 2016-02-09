@@ -73,6 +73,7 @@ class ServerBotInstance:
    async def process_text(self, substr, msg):
       
       await self._modules.on_message(msg)
+      substr = await self._modules.msg_preprocessor(substr, msg, self._cmd_prefix)
 
       (left, right) = utils.separate_left_word(substr)
 

@@ -39,6 +39,15 @@ class Random(ServerModule):
    def cmd_names(self):
       return self._cmd_names
 
+   async def msg_preprocessor(self, content, msg, default_cmd_prefix):
+      print("CONTENT: " + content)
+      str1 = default_cmd_prefix + "choose "
+      print("STR1: " + str1)
+      if content.startswith(str1):
+         content = utils.add_base_cmd(content, default_cmd_prefix, self._cmd_names[0])
+      print("CONTENT2: " + content)
+      return content
+
    def get_help_summary(self, cmd_prefix, privilegelevel=0):
       return utils.prepare_help_content(self._HELP_SUMMARY_LINES, cmd_prefix, privilegelevel)
 
@@ -60,6 +69,18 @@ class Random(ServerModule):
       (left, right) = utils.separate_left_word(substr)
       if (left == "number") or (left == "num") or (left == "int") or (left == "integer"):
          await self.cmd_number(right, msg)
+
+      elif (left == "choose") or (left == "ch") or (left == "choice") or (left == "choices"):
+         choices = right.split(";")
+         choices = list(filter(None, choices)) # Remove empty strings
+         if len(choices) == 0:
+            raise errors.InvalidCommandArgumentsError
+         buf = random.choice(choices) + "\n"
+         buf += "My choices were: "
+         for choice in choices:
+            buf += choice + ";"
+         buf = buf[:-1]
+         await self._client.send_msg(msg, buf)
 
       elif (left == "colour") or (left == "color") or (left == "rgb"):
          rand_int = random.randint(0,(16**6)-1)
@@ -120,8 +141,8 @@ class Random(ServerModule):
       buf = ""
       for rng_range in rng_ranges:
          rand = random.randint(rng_range[0], rng_range[1])
-         buf += "{0} (Range: {1} to {2})".format(rand, rng_range[0], rng_range[1])
-
+         buf += "{0} (Range: {1} to {2}, inclusive)\n".format(rand, rng_range[0], rng_range[1])
+      buf = buf[:-1] # Trim off last newline.
       return await self._client.send_msg(msg, buf)
 
 

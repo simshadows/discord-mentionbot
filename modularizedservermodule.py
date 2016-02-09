@@ -32,6 +32,10 @@ class ModularizedServerModule:
       return self._cmd_names
 
    # pls no overwriterino thx
+   async def msg_preprocessor(self, content, msg, default_cmd_prefix):
+      return await self._submodules.msg_preprocessor(content, msg, default_cmd_prefix)
+
+   # pls no overwriterino thx
    def get_help_summary(self, cmd_prefix, privilegelevel=0):
       cmd_prefix = cmd_prefix + self.cmd_names[0] + " "
       return self._submodules.get_help_content("", cmd_prefix, privilege_level=privilegelevel)
