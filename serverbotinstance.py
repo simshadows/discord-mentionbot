@@ -12,6 +12,7 @@ import errors
 import clientextended
 
 import servermodulegroup
+from serverpersistentstorage import ServerPersistentStorage
 from privilegemanager import PrivilegeManager
 
 # Modules
@@ -42,13 +43,19 @@ class ServerBotInstance:
       self._client = client
       self._server = server
 
+      self._data_directory = self._client.CACHE_DIRECTORY + "serverdata/" + self._server.id + "/"
+
       self._cmd_prefix = self.DEFAULT_COMMAND_PREFIX
       self._bot_name = self._client.user.name # TODO: Move this somewhere else.
       self._initialization_timestamp = datetime.datetime.utcnow()
 
       botowner_ID = self._client.BOTOWNER_ID
       serverowner_ID = self._server.owner.id
+
+      self._storage = ServerPersistentStorage(self._data_directory + "settings.json", self._server)
       self._privileges = PrivilegeManager(botowner_ID, serverowner_ID)
+
+      print(str(self._storage.get_server_settings()))
 
       modules = [
          Mentions(Mentions.RECOMMENDED_CMD_NAMES, client)

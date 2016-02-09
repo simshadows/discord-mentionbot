@@ -20,6 +20,7 @@ Currently, no other modules are available while the main program structure is be
 
 **TODO:**
 
+* Implement json data verification.
 * Implement module enabling/disabling.
 * Reimplement abstract classes with the `abc` library.
 * Work a design that allows unified persistent data storage, shared message history caching, and shared user activity sensing.
@@ -28,6 +29,7 @@ Currently, no other modules are available while the main program structure is be
 **Dependencies:**
 
 * `pip install git+https://github.com/Rapptz/discord.py@async`
+* `pip install git+https://github.com/Julian/jsonschema`
 
 ---
 

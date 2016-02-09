@@ -1,6 +1,7 @@
 import re
 
 import utils
+import errors
 
 class ServerModuleGroup:
 

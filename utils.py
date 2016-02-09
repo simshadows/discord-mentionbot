@@ -1,7 +1,41 @@
 import sys
 import re
+import os
+import json
 
-RE_PRIVLVL_LINE = re.compile(">>> PRIVILEGE LEVEL \d+")
+_RE_PRIVLVL_LINE = re.compile(">>> PRIVILEGE LEVEL \d+")
+
+#################################################################################
+# FILE I/O ######################################################################
+#################################################################################
+
+_CWD = os.getcwd()
+_ENCODING = "utf-8"
+
+# This overwrites whatever file is specified with the data.
+def json_write(relfilepath, data=None):
+   _mkdir_recursive(relfilepath)
+   with open(relfilepath, encoding=_ENCODING, mode="w") as f:
+      f.write(json.dumps(data, sort_keys=True, indent=3))
+   return
+
+def json_read(relfilepath):
+   with open(relfilepath, encoding=_ENCODING, mode="r") as f:
+      return json.loads(f.read())
+
+def _mkdir_recursive(relfilepath):
+   absfilepath = os.path.join(_CWD, relfilepath)
+   absdir = os.path.dirname(absfilepath)
+   try:
+      os.makedirs(absdir)
+   except FileExistsError:
+      pass
+   return
+
+#################################################################################
+# OTHERS ########################################################################
+#################################################################################
+
 
 # E.g. "hi    how   r u" -> ("hi","how   r u")
 #      "hi"              -> ("hi","")
@@ -22,7 +56,7 @@ def prepare_help_content(raw_lines, cmd_prefix, privilegelevel=0):
    help_content = ""
    line_privlvl = 0
    for line in raw_lines:
-      match = RE_PRIVLVL_LINE.match(line)
+      match = _RE_PRIVLVL_LINE.match(line)
       if match:
          line_privlvl = int(match.group(0)[len(">>> PRIVILEGE LEVEL "):])
       elif (privilegelevel >= line_privlvl):

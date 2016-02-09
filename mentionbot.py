@@ -7,6 +7,7 @@ import os
 import traceback
 
 import discord # pip install git+https://github.com/Rapptz/discord.py@async
+# pip install git+https://github.com/Julian/jsonschema
 
 import utils
 import errors
@@ -19,12 +20,14 @@ LOGIN_DETAILS_FILENAME = "login_details" # This file is used to login. Only cont
 class MentionBot(clientextended.ClientExtended):
    BOTOWNER_ID = str(119384097473822727) # User ID of the owner of this bot
    INITIAL_GAME_STATUS = "hello thar"
+   CACHE_DIRECTORY = "cache/" # This MUST end with a forward-slash. e.g. "cache/"
    
    def __init__(self, **kwargs):
       super(MentionBot, self).__init__(**kwargs)
 
       print("BOTOWNER_ID = '{}'".format(MentionBot.BOTOWNER_ID))
       print("INITIAL_GAME_STATUS = '{}'".format(MentionBot.INITIAL_GAME_STATUS))
+      print("CACHE_DIRECTORY = '{}'".format(MentionBot.CACHE_DIRECTORY))
 
       self.bot_mention = None
       self.bot_name = None
