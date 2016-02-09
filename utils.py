@@ -75,7 +75,7 @@ def add_base_cmd(content, cmd_prefix, new_base_command):
 # PRECONDITION: same precondition as add_base_command().
 def change_base_cmd(content, cmd_prefix, new_base_command):
    (left, right) = separate_left_word(content[len(cmd_prefix):])
-   return cmd_prefix + new_base_command + right
+   return cmd_prefix + new_base_command + " " + right
 
 # E.g. change_cmd_prefix("/choose A;B;C", old="/", new="$")
 #      returns: "$choose A;B;C"

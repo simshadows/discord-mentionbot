@@ -20,7 +20,7 @@ class ServerModuleFactory:
 
    # Generator for iterating through all modules.
    def module_list_gen(self):
-      for (name, module) in self._modules:
+      for (name, module) in self._modules.items():
          yield (name, module.MODULE_SHORT_DESCRIPTION)
 
    def module_exists(self, module_name):

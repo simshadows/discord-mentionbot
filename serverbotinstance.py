@@ -31,13 +31,25 @@ class ServerBotInstance:
    # TODO: Figure out a neater way of doing this.
    _HELP_SUMMARY_TO_BEGIN = """
 **The following commands are available:**
+`{pf}availablemodules` - Get all modules available for installation.
+`{pf}installedmodules` - Get all installed modules.
 `{pf}avatar [usermention]` - Get the avatar URL of the user.
-`{pf}randomcolour`
 `{pf}source` - Where to get source code.
 `{pf}rip` - Rest in pieces.
 `{pf}status` - Get bot's current status.
->>> PRIVILEGE LEVEL 1 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-`{pf}admin [cmd]` or `{pf}a [cmd]` - Bot admin commands. Must have permission to use.
+>>> PRIVILEGE LEVEL 9000 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+`{pf}so say [text]`
+`{pf}so addmodule [module name]`
+`{pf}so removemodule [module name]`
+>>> PRIVILEGE LEVEL 9001 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+`{pf}bo iam [@user] [text]`
+`{pf}bo gettime`
+`{pf}bo setgame [text]`
+`{pf}bo setusername [text]`
+`{pf}bo getemail`
+`{pf}bo joinserver [invitelink]`
+`{pf}bo leaveserver`
+`{pf}bo throwexception`
    """.strip().splitlines()
 
    def __init__(self, client, server):
@@ -106,11 +118,27 @@ class ServerBotInstance:
             help_content = self._get_help_content(right, msg, cmd_prefix)
             await self._client.send_msg(msg, help_content)
 
+         elif (left == "availablemodules") or (left == "allmodules") or (left == "allmods"):
+            buf = "**The following modules are available for installation:**"
+            for val in self._module_factory.module_list_gen():
+               buf += "\n`{0}`: {1}".format(val[0], val[1])
+            await self._client.send_msg(msg, buf)
+
+         elif (left == "installedmodules") or (left == "modules") or (left == "mods"):
+            info = self._modules.get_module_info()
+            if len(info) == 0:
+               buf = "No modules are installed."
+            else:
+               buf = "**The following modules are installed:**"
+               for val in info:
+                  buf += "\n`{0}`: {1}".format(val[0], val[1])
+            await self._client.send_msg(msg, buf)
+
          elif left == "avatar":
             await self._cmd1_avatar(right, msg)
 
          elif left == "source":
-            await self._client.send_msg(msg, "idk, ask sim.")
+            await self._client.send_msg(msg, "https://github.com/simshadows/discord-mentionbot")
 
          elif left == "rip":
             await self._client.send_msg(msg, "doesnt even deserve a funeral")
@@ -123,13 +151,11 @@ class ServerBotInstance:
          #    await self._client.send_msg(msg, buf)
 
          # TODO: rework admin command help.
-         elif (left == "admin") or (left == "a"):
-            await self._cmd_admin(right, msg)
+         elif (left == "serverowner") or (left == "so") or (left == "admin") or (left == "a"):
+            await self._cmd_serverowner(right, msg)
 
-         # USED FOR DEBUGGING
-         elif left == "test":
-            buf = "I hear ya " + msg.author.name + "!"
-            await self._client.send_msg(msg, buf)
+         elif (left == "botowner") or (left == "bo"):
+            await self._cmd_botowner(right, msg)
 
          else:
             privilege_level = self._privileges.get_privilege_level(msg.author)
@@ -170,77 +196,112 @@ class ServerBotInstance:
          return await self._client.send_msg(msg, avatar)
 
 
-   async def _cmd_admin(self, substr, msg):
+   async def _cmd_serverowner(self, substr, msg):
+      privilege_level = self._privileges.get_privilege_level(msg.author)
+      if privilege_level < PrivilegeLevel.SERVER_OWNER:
+         raise errors.CommandPrivilegeError
+
+      substr = substr.strip()
+      if substr == "":
+         raise errors.UnknownCommandError
+
+      (left1, right1) = utils.separate_left_word(substr)
+
+      if left1 == "say":
+         await self._client.send_msg(msg, right1)
+
+      elif (left1 == "addmodule") or (left1 == "installmodule"):
+         if self._module_factory.module_exists(right1):
+            if self._modules.module_is_installed(right1):
+               await self._client.send_msg(msg, "`{}` is already installed.".format(right1))
+            else:
+               new_module = self._module_factory.new_module_instance(right1)
+               await self._modules.add_server_module(new_module)
+               self._storage.add_module(right1)
+               await self._client.send_msg(msg, "`{}` successfully installed.".format(right1))
+         else:
+            await self._client.send_msg(msg, "`{}` does not exist.".format(right1))
+
+      elif (left1 == "removemodule") or (left1 == "deletemodule") or (left1 == "uninstallmodule"):
+         if self._modules.module_is_installed(right1):
+            await self._modules.remove_server_module(right1)
+            self._storage.remove_module(right1)
+            await self._client.send_msg(msg, "`{}` successfully uninstalled.".format(right1))
+         else:
+            await self._client.send_msg(msg, "`{}` is not installed.".format(right1))
+
+      else:
+         raise errors.UnknownCommandError
+      return
+
+   async def _cmd_botowner(self, substr, msg):
       privilege_level = self._privileges.get_privilege_level(msg.author)
       if privilege_level != PrivilegeLevel.BOT_OWNER:
          raise errors.CommandPrivilegeError
 
       substr = substr.strip()
-      if substr == "" and not no_default:
+      if substr == "":
          raise errors.UnknownCommandError
+      
+      (left1, right1) = utils.separate_left_word(substr)
+
+      if left1 == "iam":
+         await self._cmd_botowner_iam(right1, msg)
+
+      # TODO: Reimplement this pls.
+      # elif left1 == "toggle":
+      #    (left2, right2) = utils.separate_left_word(right1)
+      #    if (left2 == "mentions") or (left2 == "mb") or (left2 == "mentionbot"):
+      #       (left3, right3) = utils.separate_left_word(right2)
+      #       if (left3 == "notify") or (left3 == "n"):
+      #          if mentionNotifyModule.is_enabled():
+      #             self._mbNotifyModule.disable()
+      #          else:
+      #             self._mbNotifyModule.enable()
+      #          await self._client.send_msg(msg, "Notification system enabled = " + str(self._mbNotifyModule.is_enabled()))
+      #       else:
+      #          raise errors.UnknownCommandError
+      #    else:
+      #       raise errors.UnknownCommandError
+
+      elif left1 == "gettime":
+         await self._client.send_msg(msg, datetime.datetime.utcnow().strftime("My current system time: %c UTC"))
+
+      elif left1 == "setgame":
+         await self._client.set_game_status(right1)
+         await self._client.send_msg(msg, "Game set to: " + right1)
+
+      elif left1 == "setusername":
+         await self._client.edit_profile(password, username=right1)
+         self._bot_name = right1 # TODO: Consider making this a function. Or stop using bot_name...
+         await self._client.send_msg(msg, "Username set to: " + right1)
+
+      elif left1 == "getemail":
+         await self._client.send_msg(msg, "My email is: " + email)
+
+      elif left1 == "joinserver":
+         try:
+            await self._client.accept_invite(right1)
+            await self._client.send_msg(msg, "Successfully joined a new server.")
+         except discord.InvalidArgument:
+            await self._client.send_msg(msg, "Failed to join a new server.")
+
+      elif left1 == "leaveserver":
+         await self._client.send_msg(msg, "Bye!")
+         await self._client.leave_server(msg.channel.server)
+
+      elif left1 == "throwexception":
+         raise Exception
+
+      elif left1 == "throwexception2":
+         await self._client.send_message(msg, "A" * 2001)
+      
       else:
-         (left1, right1) = utils.separate_left_word(substr)
-
-         if left1 == "say":
-            await self._client.send_msg(msg, right1)
-
-         elif left1 == "iam":
-            await self._cmd_admin_iam(right1, msg)
-
-         # TODO: Reimplement this pls.
-         # elif left1 == "toggle":
-         #    (left2, right2) = utils.separate_left_word(right1)
-         #    if (left2 == "mentions") or (left2 == "mb") or (left2 == "mentionbot"):
-         #       (left3, right3) = utils.separate_left_word(right2)
-         #       if (left3 == "notify") or (left3 == "n"):
-         #          if mentionNotifyModule.is_enabled():
-         #             self._mbNotifyModule.disable()
-         #          else:
-         #             self._mbNotifyModule.enable()
-         #          await self._client.send_msg(msg, "Notification system enabled = " + str(self._mbNotifyModule.is_enabled()))
-         #       else:
-         #          raise errors.UnknownCommandError
-         #    else:
-         #       raise errors.UnknownCommandError
-
-         elif left1 == "gettime":
-            await self._client.send_msg(msg, datetime.datetime.utcnow().strftime("My current system time: %c UTC"))
-
-         elif left1 == "setgame":
-            await self._client.set_game_status(right1)
-            await self._client.send_msg(msg, "Game set to: " + right1)
-
-         elif left1 == "setusername":
-            await self._client.edit_profile(password, username=right1)
-            self._bot_name = right1 # TODO: Consider making this a function. Or stop using bot_name...
-            await self._client.send_msg(msg, "Username set to: " + right1)
-
-         elif left1 == "getemail":
-            await self._client.send_msg(msg, "My email is: " + email)
-
-         elif left1 == "joinserver":
-            try:
-               await self._client.accept_invite(right1)
-               await self._client.send_msg(msg, "Successfully joined a new server.")
-            except discord.InvalidArgument:
-               await self._client.send_msg(msg, "Failed to join a new server.")
-
-         elif left1 == "leaveserver":
-            await self._client.send_msg(msg, "Bye!")
-            await self._client.leave_server(msg.channel.server)
-
-         elif left1 == "throwexception":
-            raise Exception
-
-         elif left1 == "throwexception2":
-            await self._client.send_message(msg, "A" * 2001)
-         
-         else:
-            raise errors.UnknownCommandError
+         raise errors.UnknownCommandError
       return
 
 
-   async def _cmd_admin_iam(self, substr, msg):
+   async def _cmd_botowner_iam(self, substr, msg):
       substr = substr.strip()
       (left, right) = utils.separate_left_word(substr)
       

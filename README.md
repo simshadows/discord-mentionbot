@@ -5,15 +5,21 @@ An extensible, multi-server Discord bot.
 
 Key features:
 
-* **Persistent data and settings** *(Still under development)*
+* **Persistent data and settings**
 * **Modularity**: Modules give the bot functionality.
-* **Customizability**: Server owners are able to set up installed modules and change settings as desired. *(Still under development)*
-* **Hierarchical Permissions System**: Assign roles different permission levels. Apart from the bot owner and server owner, there are 9 assignable permission levels, including a "No Privileges" level.
+	* Each module has the ability to pre-process incoming commands, allowing for some very interesting uses.
+* **Server-wise Customizability**: Server owners are able to set up installed modules and change settings as desired.
+* **Hierarchical Permissions System**: Assign roles different permission levels. Apart from the bot owner and server owner, there are 9 assignable permission levels, including a "No Privileges" level. *(Still under development)*
 * **Server-isolation**: Each server is treated separately with their own installed modules, settings, and functionality.<sup>[1]</sup>
 
-Currently, no other modules are available while the main program structure is being built. Check back later though!
+# Available Modules
 
-**Notes:**
+* **Mentions**: Tools for keeping track of mentions.
+	* Mentions can be PMed when users are offline (with the ability to opt-out).
+	* A search tool allows you to scan through channels for mentions.
+	* A mentions cache for presenting a quick summary of 
+
+# Notes
 
 * `classdiagram.xml` is opened with [draw.io](https://www.draw.io/).
 * `design_notes.txt` is used by myself to reflect on my own design choices as this project is partly a learning exercise in object-oriented design.
@@ -22,7 +28,7 @@ Currently, no other modules are available while the main program structure is be
 	* add the module's class to `ServerModuleFactory._MODULE_LIST`.
 * This does not poll to check who's the server owner. Must restart bot to change the bot's registered bot owner. *(This might change in the future, but it's a low priority.)*
 
-**TODO:**
+# TODO:
 
 * Implement message caching (retrieving messages fromm the server is time-consuming).
 * Implement json data verification.
@@ -36,7 +42,7 @@ Currently, no other modules are available while the main program structure is be
 * (LOW PRIORITY) Implement scheduling for module enable/disable, or "alternative command" enable/disable. For example, a feature may turn off if another bot is offline or not responding. I'm not too sure if this is necessary though, especially given the added complexity such a feature would bring. Modules may even be specially built for this purpose anyway...
 * (ONGOING) Find and exterminate security flaws...
 
-**Dependencies:**
+# Dependencies:
 
 * `pip install git+https://github.com/Rapptz/discord.py@async`
 * ~~`pip install git+https://github.com/Julian/jsonschema`~~ (Planned to be used.)

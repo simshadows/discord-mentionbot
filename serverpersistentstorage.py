@@ -53,7 +53,23 @@ class ServerPersistentStorage:
       return data
 
    def save_server_settings(self, data):
-      json_write(self._settings_filepath, data=data)
+      utils.json_write(self._settings_filepath, data=data)
+      return
+
+   # ALL METHODS BELOW ONLY MANIPULATE PERSISTENT STORAGE
+   # AND DON'T CHECK FOR EXTERNAL CONSISTENCY.
+   # E.g. you can add any module name you wish.
+
+   def add_module(self, module_name):
+      data = self.get_server_settings()
+      data["Installed Modules"].append(module_name)
+      self.save_server_settings(data)
+      return
+
+   def remove_module(self, module_name):
+      data = self.get_server_settings()
+      data["Installed Modules"].remove(module_name)
+      self.save_server_settings(data)
       return
 
 

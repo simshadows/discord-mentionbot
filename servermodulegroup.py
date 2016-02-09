@@ -36,10 +36,32 @@ class ServerModuleGroup:
          raise errors.UnknownCommandError
       return
 
+   # Module is referenced by its module name.
+   def module_is_installed(self, module_name):
+      for module in self._modules_list:
+         if module.MODULE_NAME == module_name:
+            return True
+      return False
+
+   # PRECONDITION: Module isn't already installed.
+   #               This means duplicates are allowed in the same ServerModuleGroup,
+   #               but its use often requires
    async def add_server_module(self, new_module):
       self._modules_list.append(new_module)
       for cmd_name in new_module.cmd_names:
          self._modules_cmd_dict[cmd_name] = new_module
+
+   # Installs the module referenced by its base command name.
+   # PRECONDITION: Module is currently installed.
+   async def remove_server_module(self, module_name):
+      module_to_remove = None
+      for module in self._modules_list:
+         if module.MODULE_NAME == module_name:
+            module_to_remove = module
+            break
+      for cmd_name in module_to_remove.cmd_names:
+         del self._modules_cmd_dict[cmd_name]
+      self._modules_list.remove(module_to_remove)
 
    # Returns a string containing help message content.
    #     May return an empty string if no help content.
@@ -68,6 +90,15 @@ class ServerModuleGroup:
          except KeyError:
             raise errors.NoHelpContentExists
       return buf
+
+   # Returns list of all installed modules in this instance.
+   # RETURNS: A list of tuples, each tuple in the format:
+   #          (module_name, module_short_description)
+   def get_module_info(self):
+      names = []
+      for module in self._modules_list:
+         names.append((module.MODULE_NAME, module.MODULE_SHORT_DESCRIPTION))
+      return names
 
 
 # servermodules.mentions.notify.MentionNotifyModule(client, enabled=self.INIT_MENTIONS_NOTIFY_ENABLED),
