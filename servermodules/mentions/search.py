@@ -12,6 +12,9 @@ class Search(ServerModule):
 
    RECOMMENDED_CMD_NAMES = ["search", "s"]
 
+   MODULE_NAME = "Search"
+   MODULE_SHORT_DESCRIPTION = "Allows users to search for their mentions."
+
    _RE_OPTION_CH = re.compile("ch=[\w\W]+") # e.g. "ch=<#124672134>"
    _RE_OPTION_M = re.compile("m=\d+") # e.g. "m=100"
    _RE_OPTION_R = re.compile("r=\d+") # e.g. "m=1000"
@@ -33,6 +36,10 @@ option: `--verbose` or `-v` - Include extra information.
       self._client = client
       self._cmd_names = cmd_names
       return
+
+   @classmethod
+   def get_instance(cls, cmd_names, client):
+      return Search(cmd_names, client)
 
    @property
    def cmd_names(self):

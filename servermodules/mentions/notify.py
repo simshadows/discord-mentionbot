@@ -10,6 +10,9 @@ class Notify(ServerModule):
 
    RECOMMENDED_CMD_NAMES = ["notify", "n"]
 
+   MODULE_NAME = "Notify"
+   MODULE_SHORT_DESCRIPTION = "PMs offline users when mentioned."
+
    _HELP_SUMMARY_LINES = """
 `{pf}notify` - View and change settings of PM notification system.
    """.strip().splitlines()
@@ -32,6 +35,10 @@ TODO: PLS ADD HELP FOR TOGGLE FEATURE. THX M8
 
       self._enabled = enabled
       return
+
+   @classmethod
+   def get_instance(cls, cmd_names, client):
+      return Notify(cmd_names, client, enabled=False)
 
    @property
    def cmd_names(self):

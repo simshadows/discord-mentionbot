@@ -1,0 +1,7 @@
+ModularizedServerModule (abstract): Providing infrastructure for further-modularized server modules
+	
+	Giving modules additional pre-built infrastructure for sub-moduling may be unnecessary, even if it does save modules from having to code it themselves. It might be adding a bit too much complexity with many more possible points of failure. ...but on the other hand, easy sub-moduling!
+
+ServerModule (interface): Having both constructors and a static factory method
+
+	This seems like an awkward design choice by myself, but the static method is useful as an standardized instantiation method. This allows ServerModuleFactory to avoid to explicitly state each individual module's constructor.

@@ -16,20 +16,28 @@ Currently, no other modules are available while the main program structure is be
 **Notes:**
 
 * `classdiagram.xml` is opened with [draw.io](https://www.draw.io/).
-* This does not poll to check who's the server owner. Must restart bot for changes to apply.
+* `design_notes.txt` is used by myself to reflect on my own design choices as this project is partly a learning exercise in object-oriented design.
+* This does not poll to check who's the server owner. Must restart bot to change the bot's registered bot owner. *(This might change in the future, but it's a low priority.)*
 
 **TODO:**
 
+* Implement "alternative commands" as an option. For example, instead of `/chcreate open <channelname>`, one could instead do `++<channelname>`.
+* Implement message caching (retrieving messages fromm the server is time-consuming).
 * Implement json data verification.
+	* (LOW PRIORITY) Implement json data repair.
 * Implement module enabling/disabling.
+* Implement unified shared infrastructure for things like:
+	* user activity sensing,
 * Reimplement abstract classes with the `abc` library.
-* Work a design that allows unified persistent data storage, shared message history caching, and shared user activity sensing.
-* Find and exterminate the many security flaws...
+* (LOW PRIORITY) Implement data cache backups. The bot should also back up files if they're found to be corrupted (to allow for manual recovery in the case of a bug during runtime).
+* (LOW PRIORITY) Implement deeper module information infrastructure.
+* (LOW PRIORITY) Implement scheduling for module enable/disable, or "alternative command" enable/disable. For example, a feature may turn off if another bot is offline or not responding. I'm not too sure if this is necessary though, especially given the added complexity such a feature would bring. Modules may even be specially built for this purpose anyway...
+* (ONGOING) Find and exterminate security flaws...
 
 **Dependencies:**
 
 * `pip install git+https://github.com/Rapptz/discord.py@async`
-* `pip install git+https://github.com/Julian/jsonschema`
+* ~~`pip install git+https://github.com/Julian/jsonschema`~~ (Planned to be used.)
 
 ---
 

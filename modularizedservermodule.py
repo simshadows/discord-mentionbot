@@ -9,6 +9,11 @@ class ModularizedServerModule:
 
    RECOMMENDED_CMD_NAMES = NotImplemented
 
+   # Defines a standard construction method.
+   @classmethod
+   def get_instance(cls, cmd_names, client):
+      raise NotImplementedError
+
    # This must be overwritten to return a list of initialized submodules.
    def _get_initial_submodules(self):
       raise NotImplementedError

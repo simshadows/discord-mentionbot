@@ -14,6 +14,9 @@ class Summary(ServerModule):
 
    RECOMMENDED_CMD_NAMES = ["summary"]
 
+   MODULE_NAME = "Notify"
+   MODULE_SHORT_DESCRIPTION = "Caches mentions to present summaries of recent mentions."
+
    _HELP_SUMMARY_LINES = """
 `{pf}summary [options]` - Get summary of all latest mentions.
    """.strip().splitlines()
@@ -33,6 +36,10 @@ option: `--verbose` or `-v` - Include extra information.
       self._initialization_timestamp = datetime.datetime.utcnow()
       
       return
+
+   @classmethod
+   def get_instance(cls, cmd_names, client):
+      return Summary(cmd_names, client)
 
    @property
    def cmd_names(self):

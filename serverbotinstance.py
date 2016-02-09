@@ -11,9 +11,10 @@ from enums import PrivilegeLevel
 import errors
 import clientextended
 
-import servermodulegroup
+from servermodulegroup import ServerModuleGroup
 from serverpersistentstorage import ServerPersistentStorage
 from privilegemanager import PrivilegeManager
+from servermodulefactory import ServerModuleFactory
 
 # Modules
 from servermodules.mentions.mentions import Mentions
@@ -54,13 +55,17 @@ class ServerBotInstance:
 
       self._storage = ServerPersistentStorage(self._data_directory + "settings.json", self._server)
       self._privileges = PrivilegeManager(botowner_ID, serverowner_ID)
+      self._module_factory = ServerModuleFactory(self._client)
 
-      print(str(self._storage.get_server_settings()))
+      self._modules = None # Initialize later
 
-      modules = [
-         Mentions(Mentions.RECOMMENDED_CMD_NAMES, client)
-      ]
-      self._modules = servermodulegroup.ServerModuleGroup(initial_modules=modules)
+      # Load and apply server settings
+
+      data = self._storage.get_server_settings()
+      modules = []
+      for module_name in data["Installed Modules"]:
+         modules.append(self._module_factory.new_module_instance(module_name))
+      self._modules = ServerModuleGroup(initial_modules=modules)
       return
 
 

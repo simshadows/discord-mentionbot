@@ -1,11 +1,16 @@
 # Abstract Class (would've been an interface...)
 # All server modules are subclasses of ServerModule.
 class ServerModule:
-
+   
    RECOMMENDED_CMD_NAMES = NotImplemented
 
-   # TODO: Is it possible or even practical to define a standard constructor?
-   # def __init__(self, cmd_names, client):
+   MODULE_NAME = NotImplemented
+   MODULE_SHORT_DESCRIPTION = NotImplemented
+
+   # Defines a standard construction method.
+   @classmethod
+   def get_instance(cls, cmd_names, client):
+      raise NotImplementedError
 
    # Return a list of strings to be used to invoke a module command.
    # For example, if command_names=["foo","baz"], then subcommands

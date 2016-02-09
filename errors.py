@@ -18,7 +18,10 @@ class NoHelpContentExists(MentionbotError):
    def __init__(self):
       return
 
-
+# General-purpose exception.
+class DoesNotExist(MentionbotError):
+   def __init__(self):
+      return
 
 
 
