@@ -26,10 +26,13 @@ class Random(ServerModule):
 `{pf}random number -1 to -5, 6to10` - Generates two random numbers.
 `{pf}random coin` - Flips a coin.
 `{pf}random colour` - Generates a random RGB colour code.
+`{pf}random dice 3d9` - Rolls 9-sided dice (faces 1 to 9) 3 times.
    """.strip().splitlines()
 
+   _RE_DIGITS = re.compile("\d+")
    _RE_INT = re.compile("[-\+]?\d+")
-   _RE_CMD_CHOOSE = re.compile("choose|ch|choice|choices")
+   _RE_KW_CHOOSE = re.compile("choose|ch|choice|choices")
+   _RE_DICE_NOTATION = re.compile("(\d*d)?\d+")
 
    # PARAMETER: enabled - If false, the module is disabled.
    def __init__(self, cmd_names, client):
@@ -46,12 +49,9 @@ class Random(ServerModule):
       return self._cmd_names
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
-      print("CONTENT: " + content)
       str1 = default_cmd_prefix + "choose "
-      print("STR1: " + str1)
       if content.startswith(str1):
          content = utils.add_base_cmd(content, default_cmd_prefix, self._cmd_names[0])
-      print("CONTENT2: " + content)
       return content
 
    def get_help_summary(self, cmd_prefix, privilegelevel=0):
@@ -72,7 +72,7 @@ class Random(ServerModule):
          substr = "number"
       elif self._RE_INT.match(substr):
          substr = "number " + substr
-      elif (not self._RE_CMD_CHOOSE.match(substr)) and (";" in substr):
+      elif (not self._RE_KW_CHOOSE.match(substr)) and (";" in substr):
          substr = "choose " + substr
       
       # Process the command itself
@@ -102,7 +102,7 @@ class Random(ServerModule):
             buf += "\nThis happens every approx. 1/6000 times!"
             buf += "\nhttp://journals.aps.org/pre/abstract/10.1103/PhysRevE.48.2547"
             buf += "\n(Disclaimer: Actually, this RNG does it every 600th flip"
-            buf += " to give this event a small chance of occurring.)"
+            buf += " to give this event a slight probability boost.)"
          elif random.randint(1,80) == 1:
             buf = "You accidentally tear a hole in the fabric of spacetime. Good job. Idiot."
          await self._client.send_msg(msg, buf)
@@ -113,6 +113,42 @@ class Random(ServerModule):
          rand = rand.zfill(6)
          buf = "{}, your random colour is {} (decimal: {})".format(msg.author.name, rand, rand_int)
          buf += "\nhttp://www.colorhexa.com/{}.png".format(rand)
+         await self._client.send_msg(msg, buf)
+
+      elif (left == "dice") or (left == "roll"):
+         if right == "":
+            throws = 1
+            sides = 6
+         elif self._RE_DICE_NOTATION.fullmatch(right):
+            spl = utils.remove_blank_strings(right.split("d"))
+            if len(spl) == 1:
+               throws = 1
+               sides = int(spl[0])
+            else:
+               throws = int(spl[0])
+               sides = int(spl[1])
+         else:
+            raise errors.InvalidCommandArgumentsError
+         # Verify values
+         if (throws < 1) or (sides < 1) or (throws > 1000):
+            raise errors.InvalidCommandArgumentsError
+         # Calculate output
+         total = 0
+         buf3 = ""
+         for i in range(0,throws):
+            trial = random.randint(1,sides)
+            total += trial
+            buf3 += str(trial) + ", "
+         buf1 = str(total)
+         buf2 = "\n\n**Interpretation:** {0}d{1}".format(throws, sides)
+         buf2 += "\n**Individual dice rolls:** "
+         buf3 = buf3[:-2]
+         if throws == 1:
+            buf = buf1 + " ({0}d{1})".format(throws, sides)
+         elif len(buf1) + len(buf2) + len(buf3) > 1998:
+            buf = buf1 + buf2 + "*(Too many dicerolls to display. Sorry!)*"
+         else:
+            buf = buf1 + buf2 + buf3
          await self._client.send_msg(msg, buf)
 
       else:

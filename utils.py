@@ -103,7 +103,7 @@ def prepare_help_content(raw_lines, cmd_prefix, privilegelevel=0):
 
 
 def remove_blank_strings(string_list):
-   return filter(None, string_list)
+   return list(filter(None, string_list))
 
 
 # Parses a block of text, returns a list of flags.

@@ -17,7 +17,8 @@ Key features:
 * **Mentions**: Tools for keeping track of mentions.
 	* Mentions can be PMed when users are offline (with the ability to opt-out).
 	* A search tool allows you to scan through channels for mentions.
-	* A mentions cache for presenting a quick summary of 
+* **Random**: Randomization tools.
+	* Generate random numbers of arbitrary ranges, flip coins, get random RGB colour codes, and use dice notation.
 
 # Notes
 
@@ -37,9 +38,12 @@ Key features:
 * Implement unified shared infrastructure for things like:
 	* user activity sensing,
 * Reimplement abstract classes with the `abc` library.
+* Find all uses of utils.remove_blank_strings() and ensure none of them have a redundant list() around them.
 * (LOW PRIORITY) Implement data cache backups. The bot should also back up files if they're found to be corrupted (to allow for manual recovery in the case of a bug during runtime).
 * (LOW PRIORITY) Implement deeper module information infrastructure.
 * (LOW PRIORITY) Implement scheduling for module enable/disable, or "alternative command" enable/disable. For example, a feature may turn off if another bot is offline or not responding. I'm not too sure if this is necessary though, especially given the added complexity such a feature would bring. Modules may even be specially built for this purpose anyway...
+* (VERY LOW PRIORITY) The following module features:
+	* In module `Random`, implement more advanced dicerolling.
 * (ONGOING) Find and exterminate security flaws...
 
 # Dependencies:
