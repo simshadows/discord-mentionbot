@@ -33,15 +33,18 @@ class ServerBotInstance:
 **The following commands are available:**
 `{pf}availablemodules` - Get all modules available for installation.
 `{pf}installedmodules` - Get all installed modules.
-`{pf}avatar [usermention]` - Get the avatar URL of the user.
 `{pf}source` - Where to get source code.
 `{pf}rip` - Rest in pieces.
 `{pf}status` - Get bot's current status.
->>> PRIVILEGE LEVEL 9000 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+   """.strip().splitlines()
+
+   _HELP_ADMIN = """
+>>> PRIVILEGE LEVEL 9000 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 `{pf}so say [text]`
 `{pf}so addmodule [module name]`
 `{pf}so removemodule [module name]`
->>> PRIVILEGE LEVEL 9001 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>> PRIVILEGE LEVEL 9001 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 `{pf}bo iam [@user] [text]`
 `{pf}bo gettime`
 `{pf}bo setgame [text]`
@@ -139,9 +142,6 @@ class ServerBotInstance:
                   buf += "\n`{0}`: {1}".format(val[0], val[1])
             await self._client.send_msg(msg, buf)
 
-         elif left == "avatar":
-            await self._cmd1_avatar(right, msg)
-
          elif left == "source":
             await self._client.send_msg(msg, "https://github.com/simshadows/discord-mentionbot")
 
@@ -181,24 +181,6 @@ class ServerBotInstance:
          buf = ""
       buf += self._modules.get_help_content(substr, cmd_prefix, privilege_level=privilege_level)
       return buf
-
-
-   async def _cmd1_avatar(self, substr, msg):
-      (left, right) = utils.separate_left_word(substr)
-      user = None
-      if len(left) > 0:
-         user = self._client.search_for_user(left, enablenamesearch=True, serverrestriction=msg.server)
-         if user is None:
-            return await self._client.send_msg(msg, left + " doesn't even exist m8")
-      else:
-         user = msg.author
-
-      # Guaranteed to have a user.
-      avatar = user.avatar_url
-      if avatar == "":
-         return await self._client.send_msg(msg, left + " m8 get an avatar")
-      else:
-         return await self._client.send_msg(msg, avatar)
 
 
    async def _cmd_serverowner(self, substr, msg):

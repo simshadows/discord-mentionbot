@@ -13,7 +13,7 @@ class Random(ServerModule):
    RECOMMENDED_CMD_NAMES = ["random", "rng", "rnd", "rand"]
 
    MODULE_NAME = "Random"
-   MODULE_SHORT_DESCRIPTION = "A suite of commands for generating random values."
+   MODULE_SHORT_DESCRIPTION = "Random value generation tools."
 
    _HELP_SUMMARY_LINES = """
 `{pf}random [integer]` - Get random int. (See `{pf}help random` for more!)
@@ -24,6 +24,7 @@ class Random(ServerModule):
 *All ranges are inclusive unless otherwise noted.*
 `{pf}random` - Generates random number from 1 to 10.
 `{pf}random number -1 to -5, 6to10` - Generates two random numbers.
+`{pf}random choose A;B;C` - Randomly picks an option (delimited by `;`).
 `{pf}random coin` - Flips a coin.
 `{pf}random colour` - Generates a random RGB colour code.
 `{pf}random dice 3d9` - Rolls 9-sided dice (faces 1 to 9) 3 times.
@@ -34,7 +35,6 @@ class Random(ServerModule):
    _RE_KW_CHOOSE = re.compile("choose|ch|choice|choices")
    _RE_DICE_NOTATION = re.compile("(\d*d)?\d+")
 
-   # PARAMETER: enabled - If false, the module is disabled.
    def __init__(self, cmd_names, client):
       self._client = client
       self._cmd_names = cmd_names
@@ -49,8 +49,8 @@ class Random(ServerModule):
       return self._cmd_names
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
-      str1 = default_cmd_prefix + "choose "
-      if content.startswith(str1):
+      str_choose = default_cmd_prefix + "choose "
+      if content.startswith(str_choose):
          content = utils.add_base_cmd(content, default_cmd_prefix, self._cmd_names[0])
       return content
 
@@ -60,11 +60,6 @@ class Random(ServerModule):
    def get_help_detail(self, substr, cmd_prefix, privilegelevel=0):
       return utils.prepare_help_content(self._HELP_DETAIL_LINES, cmd_prefix, privilegelevel)
 
-   # Call this every time a message is received.
-   async def on_message(self, msg):
-      pass
-
-   # Call this to process a command.
    async def process_cmd(self, substr, msg, privilegelevel=0):
       
       # Process command shortcuts
@@ -78,7 +73,7 @@ class Random(ServerModule):
       # Process the command itself
       (left, right) = utils.separate_left_word(substr)
       if (left == "number") or (left == "num") or (left == "int") or (left == "integer"):
-         await self.cmd_number(right, msg)
+         await self._cmd_number(right, msg)
 
       elif (left == "choose") or (left == "ch") or (left == "choice") or (left == "choices"):
          choices = right.split(";")
@@ -156,7 +151,7 @@ class Random(ServerModule):
 
       return
 
-   async def cmd_number(self, substr, msg):
+   async def _cmd_number(self, substr, msg):
       # Compile a set of ranges to randomize.
       args = utils.remove_whitespace(substr)
       rng_ranges = []
@@ -207,3 +202,5 @@ class Random(ServerModule):
       return await self._client.send_msg(msg, buf)
 
 
+
+   

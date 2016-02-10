@@ -14,6 +14,7 @@ class ServerPersistentStorage:
    DEFAULT_SETTINGS = {
       "Server Name": "",
       "Installed Modules": [
+         "Basic Information",
          "Mentions",
          "Random",
       ],

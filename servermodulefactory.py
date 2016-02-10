@@ -1,4 +1,5 @@
 # Modules
+from servermodules.basicinfo import BasicInfo
 from servermodules.mentions.mentions import Mentions
 from servermodules.random import Random
 
@@ -6,8 +7,9 @@ class ServerModuleFactory:
 
    # Please hard-code every module class into this list.
    _MODULE_LIST = [
+      BasicInfo,
       Mentions,
-      Random
+      Random,
    ]
 
    def __init__(self, client):
@@ -34,9 +36,6 @@ class ServerModuleFactory:
    def new_module_instance(self, module_name):
       module = self._modules[module_name]
       return module.get_instance(module.RECOMMENDED_CMD_NAMES, self._client)
-
-
-
 
 
 
