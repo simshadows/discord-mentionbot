@@ -16,14 +16,20 @@ class Random(ServerModule):
    MODULE_SHORT_DESCRIPTION = "A suite of commands for generating random values."
 
    _HELP_SUMMARY_LINES = """
-`{pf}random` - Get random int. (Additional help exists.)
+`{pf}random [integer]` - Get random int. (See `{pf}help random` for more!)
    """.strip().splitlines()
 
    _HELP_DETAIL_LINES = """
-**Sorry, I haven't written help info for this module yet. Check back later!**
+**Examples**
+*All ranges are inclusive unless otherwise noted.*
+`{pf}random` - Generates random number from 1 to 10.
+`{pf}random number -1 to -5, 6to10` - Generates two random numbers.
+`{pf}random coin` - Flips a coin.
+`{pf}random colour` - Generates a random RGB colour code.
    """.strip().splitlines()
 
    _RE_INT = re.compile("[-\+]?\d+")
+   _RE_CMD_CHOOSE = re.compile("choose|ch|choice|choices")
 
    # PARAMETER: enabled - If false, the module is disabled.
    def __init__(self, cmd_names, client):
@@ -64,6 +70,10 @@ class Random(ServerModule):
       # Process command shortcuts
       if substr == "": # Default Case
          substr = "number"
+      elif self._RE_INT.match(substr):
+         substr = "number " + substr
+      elif (not self._RE_CMD_CHOOSE.match(substr)) and (";" in substr):
+         substr = "choose " + substr
       
       # Process the command itself
       (left, right) = utils.separate_left_word(substr)
@@ -82,7 +92,22 @@ class Random(ServerModule):
          buf = buf[:-1]
          await self._client.send_msg(msg, buf)
 
-      elif (left == "colour") or (left == "color") or (left == "rgb"):
+      elif (left == "coin") or (left == "flip"):
+         if random.randint(0,1) == 1:
+            buf = "Heads"
+         else:
+            buf = "Tails"
+         if random.randint(1,600) == 1:
+            buf = "The coin landed on its side."
+            buf += "\nThis happens every approx. 1/6000 times!"
+            buf += "\nhttp://journals.aps.org/pre/abstract/10.1103/PhysRevE.48.2547"
+            buf += "\n(Disclaimer: Actually, this RNG does it every 600th flip"
+            buf += " to give this event a small chance of occurring.)"
+         elif random.randint(1,80) == 1:
+            buf = "You accidentally tear a hole in the fabric of spacetime. Good job. Idiot."
+         await self._client.send_msg(msg, buf)
+
+      elif (left == "colour") or (left == "color") or (left == "rgb") or (left == "RGB"):
          rand_int = random.randint(0,(16**6)-1)
          rand = hex(rand_int)[2:] # Convert to hex
          rand = rand.zfill(6)

@@ -85,6 +85,11 @@ class ServerBotInstance:
    async def process_text(self, substr, msg):
       
       await self._modules.on_message(msg)
+
+      privilege_level = self._privileges.get_privilege_level(msg.author)
+      if privilege_level == PrivilegeLevel.NO_PRIVILEGE:
+         return
+
       substr = await self._modules.msg_preprocessor(substr, msg, self._cmd_prefix)
 
       (left, right) = utils.separate_left_word(substr)
