@@ -64,9 +64,11 @@ class JCFDiscord(ServerModule):
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
       str_functions = default_cmd_prefix + "functions"
+      str_rip = default_cmd_prefix + "rip"
       if content.startswith(str_functions + " ") or (content == str_functions): # TODO: IMPORTANT! FIX THE INCONSISTENCY.
          content = utils.add_base_cmd(content, default_cmd_prefix, self._cmd_names[0])
-
+      elif content.startswith(str_rip + " ") or (content == str_rip): # TODO: IMPORTANT! FIX THE INCONSISTENCY.
+         content = utils.add_base_cmd(content, default_cmd_prefix, self._cmd_names[0])
       return content
 
    def get_help_summary(self, cmd_prefix, privilegelevel=0):
@@ -93,6 +95,9 @@ class JCFDiscord(ServerModule):
             buf += mbti_type + " = " + self._FUNCTION_STACKS[mbti_type] + "\n"
          buf += "```"
          await self._client.send_msg(msg, buf)
+
+      elif left == "rip":
+         await self._client.send_msg(msg, "doesnt even deserve a funeral")
 
       else:
          raise errors.InvalidCommandArgumentsError

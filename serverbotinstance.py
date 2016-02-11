@@ -31,19 +31,19 @@ class ServerBotInstance:
    # TODO: Figure out a neater way of doing this.
    _HELP_SUMMARY_TO_BEGIN = """
 **The following commands are available:**
-`{pf}availablemodules` - Get all modules available for installation.
-`{pf}installedmodules` - Get all installed modules.
 `{pf}source` - Where to get source code.
+`{pf}allmods` - Get all modules available for installation.
+`{pf}mods` - Get all installed modules.
 `{pf}rip` - Rest in pieces.
 `{pf}status` - Get bot's current status.
-
+>>> PRIVILEGE LEVEL 8000 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+`{pf}say [text]`
+`{pf}add [module name]`
+`{pf}remove [module name]`
    """.strip().splitlines()
 
    _HELP_ADMIN = """
->>> PRIVILEGE LEVEL 9000 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-`{pf}so say [text]`
-`{pf}so addmodule [module name]`
-`{pf}so removemodule [module name]`
+
 >>> PRIVILEGE LEVEL 9001 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 `{pf}bo iam [@user] [text]`
 `{pf}bo gettime`
@@ -140,6 +140,7 @@ class ServerBotInstance:
 
    async def _cmd1(self, substr, msg, cmd_prefix, no_default=False):
       substr = substr.strip()
+      privilege_level = self._privileges.get_privilege_level(msg.author)
       if substr == "" and not no_default:
          raise NotImplementedError # TODO !!!
          # await self._mbSummaryModule.process_cmd("", msg, add_extra_help=False)
@@ -149,13 +150,13 @@ class ServerBotInstance:
             help_content = self._get_help_content(right, msg, cmd_prefix)
             await self._client.send_msg(msg, help_content)
 
-         elif (left == "availablemodules") or (left == "allmodules") or (left == "allmods"):
+         elif (left == "allmods") or (left == "allmodules"):
             buf = "**The following modules are available for installation:**"
             for val in self._module_factory.module_list_gen():
                buf += "\n`{0}`: {1}".format(val[0], val[1])
             await self._client.send_msg(msg, buf)
 
-         elif (left == "installedmodules") or (left == "modules") or (left == "mods"):
+         elif (left == "mods") or (left == "modules"):
             info = self._modules.get_module_info()
             if len(info) == 0:
                buf = "No modules are installed."
@@ -168,22 +169,42 @@ class ServerBotInstance:
          elif left == "source":
             await self._client.send_msg(msg, "https://github.com/simshadows/discord-mentionbot")
 
-         elif left == "rip":
-            await self._client.send_msg(msg, "doesnt even deserve a funeral")
-
-         # TODO: Make this useable.
-         # elif left == "status":
-         #    buf = "**Status:**"
-         #    buf += "\nBot current uptime: {}. ".format(utils.seconds_to_string(self.get_presence_time()))
-         #    buf += "\nNotification system enabled = " + str(self._mbNotifyModule.is_enabled())
-         #    await self._client.send_msg(msg, buf)
-
-         # TODO: rework admin command help.
-         elif (left == "serverowner") or (left == "so") or (left == "admin") or (left == "a"):
-            await self._cmd_serverowner(right, msg)
+         elif left == "status":
+            buf = "**Status:**"
+            buf += "\nBot current uptime: {}. ".format(utils.seconds_to_string(self.get_presence_time()))
+            await self._client.send_msg(msg, buf)
 
          elif (left == "botowner") or (left == "bo"):
             await self._cmd_botowner(right, msg)
+
+         elif left == "say":
+            if privilege_level < PrivilegeLevel.ADMIN:
+               raise errors.CommandPrivilegeError
+            await self._client.send_msg(msg, right)
+
+         elif (left == "add") or (left == "install") or (left == "addmodule"):
+            if privilege_level < PrivilegeLevel.ADMIN:
+               raise errors.CommandPrivilegeError
+            if self._module_factory.module_exists(right):
+               if self._modules.module_is_installed(right):
+                  await self._client.send_msg(msg, "`{}` is already installed.".format(right))
+               else:
+                  new_module = self._module_factory.new_module_instance(right, self)
+                  await self._modules.add_server_module(new_module)
+                  self._storage.add_module(right)
+                  await self._client.send_msg(msg, "`{}` successfully installed.".format(right))
+            else:
+               await self._client.send_msg(msg, "`{}` does not exist.".format(right))
+
+         elif (left == "remove") or (left == "uninstall") or (left == "removemodule"):
+            if privilege_level < PrivilegeLevel.ADMIN:
+               raise errors.CommandPrivilegeError
+            if self._modules.module_is_installed(right):
+               await self._modules.remove_server_module(right)
+               self._storage.remove_module(right)
+               await self._client.send_msg(msg, "`{}` successfully uninstalled.".format(right))
+            else:
+               await self._client.send_msg(msg, "`{}` is not installed.".format(right))
 
          else:
             print("processing command: " + substr)
@@ -205,45 +226,6 @@ class ServerBotInstance:
          buf = ""
       buf += self._modules.get_help_content(substr, cmd_prefix, privilege_level=privilege_level)
       return buf
-
-
-   async def _cmd_serverowner(self, substr, msg):
-      privilege_level = self._privileges.get_privilege_level(msg.author)
-      if privilege_level < PrivilegeLevel.SERVER_OWNER:
-         raise errors.CommandPrivilegeError
-
-      substr = substr.strip()
-      if substr == "":
-         raise errors.UnknownCommandError
-
-      (left1, right1) = utils.separate_left_word(substr)
-
-      if left1 == "say":
-         await self._client.send_msg(msg, right1)
-
-      elif (left1 == "addmodule") or (left1 == "installmodule"):
-         if self._module_factory.module_exists(right1):
-            if self._modules.module_is_installed(right1):
-               await self._client.send_msg(msg, "`{}` is already installed.".format(right1))
-            else:
-               new_module = self._module_factory.new_module_instance(right1, self)
-               await self._modules.add_server_module(new_module)
-               self._storage.add_module(right1)
-               await self._client.send_msg(msg, "`{}` successfully installed.".format(right1))
-         else:
-            await self._client.send_msg(msg, "`{}` does not exist.".format(right1))
-
-      elif (left1 == "removemodule") or (left1 == "deletemodule") or (left1 == "uninstallmodule"):
-         if self._modules.module_is_installed(right1):
-            await self._modules.remove_server_module(right1)
-            self._storage.remove_module(right1)
-            await self._client.send_msg(msg, "`{}` successfully uninstalled.".format(right1))
-         else:
-            await self._client.send_msg(msg, "`{}` is not installed.".format(right1))
-
-      else:
-         raise errors.UnknownCommandError
-      return
 
    async def _cmd_botowner(self, substr, msg):
       privilege_level = self._privileges.get_privilege_level(msg.author)

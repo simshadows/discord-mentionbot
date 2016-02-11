@@ -37,7 +37,7 @@ class BsiStarkRavingMadBot(ServerModule):
 ~~- $invite~~
 ~~- $pengu~~
 ~~- $reddit~~
-~~- $rip~~
+- $rip
 - $roll
 - $say
 - $serverstats
@@ -82,7 +82,7 @@ For reference, I require the following modules to be installed:
          "$invite": cmdnotimplemented,
          "$pengu": cmdnotimplemented,
          "$reddit": cmdnotimplemented,
-         "$rip": cmdnotimplemented,
+         "$rip": pf + "rip",
          "$roll": pf + "random dice",
          "$say": this + " say",
          "$serverstats": pf + "basicinfo server",
@@ -120,9 +120,8 @@ For reference, I require the following modules to be installed:
       #            StarkRavingMadBot changes. e.g. if messages are
       #            invoked with a prefix that has a space.
       (left, right) = utils.separate_left_word(content)
-      print(left)
       try:
-         left = self._preprocessor_replace[left]
+         left = self._preprocessor_replace[left.lower()]
       except KeyError:
          return content
 
