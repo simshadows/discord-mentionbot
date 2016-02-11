@@ -24,6 +24,7 @@ Key features:
 
 Some community-specific modules:
 
+* **JCFDiscord**: For the [JCFDiscord](https://www.reddit.com/r/JCFDiscord/) community.
 * **BSI StarkRavingMadBot**: A bot stand-in for the [JCFDiscord](https://www.reddit.com/r/JCFDiscord/) community's [StarkRavingMadBot](https://github.com/josh951623/StarkRavingMadBot).
 	* This module is made to mirror some of StarkRavingMadBot's functionality, as well as take over if it's Stark isn't present on the server.
 

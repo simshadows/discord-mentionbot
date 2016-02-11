@@ -20,7 +20,7 @@ class ServerModuleResources:
 
    @property
    def client(self):
-       return self._sbi.client
+      return self._sbi.client
 
    @property
    def server(self):
@@ -28,7 +28,11 @@ class ServerModuleResources:
 
    @property
    def data_directory(self):
-       return self._data_directory
+      return self._data_directory
+
+   @property
+   def shared_directory(self):
+       return self._shared_directory
    
    @property
    def cmd_prefix(self):

@@ -5,6 +5,7 @@ from servermodules.basicinfo import BasicInfo
 from servermodules.mentions.mentions import Mentions
 from servermodules.random import Random
 from servermodules.wolframalpha import WolframAlpha
+from servermodules.jcfdiscord import JCFDiscord
 from servermodules.bsistarkravingmadbot import BsiStarkRavingMadBot
 
 class ServerModuleFactory:
@@ -15,6 +16,7 @@ class ServerModuleFactory:
       Mentions,
       Random,
       WolframAlpha,
+      JCFDiscord,
       BsiStarkRavingMadBot,
    ]
 
