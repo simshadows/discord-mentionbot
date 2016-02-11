@@ -108,6 +108,8 @@ class MentionBot(clientextended.ClientExtended):
       
       return
 
+   def get_server_bot_instance(self, server):
+      return self._bot_instances[server]
 
 # Log in to discord
 client = MentionBot()

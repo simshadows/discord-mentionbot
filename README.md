@@ -33,6 +33,8 @@ Key features:
 
 # TODO:
 
+* (IMPORTANT) Make a shared resource access point for modules.
+	* Additionally, fix the issue in `bsistarkravingmadbot` where the command prefix is hard-coded.
 * Implement additional utility functions to make message pre-processing faster, and with neater code.
 * Figure out a way to use dicts for faster message preprocessing. (It currently uses lots of if-else statements.)
 * Implement message caching (retrieving messages fromm the server is time-consuming).

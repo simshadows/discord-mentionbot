@@ -38,7 +38,7 @@ option: `--verbose` or `-v` - Include extra information.
       return
 
    @classmethod
-   def get_instance(cls, cmd_names, client):
+   def get_instance(cls, cmd_names, client, server):
       return Summary(cmd_names, client)
 
    @property

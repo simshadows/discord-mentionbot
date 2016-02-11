@@ -70,7 +70,7 @@ class ServerBotInstance:
 
       self._storage = ServerPersistentStorage(self._data_directory + "settings.json", self._server)
       self._privileges = PrivilegeManager(botowner_ID, serverowner_ID)
-      self._module_factory = ServerModuleFactory(self._client)
+      self._module_factory = ServerModuleFactory(self._client, self._server)
 
       self._modules = None # Initialize later
 
@@ -82,6 +82,12 @@ class ServerBotInstance:
          modules.append(self._module_factory.new_module_instance(module_name))
       self._modules = ServerModuleGroup(initial_modules=modules)
       return
+
+
+   @property
+   def cmd_prefix(self):
+       return self._cmd_prefix
+   
 
 
    # Call this to process text (to parse for commands).

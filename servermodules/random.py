@@ -41,7 +41,7 @@ class Random(ServerModule):
       return
 
    @classmethod
-   def get_instance(cls, cmd_names, client):
+   def get_instance(cls, cmd_names, client, server):
       return Random(cmd_names, client)
 
    @property

@@ -3,6 +3,8 @@ import re
 import os
 import json
 
+import discord
+
 _RE_PRIVLVL_LINE = re.compile(">>> PRIVILEGE LEVEL \d+")
 
 #################################################################################
@@ -85,6 +87,15 @@ def change_cmd_prefix(content, old="/", new="$"):
 #################################################################################
 # OTHERS ########################################################################
 #################################################################################
+
+def member_is_offline(member):
+   return str(member.status) == str(discord.Status.offline)
+
+def member_is_idle(member):
+   return str(member.status) == str(discord.Status.idle)
+
+def member_is_online(member):
+   return str(member.status) == str(discord.Status.online)
 
 # A helper method for preparing help strings.
 # Parses a list of lines, producing a single string with the lines

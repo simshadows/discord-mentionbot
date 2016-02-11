@@ -17,7 +17,7 @@ class Mentions(ModularizedServerModule):
    MODULE_SHORT_DESCRIPTION = "Assists in finding mentions."
 
    @classmethod
-   def get_instance(cls, cmd_names, client):
+   def get_instance(cls, cmd_names, client, server):
       return Mentions(cmd_names, client)
 
    def _get_initial_submodules(self):

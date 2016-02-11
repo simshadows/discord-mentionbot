@@ -2,6 +2,7 @@
 from servermodules.basicinfo import BasicInfo
 from servermodules.mentions.mentions import Mentions
 from servermodules.random import Random
+from servermodules.bsistarkravingmadbot import BsiStarkRavingMadBot
 
 class ServerModuleFactory:
 
@@ -10,10 +11,12 @@ class ServerModuleFactory:
       BasicInfo,
       Mentions,
       Random,
+      BsiStarkRavingMadBot,
    ]
 
-   def __init__(self, client):
+   def __init__(self, client, server):
       self._client = client
+      self._server = server
       self._modules = {}
 
       for module in self._MODULE_LIST:
@@ -35,7 +38,7 @@ class ServerModuleFactory:
    # PRECONDITION: self.module_exists(module_name) == True
    def new_module_instance(self, module_name):
       module = self._modules[module_name]
-      return module.get_instance(module.RECOMMENDED_CMD_NAMES, self._client)
+      return module.get_instance(module.RECOMMENDED_CMD_NAMES, self._client, self._server)
 
 
 

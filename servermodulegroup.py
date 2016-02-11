@@ -77,7 +77,9 @@ class ServerModuleGroup:
          # This serves a summary of commands.
          buf = ""
          for module in self._modules_list:
-            buf += module.get_help_summary(cmd_prefix, privilegelevel=privilege_level) + "\n"
+            content = module.get_help_summary(cmd_prefix, privilegelevel=privilege_level)
+            if content != "":
+               buf += content + "\n"
          buf = buf[:-1] # Remove extra newline.
       else:
          # This serves detailed help content for a module.
@@ -86,7 +88,10 @@ class ServerModuleGroup:
          # all up to the module.
          (left, right) = utils.separate_left_word(substr)
          try:
-            buf = self._modules_cmd_dict[left].get_help_detail(right, cmd_prefix, privilegelevel=privilege_level)
+            content = self._modules_cmd_dict[left].get_help_detail(right, cmd_prefix, privilegelevel=privilege_level)
+            if content == "":
+               raise errors.NoHelpContentExists
+            buf = content
          except KeyError:
             raise errors.NoHelpContentExists
       return buf

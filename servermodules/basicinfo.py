@@ -35,7 +35,7 @@ class BasicInfo(ServerModule):
       return
 
    @classmethod
-   def get_instance(cls, cmd_names, client):
+   def get_instance(cls, cmd_names, client, server):
       return BasicInfo(cmd_names, client)
 
    @property
