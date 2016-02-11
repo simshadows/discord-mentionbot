@@ -17,7 +17,7 @@ class ServerPersistentStorage:
          "Basic Information",
          "Mentions",
          "Random",
-         "WolframAlpha",
+         "Wolfram Alpha",
       ],
    }
 
