@@ -12,7 +12,10 @@ class ServerModuleResources:
 
       self._server = self._sbi.server
       self._data_directory = self._sbi.data_directory + utils.remove_whitespace("m-" + module_name) + "/"
+      self._shared_directory = self._sbi.shared_directory + utils.remove_whitespace("m-" + module_name) + "/"
+      
       self._settings_filepath = self._data_directory + "settings.json"
+      self._shared_settings_filepath = self._shared_directory + "settings.json"
       return
 
    @property
@@ -22,6 +25,10 @@ class ServerModuleResources:
    @property
    def server(self):
       return self._server
+
+   @property
+   def data_directory(self):
+       return self._data_directory
    
    @property
    def cmd_prefix(self):
@@ -42,5 +49,15 @@ class ServerModuleResources:
    # Save module settings.
    def save_settings(self, data):
       utils.json_write(self._settings_filepath, data=data)
+      return
+
+   def get_shared_settings(self):
+      try:
+         return utils.json_read(self._shared_settings_filepath)
+      except FileNotFoundError:
+         return None
+
+   def save_shared_settings(self, data):
+      utils.json_write(self._shared_settings_filepath, data=data)
       return
 

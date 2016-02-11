@@ -60,6 +60,7 @@ class ServerBotInstance:
       self._server = server
 
       self._data_directory = self._client.CACHE_DIRECTORY + "serverdata/" + self._server.id + "/"
+      self._shared_directory = self._client.CACHE_DIRECTORY + "shared/"
 
       self._cmd_prefix = self.DEFAULT_COMMAND_PREFIX
       self._bot_name = self._client.user.name # TODO: Move this somewhere else.
@@ -99,6 +100,11 @@ class ServerBotInstance:
    @property
    def data_directory(self):
       return self._data_directory
+
+   @property
+   def shared_directory(self):
+      return self._shared_directory
+   
 
 
    # Call this to process text (to parse for commands).

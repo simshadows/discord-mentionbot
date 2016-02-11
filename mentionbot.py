@@ -90,6 +90,8 @@ class MentionBot(clientextended.ClientExtended):
       except errors.NoHelpContentExists:
          print("Caught NoHelpContentExists.")
          await self.send_msg(msg, "No help content exists.")
+      except errors.OperationAborted:
+         print("Caught OperationAborted.")
       except aiohttp.errors.ClientOSError as e:
          raise e # Continue propagation
       except Exception as e:

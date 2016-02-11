@@ -32,22 +32,43 @@ class WolframAlpha(ServerModule):
 (Pods are answers from Wolfram Alpha.)
    """.strip().splitlines()
 
-   _WA_APP_ID = "" # Change this...
+   DEFAULT_SHARED_SETTINGS = {
+      "WA App ID": "PLACEHOLDER",
+   }
 
-   def __init__(self, cmd_names, client):
-      self._client = client
+   def __init__(self, cmd_names, resources):
+      self._res = resources
+
+      self._client = self._res.client
       self._cmd_names = cmd_names
 
       self._max_pods = 2
       self._show_text = True
       self._show_img = False
 
-      self._wa_client = wolframalpha.Client(WolframAlpha._WA_APP_ID)
+      self._wa_app_ID = "PLACEHOLDER"
+      self._wa_client = None
+
+      self._load_global_settings()
+      return
+
+   def _load_global_settings(self):
+      global_settings = self._res.get_shared_settings()
+      if global_settings is None:
+         self._res.save_shared_settings(self.DEFAULT_SHARED_SETTINGS)
+      else:
+         try:
+            self._wa_app_ID = global_settings["WA App ID"]
+         except KeyError:
+            global_settings["WA App ID"] = "PLACEHOLDER"
+            self._res.save_shared_settings(global_settings)
+
+      self._wa_client = wolframalpha.Client(self._wa_app_ID)
       return
 
    @classmethod
    def get_instance(cls, cmd_names, resources):
-      return WolframAlpha(cmd_names, resources.client)
+      return WolframAlpha(cmd_names, resources)
 
    @property
    def cmd_names(self):
@@ -77,7 +98,14 @@ class WolframAlpha(ServerModule):
             await self._client.send_msg(msg, "Error: No text input made for query. Aborting.")
          else:
             self._client.send_typing(msg.channel)
-            result = self._wa_client.query(right)
+            try:
+               result = self._wa_client.query(right)
+            except:
+               buf = "Error: No app ID has been registered."
+               buf += "\nFor security reasons, the bot owner will need "
+               buf += "to manually enter it into the module's shared `settings.json`."
+               await self._client.send_msg(msg, buf)
+               raise errors.OperationAborted
             buf = ""
             pods_to_fetch = self._max_pods
             try:
@@ -141,6 +169,10 @@ class WolframAlpha(ServerModule):
                await self._client.send_msg(msg, "Queries no longer show images.")
             else:
                await self._client.send_msg(msg, "Error: Must show at least text or images.")
+
+      elif left == "reloadsettings":
+         self._load_global_settings()
+         await self._client.send_msg(msg, "Wolfram Alpha settings reloaded successfully.")
 
       else:
          raise errors.InvalidCommandArgumentsError
