@@ -1,4 +1,5 @@
 import asyncio
+import random
 
 import discord
 
@@ -40,16 +41,16 @@ class BsiStarkRavingMadBot(ServerModule):
 - $roll
 - $say
 - $serverstats
-~~- $sleep~~
+- $sleep
 ~~- $spooderman~~
 ~~- $subreddit~~
 ~~- $swole~~
 ~~- $truth~~
 ~~- $ud~~
 - $whois
+
 *Reference commit: 89c88d92c98e7ccdf4b45092b6a139982d01acec, 6/2/16*
 *Disclaimer: Behaviour may not match up 1:1.*
-
 For reference, I require the following modules to be installed:
 `Basic Information`
 `Random`
@@ -85,7 +86,7 @@ For reference, I require the following modules to be installed:
          "$roll": pf + "random dice",
          "$say": this + " say",
          "$serverstats": pf + "basicinfo server",
-         "$sleep": cmdnotimplemented,
+         "$sleep": this + " sleep",
          "$spooderman": cmdnotimplemented,
          "$subreddit": cmdnotimplemented,
          "$swole": cmdnotimplemented,
@@ -94,12 +95,18 @@ For reference, I require the following modules to be installed:
          "$whois": pf + "basicinfo user",
       }
 
+      self._sleep_choices = [
+         "Go to sleep",
+         "Git to bed",
+         "(ﾉಠ_ಠ)ﾉ*:・ﾟ✧\ngit to sleep"
+      ]
+
       self._c = self._cmd_names[0] # A shorter name. This will be used a LOT.
       return
 
    @classmethod
-   def get_instance(cls, cmd_names, client, server):
-      return BsiStarkRavingMadBot(cmd_names, client, server)
+   def get_instance(cls, cmd_names, resources):
+      return BsiStarkRavingMadBot(cmd_names, resources.client, resources.server)
 
    @property
    def cmd_names(self):
@@ -148,6 +155,9 @@ For reference, I require the following modules to be installed:
 
       elif left == "say":
          await self._client.send_msg(msg, "m8")
+
+      elif left == "sleep":
+         await self._client.send_msg(msg, random.choice(self._sleep_choices))
 
       else:
          raise errors.InvalidCommandArgumentsError

@@ -1,3 +1,5 @@
+from servermoduleresources import ServerModuleResources
+
 # Modules
 from servermodules.basicinfo import BasicInfo
 from servermodules.mentions.mentions import Mentions
@@ -38,9 +40,10 @@ class ServerModuleFactory:
          return False
 
    # PRECONDITION: self.module_exists(module_name) == True
-   def new_module_instance(self, module_name):
+   def new_module_instance(self, module_name, server_bot_instance):
       module = self._modules[module_name]
-      return module.get_instance(module.RECOMMENDED_CMD_NAMES, self._client, self._server)
+      resources = ServerModuleResources(module_name, server_bot_instance)
+      return module.get_instance(module.RECOMMENDED_CMD_NAMES, resources)
 
 
 

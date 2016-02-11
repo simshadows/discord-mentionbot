@@ -79,15 +79,26 @@ class ServerBotInstance:
       data = self._storage.get_server_settings()
       modules = []
       for module_name in data["Installed Modules"]:
-         modules.append(self._module_factory.new_module_instance(module_name))
+         modules.append(self._module_factory.new_module_instance(module_name, self))
       self._modules = ServerModuleGroup(initial_modules=modules)
       return
 
 
    @property
+   def client(self):
+      return self._client
+
+   @property
+   def server(self):
+      return self._server
+
+   @property
    def cmd_prefix(self):
-       return self._cmd_prefix
-   
+      return self._cmd_prefix
+
+   @property
+   def data_directory(self):
+      return self._data_directory
 
 
    # Call this to process text (to parse for commands).
@@ -209,7 +220,7 @@ class ServerBotInstance:
             if self._modules.module_is_installed(right1):
                await self._client.send_msg(msg, "`{}` is already installed.".format(right1))
             else:
-               new_module = self._module_factory.new_module_instance(right1)
+               new_module = self._module_factory.new_module_instance(right1, self)
                await self._modules.add_server_module(new_module)
                self._storage.add_module(right1)
                await self._client.send_msg(msg, "`{}` successfully installed.".format(right1))

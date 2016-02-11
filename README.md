@@ -14,11 +14,18 @@ Key features:
 
 # Available Modules
 
+* **Basic Information**: Presents some basic information about the server and the users in it, including user avatars and server icons.
 * **Mentions**: Tools for keeping track of mentions.
 	* Mentions can be PMed when users are offline (with the ability to opt-out).
 	* A search tool allows you to scan through channels for mentions.
 * **Random**: Randomization tools.
 	* Generate random numbers of arbitrary ranges, flip coins, get random RGB colour codes, and use dice notation.
+* **Wolfram Alpha**: Allows users to query Wolfram Alpha.
+
+Some community-specific modules:
+
+* **BSI StarkRavingMadBot**: A bot stand-in for the [JCFDiscord](https://www.reddit.com/r/JCFDiscord/) community's [StarkRavingMadBot](https://github.com/josh951623/StarkRavingMadBot).
+	* This module is made to mirror some of StarkRavingMadBot's functionality, as well as take over if it's Stark isn't present on the server.
 
 # Notes
 
@@ -34,8 +41,7 @@ Key features:
 
 # TODO:
 
-* (IMPORTANT) Make a shared resource access point for modules.
-	* Additionally, fix the issue in `bsistarkravingmadbot` where the command prefix is hard-coded.
+* Fix the issue in `bsistarkravingmadbot` where the command prefix is hard-coded.
 * Implement additional utility functions to make message pre-processing faster, and with neater code.
 * Figure out a way to use dicts for faster message preprocessing. (It currently uses lots of if-else statements.)
 * Implement message caching (retrieving messages fromm the server is time-consuming).

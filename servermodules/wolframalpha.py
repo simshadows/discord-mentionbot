@@ -46,8 +46,8 @@ class WolframAlpha(ServerModule):
       return
 
    @classmethod
-   def get_instance(cls, cmd_names, client, server):
-      return WolframAlpha(cmd_names, client)
+   def get_instance(cls, cmd_names, resources):
+      return WolframAlpha(cmd_names, resources.client)
 
    @property
    def cmd_names(self):

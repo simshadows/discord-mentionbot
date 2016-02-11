@@ -37,8 +37,8 @@ TODO: PLS ADD HELP FOR TOGGLE FEATURE. THX M8
       return
 
    @classmethod
-   def get_instance(cls, cmd_names, client, server):
-      return Notify(cmd_names, client, enabled=False)
+   def get_instance(cls, cmd_names, resources):
+      return Notify(cmd_names, resources.client, enabled=False)
 
    @property
    def cmd_names(self):
