@@ -88,6 +88,10 @@ def change_cmd_prefix(content, old="/", new="$"):
 # OTHERS ########################################################################
 #################################################################################
 
+_true_strings = ["true","1","t","y", "yes", ""]
+def str_says_true(text):
+   return text.lower() in _true_strings
+
 def member_is_offline(member):
    return str(member.status) == str(discord.Status.offline)
 

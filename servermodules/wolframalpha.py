@@ -5,6 +5,7 @@ import wolframalpha
 
 import utils
 import errors
+from enums import PrivilegeLevel
 from servermodule import ServerModule
 
 class WolframAlpha(ServerModule):
@@ -15,11 +16,20 @@ class WolframAlpha(ServerModule):
    MODULE_SHORT_DESCRIPTION = "Conveniently allows you to send and receive WA queries."
 
    _HELP_SUMMARY_LINES = """
-`{pf}wa [query]` - Make a Wolfram Alpha query.
+`{pf}wa [query]` - Make a Wolfram Alpha query. (See `{pf}help wamanage` for more!)
    """.strip().splitlines()
 
    _HELP_DETAIL_LINES = """
 `{pf}wa [query]` - Make a Wolfram Alpha query.
+`{pf}wamanage maxpods` - Get the max number of pods shown.
+>>> PRIVILEGE LEVEL 8000 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+`{pf}wamanage setmaxpods [integer]` - Get the max number of pods shown.
+`{pf}wamanage showtext [true|false]` - Set whether or not queries show text results.
+`{pf}wamanage showimg [true|false]` - Set whether or not queries show image results.
+(NOTE: Settings are not persistently stored. This will change in the future.)
+>>> PRIVILEGE LEVEL 0 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+(Pods are answers from Wolfram Alpha.)
    """.strip().splitlines()
 
    _WA_APP_ID = "" # Change this...
@@ -27,6 +37,10 @@ class WolframAlpha(ServerModule):
    def __init__(self, cmd_names, client):
       self._client = client
       self._cmd_names = cmd_names
+
+      self._max_pods = 2
+      self._show_text = True
+      self._show_img = False
 
       self._wa_client = wolframalpha.Client(WolframAlpha._WA_APP_ID)
       return
@@ -55,6 +69,8 @@ class WolframAlpha(ServerModule):
    async def process_cmd(self, substr, msg, privilegelevel=0):
       
       # Process the command itself
+      # Here, each query command has a different format, as a way of
+      # documenting old formats I tried using.
       (left, right) = utils.separate_left_word(substr)
       if (left == "query") or (left == "q"):
          if right == "":
@@ -62,53 +78,69 @@ class WolframAlpha(ServerModule):
          else:
             self._client.send_typing(msg.channel)
             result = self._wa_client.query(right)
-            result_pod = None
-            for pod in result.pods:
-               if str(pod.title) == "Result":
-                  result_pod = pod
-                  break
-            if result_pod is None:
-               await self._client.send_msg(msg, "Error: Result pod not found.")
-            else:
-               try:
-                  buf = "```\n" + result_pod.text + "\n```" + result_pod.img
-                  await self._client.send_msg(msg, buf)
-               except:
-                  await self._client.send_msg(msg, "Error: Unknown error. Aborting.")
-
-      elif (left == "query2") or (left == "q2"):
-         if privilegelevel < PrivilegeLevel.TRUSTED:
-            raise errors.CommandPrivilegeError
-
-         if right == "":
-            await self._client.send_msg(msg, "Error: No text input made for query. Aborting.")
-         else:
-            self._client.send_typing(msg.channel)
-            result = self._wa_client.query(right)
             buf = ""
-            for pod in result.pods:
-               buf += "**" + str(pod.title) + ":**\n"
-               if not pod.img is None:
-                  buf += str(pod.img) + "\n"
-               buf += str(pod.text) + "\n\n"
-            buf = buf[:-2] # Trim off last two newlines
+            pods_to_fetch = self._max_pods
+            try:
+               for pod in result.pods:
+                  if pods_to_fetch <= 0:
+                     buf += "*Unprinted pod: " + str(pod.title) + "*\n"
+                  else:
+                     pods_to_fetch += -1
+                     buf += "**" + str(pod.title) + ":**\n"
+                     if self._show_text:
+                        buf += "```\n" + pod.text + "\n```\n"
+                     if self._show_img:
+                        buf += str(pod.img) + "\n"
+               buf = buf[:-1] # Trim off extra newline
+            except:
+               buf = "Error: Unknown error. Aborting."
             await self._client.send_msg(msg, buf)
 
-      elif (left == "query3") or (left == "q3"):
-         if privilegelevel < PrivilegeLevel.TRUSTED:
+      elif left == "maxpods":
+         await self._client.send_msg(msg, "Max pods: " + str(self._max_pods))
+
+      elif left == "setmaxpods":
+         if privilegelevel < PrivilegeLevel.ADMIN:
             raise errors.CommandPrivilegeError
 
-         if right == "":
-            await self._client.send_msg(msg, "Error: No text input made for query. Aborting.")
+         new_max_pods = None
+         try:
+            new_max_pods = int(right)
+         except:
+            raise errors.InvalidCommandArgumentsError
+
+         if new_max_pods < 1:
+            raise errors.InvalidCommandArgumentsError
+         self._max_pods = new_max_pods
+         await self._client.send_msg(msg, "New max pods set to " + str(self._max_pods) + ".")
+
+      elif left == "showtext":
+         if privilegelevel < PrivilegeLevel.ADMIN:
+            raise errors.CommandPrivilegeError
+
+         if utils.str_says_true(right):
+            self._show_text = True
+            await self._client.send_msg(msg, "Queries now show text.")
          else:
-            self._client.send_typing(msg.channel)
-            result = self._wa_client.query(right)
-            for pod in result.pods:
-               buf = "**" + str(pod.title) + ":**\n"
-               if not pod.img is None:
-                  buf += str(pod.img) + "\n"
-               buf += "```\n" + str(pod.text) + "\n```"
-               await self._client.send_msg(msg, buf)
+            if self._show_img:
+               self._show_text = False
+               await self._client.send_msg(msg, "Queries no longer show text.")
+            else:
+               await self._client.send_msg(msg, "Error: Must show at least text or images.")
+
+      elif left == "showimg":
+         if privilegelevel < PrivilegeLevel.ADMIN:
+            raise errors.CommandPrivilegeError
+
+         if utils.str_says_true(right):
+            self._show_img = True
+            await self._client.send_msg(msg, "Queries now show images.")
+         else:
+            if self._show_text:
+               self._show_img = False
+               await self._client.send_msg(msg, "Queries no longer show images.")
+            else:
+               await self._client.send_msg(msg, "Error: Must show at least text or images.")
 
       else:
          raise errors.InvalidCommandArgumentsError

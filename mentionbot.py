@@ -90,6 +90,8 @@ class MentionBot(clientextended.ClientExtended):
       except errors.NoHelpContentExists:
          print("Caught NoHelpContentExists.")
          await self.send_msg(msg, "No help content exists.")
+      except aiohttp.errors.ClientOSError as e:
+         raise e # Continue propagation
       except Exception as e:
          # This is only for feedback. Exception will continue to propagate.
          buf = "**EXCEPTION**"
@@ -103,7 +105,7 @@ class MentionBot(clientextended.ClientExtended):
          buf = "**EXCEPTION:** " + type(e).__name__
          buf += "\n" + str(e)
          buf += "\n" + self.botowner_mention + " m8, fix this. I PM'd you the traceback."
-         buf += "\n\n**This bot will now terminate to avoid further issues.**"
+         buf += "\n\n**THIS BOT WILL NOW TERMINATE. Please fix the bug before relaunching.**"
          await self.send_msg(msg, buf)
          sys.exit(0)
       
@@ -126,6 +128,11 @@ print("Email: " + email)
 print("Password: " + len(password) * "*")
 print("Logging in...") # print("Logging in...", end="")
 
-client.run(email, password)
-
-
+try:
+   client.run(email, password)
+except Exception as e:
+   print("Error launching client!")
+   print("Details are below.\n\n")
+   print(traceback.format_exc())
+   print("\n\nClosing in 30 seconds.")
+   time.sleep(30)
