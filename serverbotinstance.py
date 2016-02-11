@@ -106,17 +106,17 @@ class ServerBotInstance:
       if substr.startswith(self._cmd_prefix):
          await self._cmd1(substr[1:].strip(), msg, self._cmd_prefix, no_default=True)
 
-      # EASTER EGG REPLY.
-      elif (left == "$blame") and (self._client.bot_mention in substr):
-         await self._client.send_msg(msg, "no fk u")
+      # # EASTER EGG REPLY.
+      # elif (left == "$blame") and (self._client.bot_mention in substr):
+      #    await self._client.send_msg(msg, "no fk u")
 
       # TODO: Fix this later.
       # elif (self._client.bot_mention in substr or substr == self._client.user.name + " pls"):
       #    await self._mbSummaryModule.process_cmd("", msg, add_extra_help=True)
       
-      # EASTER EGG REPLY
-      elif msg.content.startswith("$blame " + self._client.botowner_mention) or msg.content.startswith("$blame " + self._client.botowner.name):
-         await self._client.send_msg(msg, "he didnt do shit m8")
+      # # EASTER EGG REPLY
+      # elif msg.content.startswith("$blame " + self._client.botowner_mention) or msg.content.startswith("$blame " + self._client.botowner.name):
+      #    await self._client.send_msg(msg, "he didnt do shit m8")
       
       return
 
@@ -169,6 +169,7 @@ class ServerBotInstance:
             await self._cmd_botowner(right, msg)
 
          else:
+            print("processing command: " + substr)
             privilege_level = self._privileges.get_privilege_level(msg.author)
             await self._modules.process_cmd(substr, msg, privilegelevel=privilege_level)
          

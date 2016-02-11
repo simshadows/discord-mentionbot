@@ -103,8 +103,9 @@ class MentionBot(clientextended.ClientExtended):
          buf = "**EXCEPTION:** " + type(e).__name__
          buf += "\n" + str(e)
          buf += "\n" + self.botowner_mention + " m8, fix this. I PM'd you the traceback."
+         buf += "\n\n**This bot will now terminate to avoid further issues.**"
          await self.send_msg(msg, buf)
-         raise e
+         sys.exit(0)
       
       return
 

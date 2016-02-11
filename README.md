@@ -22,6 +22,7 @@ Key features:
 
 # Notes
 
+* To run the *Wolfram Alpha* module, you must add your Wolfram Alpha app ID to `WolframAlpha._WA_APP_ID`.
 * `classdiagram.xml` is opened with [draw.io](https://www.draw.io/).
 * `design_notes.txt` is used by myself to reflect on my own design choices as this project is partly a learning exercise in object-oriented design.
 * To add a new module:
@@ -55,6 +56,7 @@ Key features:
 # Dependencies:
 
 * `pip install git+https://github.com/Rapptz/discord.py@async`
+* `pip install wolframalpha`
 * ~~`pip install git+https://github.com/Julian/jsonschema`~~ (Planned to be used.)
 
 ---

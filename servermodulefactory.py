@@ -2,6 +2,7 @@
 from servermodules.basicinfo import BasicInfo
 from servermodules.mentions.mentions import Mentions
 from servermodules.random import Random
+from servermodules.wolframalpha import WolframAlpha
 from servermodules.bsistarkravingmadbot import BsiStarkRavingMadBot
 
 class ServerModuleFactory:
@@ -11,6 +12,7 @@ class ServerModuleFactory:
       BasicInfo,
       Mentions,
       Random,
+      WolframAlpha,
       BsiStarkRavingMadBot,
    ]
 
