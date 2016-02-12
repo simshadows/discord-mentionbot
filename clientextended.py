@@ -59,9 +59,9 @@ class ClientExtended(discord.Client):
    #                                If it's a valid server, the search is done on only that server.
    def search_for_channel(self, text, enablenamesearch=False, serverrestriction=None): # Type: Channel
       if self._re_chmentionstr.fullmatch(text):
-         return get_channel(text[2:-1])
+         return self.get_channel(text[2:-1])
       elif self._re_alldigits.fullmatch(text):
-         return get_channel(text)
+         return self.get_channel(text)
       elif enablenamesearch:
          searchkey = lambda channel : channel.name == str(text)
       else:
