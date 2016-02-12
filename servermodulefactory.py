@@ -2,6 +2,7 @@ from servermoduleresources import ServerModuleResources
 
 # Modules
 from servermodules.basicinfo import BasicInfo
+from servermodules.dynamicchannels import DynamicChannels
 from servermodules.mentions.mentions import Mentions
 from servermodules.random import Random
 from servermodules.wolframalpha import WolframAlpha
@@ -13,6 +14,7 @@ class ServerModuleFactory:
    # Please hard-code every module class into this list.
    _MODULE_LIST = [
       BasicInfo,
+      DynamicChannels,
       Mentions,
       Random,
       WolframAlpha,

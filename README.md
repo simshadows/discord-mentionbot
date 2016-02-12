@@ -15,6 +15,9 @@ An extensible, multi-server Discord bot.
 # Available Modules
 
 * **Basic Information**: Presents some basic information about the server and the users in it, including user avatars and server icons.
+* **Dynamic Channels**: Gives users the ability to create temporary channels that disappear after a few minutes of inactivity.
+	* "Default channels" can be specified to be ignored by the module.
+	* Warning: Server owners beware! While normal members won't see all the hidden channels, you and the bot will. The solution is to have an "admin acount" separate from your normal account.
 * **Mentions**: Tools for keeping track of mentions.
 	* Mentions can be PMed when users are offline (with the ability to opt-out).
 	* A search tool allows you to scan through channels for mentions.
@@ -26,11 +29,11 @@ Some community-specific modules:
 
 * **JCFDiscord**: For the [JCFDiscord](https://www.reddit.com/r/JCFDiscord/) community.
 * **BSI StarkRavingMadBot**: A bot stand-in for the [JCFDiscord](https://www.reddit.com/r/JCFDiscord/) community's [StarkRavingMadBot](https://github.com/josh951623/StarkRavingMadBot).
-	* This module is made to mirror some of StarkRavingMadBot's functionality, as well as take over if it's Stark isn't present on the server.
+	* This module is made to mirror some of StarkRavingMadBot's functionality, as well as take over if Stark isn't present on the server.
 
 # Notes
 
-* To run the *Wolfram Alpha* module, you must add your Wolfram Alpha app ID to `WolframAlpha._WA_APP_ID`.
+* To run the *Wolfram Alpha* module, you must add your Wolfram Alpha app ID to `cache/shared/m-WolframAlpha/settings.json`. This file appears the first time you use the module.
 * `classdiagram.xml` is opened with [draw.io](https://www.draw.io/).
 * `design_notes.txt` is used by myself to reflect on my own design choices as this project is partly a learning exercise in object-oriented design.
 * To add a new module:
