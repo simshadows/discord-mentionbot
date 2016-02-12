@@ -28,12 +28,15 @@ class ServerModuleGroup:
          await module.on_message(msg)
       return
 
-   async def process_cmd(self, substr, msg, privilegelevel=0):
+   async def process_cmd(self, substr, msg, privilegelevel=0, silentfail=False):
       (left, right) = utils.separate_left_word(substr)
       try:
          await self._modules_cmd_dict[left].process_cmd(right, msg, privilegelevel)
       except KeyError:
-         raise errors.UnknownCommandError
+         if silentfail:
+            raise errors.SilentUnknownCommandError
+         else:
+            raise errors.UnknownCommandError
       return
 
    # Module is referenced by its module name.

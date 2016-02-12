@@ -82,7 +82,7 @@ For reference, I require the following modules to be installed:
          "$invite": cmdnotimplemented,
          "$pengu": cmdnotimplemented,
          "$reddit": cmdnotimplemented,
-         "$rip": pf + "rip",
+         "$rip": this + " rip",
          "$roll": pf + "random dice",
          "$say": this + " say",
          "$serverstats": pf + "basicinfo server",
@@ -157,6 +157,9 @@ For reference, I require the following modules to be installed:
 
       elif left == "sleep":
          await self._client.send_msg(msg, random.choice(self._sleep_choices))
+
+      elif left == "rip":
+         await self._client.send_msg(msg, "doesnt even deserve a funeral")
 
       else:
          raise errors.InvalidCommandArgumentsError

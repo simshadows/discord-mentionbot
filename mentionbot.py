@@ -19,7 +19,7 @@ LOGIN_DETAILS_FILENAME = "login_details" # This file is used to login. Only cont
 
 class MentionBot(clientextended.ClientExtended):
    BOTOWNER_ID = str(119384097473822727) # User ID of the owner of this bot
-   INITIAL_GAME_STATUS = "hello thar"
+   INITIAL_GAME_STATUS = "/help"
    CACHE_DIRECTORY = "cache/" # This MUST end with a forward-slash. e.g. "cache/"
    
    def __init__(self, **kwargs):
@@ -74,6 +74,8 @@ class MentionBot(clientextended.ClientExtended):
             except Exception:
                print("private msg rcv (CAUGHT EXCEPTION; UNKNOWN DISPLAY ERROR)")
       
+      except errors.SilentUnknownCommandError:
+         print("Caught SilentUnknownCommandError.")
       except errors.UnknownCommandError:
          print("Caught UnknownCommandError.")
          await self.send_msg(msg, "sry m8 idk what ur asking") # intentional typos. pls don't lynch me.
@@ -92,8 +94,6 @@ class MentionBot(clientextended.ClientExtended):
          await self.send_msg(msg, "No help content exists.")
       except errors.OperationAborted:
          print("Caught OperationAborted.")
-      except aiohttp.errors.ClientOSError as e:
-         raise e # Continue propagation
       except Exception as e:
          # This is only for feedback. Exception will continue to propagate.
          buf = "**EXCEPTION**"

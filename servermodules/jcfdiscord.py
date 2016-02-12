@@ -1,7 +1,6 @@
 import asyncio
 
 import discord
-import wolframalpha
 
 import utils
 import errors
@@ -95,9 +94,6 @@ class JCFDiscord(ServerModule):
             buf += mbti_type + " = " + self._FUNCTION_STACKS[mbti_type] + "\n"
          buf += "```"
          await self._client.send_msg(msg, buf)
-
-      elif left == "rip":
-         await self._client.send_msg(msg, "doesnt even deserve a funeral")
 
       else:
          raise errors.InvalidCommandArgumentsError

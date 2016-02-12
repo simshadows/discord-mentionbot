@@ -35,7 +35,13 @@ class WolframAlpha(ServerModule):
    """.strip().splitlines()
 
    DEFAULT_SHARED_SETTINGS = {
-      "WA App ID": "PLACEHOLDER",
+      "wa app id": "PLACEHOLDER",
+   }
+
+   DEFAULT_SETTINGS = {
+      "max pods": 2,
+      "show text": "true",
+      "show img": "false",
    }
 
    def __init__(self, cmd_names, resources):
@@ -61,12 +67,27 @@ class WolframAlpha(ServerModule):
          self._res.save_shared_settings(self.DEFAULT_SHARED_SETTINGS)
       else:
          try:
-            self._wa_app_ID = global_settings["WA App ID"]
+            self._wa_app_ID = global_settings["wa app id"]
          except KeyError:
-            global_settings["WA App ID"] = "PLACEHOLDER"
+            global_settings["wa app id"] = "PLACEHOLDER"
             self._res.save_shared_settings(global_settings)
 
       self._wa_client = wolframalpha.Client(self._wa_app_ID)
+
+      # Server Settings
+      settings = self._res.get_settings()
+      if settings is None:
+         self._res.save_settings(self.DEFAULT_SETTINGS)
+      else:
+         try:
+            self._max_pods = settings["max pods"]
+            self._show_text = utils.str_says_true(settings["show text"])
+            self._show_img = utils.str_says_true(settings["show img"])
+         except KeyError:
+            settings["max pods"] = 2
+            settings["show text"] = True
+            settings["show img"] = False
+            self._res.save_settings(settings)
       return
 
    @classmethod
@@ -82,7 +103,7 @@ class WolframAlpha(ServerModule):
       str_define = default_cmd_prefix + "define "
       if content.startswith(str_wa): # TODO: IMPORTANT! FIX THE INCONSISTENCY.
          content = utils.change_base_cmd(content, default_cmd_prefix, self._cmd_names[0] + " q")
-      if content.startswith(str_define):
+      elif content.startswith(str_define):
          content = utils.change_base_cmd(content, default_cmd_prefix, self._cmd_names[0] + " def")
       return content
 

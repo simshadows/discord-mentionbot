@@ -6,6 +6,10 @@ class UnknownCommandError(MentionbotError):
    def __init__(self):
       return
 
+class SilentUnknownCommandError(UnknownCommandError):
+   def __init__(self):
+      return
+
 class InvalidCommandArgumentsError(MentionbotError):
    def __init__(self):
       return

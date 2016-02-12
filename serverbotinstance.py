@@ -209,10 +209,7 @@ class ServerBotInstance:
          else:
             print("processing command: " + substr)
             privilege_level = self._privileges.get_privilege_level(msg.author)
-            await self._modules.process_cmd(substr, msg, privilegelevel=privilege_level)
-         
-         # else:
-         #    raise CommandArgumentsError
+            await self._modules.process_cmd(substr, msg, privilegelevel=privilege_level, silentfail=True)
       
       return
 

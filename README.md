@@ -3,7 +3,7 @@ An extensible, multi-server Discord bot.
 
 **This bot is still at a really early stage in development. I suggest you don't use it just yet...**
 
-Key features:
+# Key features:
 
 * **Persistent data and settings**
 * **Modularity**: Modules give the bot functionality.
@@ -42,15 +42,14 @@ Some community-specific modules:
 
 # TODO:
 
+* Implement module safe-shutdown. Modules such as `Dynamic Channels` will need a method to end threads.
 * Fix the issue in `bsistarkravingmadbot` where the command prefix is hard-coded.
 * (IMPORTANT) Implement additional utility functions to make message pre-processing faster, and with neater code.
 * Figure out a way to use dicts for faster message preprocessing. (It currently uses lots of if-else statements.)
-* Implement message caching (retrieving messages fromm the server is time-consuming).
+* Implement message caching (retrieving messages from the server is time-consuming).
 * Implement json data verification.
 	* (LOW PRIORITY) Implement json data repair.
 * Implement module enabling/disabling.
-* Implement unified shared infrastructure for things like:
-	* user activity sensing,
 * Reimplement abstract classes with the `abc` library.
 * Find all uses of utils.remove_blank_strings() and ensure none of them have a redundant list() around them.
 * (LOW PRIORITY) Implement data cache backups. The bot should also back up files if they're found to be corrupted (to allow for manual recovery in the case of a bug during runtime).
