@@ -58,6 +58,7 @@ class ServerBotInstance:
    def __init__(self, client, server):
       self._client = client
       self._server = server
+      print(str(server))
 
       self._data_directory = self._client.CACHE_DIRECTORY + "serverdata/" + self._server.id + "/"
       self._shared_directory = self._client.CACHE_DIRECTORY + "shared/"
@@ -67,7 +68,12 @@ class ServerBotInstance:
       self._initialization_timestamp = datetime.datetime.utcnow()
 
       botowner_ID = self._client.BOTOWNER_ID
-      serverowner_ID = self._server.owner.id
+      # TODO: There are cases where self._server.owner is None. If that's solved, remove this.
+      try:
+         serverowner_ID = self._server.owner.id
+      except:
+         print("ERROR: Server owner not found in " + utils.str_asciionly(self._server.name))
+         serverowner_ID = None
 
       self._storage = ServerPersistentStorage(self._data_directory + "settings.json", self._server)
       self._privileges = PrivilegeManager(botowner_ID, serverowner_ID)
@@ -135,6 +141,16 @@ class ServerBotInstance:
       # elif msg.content.startswith("$blame " + self._client.botowner_mention) or msg.content.startswith("$blame " + self._client.botowner.name):
       #    await self._client.send_msg(msg, "he didnt do shit m8")
       
+      return
+
+
+   async def on_s_channel_delete(self, ch):
+      await self._modules.on_s_channel_delete(ch)
+      return
+
+
+   async def on_s_channel_create(self, ch):
+      await self._modules.on_s_channel_create(ch)
       return
 
 
@@ -207,7 +223,10 @@ class ServerBotInstance:
                await self._client.send_msg(msg, "`{}` is not installed.".format(right))
 
          else:
-            print("processing command: " + substr)
+            try:
+               print("processing command: " + substr)
+            except:
+               print("processing command: (UNKNOWN DISPLAY ERROR)")
             privilege_level = self._privileges.get_privilege_level(msg.author)
             await self._modules.process_cmd(substr, msg, privilegelevel=privilege_level, silentfail=True)
       
@@ -310,7 +329,7 @@ class ServerBotInstance:
 
    # RETURNS: Bot's current uptime in seconds
    def get_presence_time(self):
-      timediff = datetime.datetime.utcnow() - initialization_timestamp
+      timediff = datetime.datetime.utcnow() - self._initialization_timestamp
       return timediff.seconds
 
 

@@ -10,7 +10,7 @@ class ServerModule:
    # Defines a standard construction method.
    @classmethod
    def get_instance(cls, cmd_names, resources):
-      raise NotImplementedError
+      raise NotImplementedError # THIS IS TO BE OVERWRITTEN!
 
    # Return a list of strings to be used to invoke a module command.
    # For example, if command_names=["foo","baz"], then subcommands
@@ -19,7 +19,7 @@ class ServerModule:
    # TODO: Figure out a better way to define abstract attributes!!!
    @property
    def cmd_names(self):
-      raise NotImplementedError
+      raise NotImplementedError # THIS IS TO BE OVERWRITTEN!
 
    # Every module has the opportunity to pre-process the contents of a message.
    # This is carried out after all modules have carried out their on_message()
@@ -43,7 +43,7 @@ class ServerModule:
    #     and if so, the module will process messages to redirect
    #     commands to itself to serve them.
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
-      return content # THIS IS TO BE OVERWRITTEN!
+      return content
 
    # Get a help-message string summarising the module functionality,
    # or at least directing the user to more detailed help.
@@ -53,13 +53,13 @@ class ServerModule:
    #       up as "/examplecommand", while "$mb " will make the same
    #       module command show up as "$mb examplecommand".
    def get_help_summary(self, cmd_prefix, privilegelevel=0):
-      raise NotImplementedError
+      raise NotImplementedError # THIS IS TO BE OVERWRITTEN!
 
    # Get a detailed help-message string about the module.
    # String has no leading/trailing whitespace.
    # NOTE: cmd_prefix works the same as in get_help_summary.
    def get_help_detail(self, substr, cmd_prefix, privilegelevel=0):
-      raise NotImplementedError
+      raise NotImplementedError # THIS IS TO BE OVERWRITTEN!
 
    # This method is always called every time a message from the module's associated
    # server is received.
@@ -68,6 +68,14 @@ class ServerModule:
 
    # This method is called if a command is to be handled by the module.
    async def process_cmd(self, substr, msg, privilegelevel=0):
+      pass
+
+   # This method is called if a server channel is deleted.
+   async def on_s_channel_delete(self, ch):
+      pass
+
+   # This method is called if a server channel is created.
+   async def on_s_channel_create(self, ch):
       pass
 
 

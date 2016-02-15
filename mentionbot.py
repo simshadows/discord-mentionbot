@@ -95,7 +95,6 @@ class MentionBot(clientextended.ClientExtended):
       except errors.OperationAborted:
          print("Caught OperationAborted.")
       except Exception as e:
-         # This is only for feedback. Exception will continue to propagate.
          buf = "**EXCEPTION**"
          buf += "\n**From:** <#" + msg.channel.id + "> **in** " + msg.server.name
          buf += "\n**Command issued by:** <@" + msg.author.id + ">"
@@ -112,6 +111,30 @@ class MentionBot(clientextended.ClientExtended):
          sys.exit(0)
       
       return
+
+   async def on_channel_delete(self, ch):
+      try:
+         await self._bot_instances[ch.server].on_s_channel_delete(ch)
+      except Exception as e:
+         buf = "**EXCEPTION**"
+         buf += "\n**Channel deleted:** <#{}> ".format(ch.id)
+         buf += "(Name: {}, ID: {})".format(ch.name, ch.id)
+         buf += "\n**Stack Trace:**"
+         buf += "\n```" + traceback.format_exc() + "```"
+         await self.send_msg(self.botowner, buf)
+
+   async def on_channel_create(self, ch):
+      try:
+         if not ch.is_private:
+            await self._bot_instances[ch.server].on_s_channel_create(ch)
+         # NOTE: Use this to also handle PM channel creation.
+      except Exception as e:
+         buf = "**EXCEPTION**"
+         buf += "\n**Channel created:** <#{}> ".format(ch.id)
+         buf += "(Name: {}, ID: {})".format(ch.name, ch.id)
+         buf += "\n**Stack Trace:**"
+         buf += "\n```" + traceback.format_exc() + "```"
+         await self.send_msg(self.botowner, buf)
 
    def get_server_bot_instance(self, server):
       return self._bot_instances[server]

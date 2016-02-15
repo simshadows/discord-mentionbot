@@ -5,8 +5,6 @@ import json
 
 import discord
 
-_RE_PRIVLVL_LINE = re.compile(">>> PRIVILEGE LEVEL \d+")
-
 #################################################################################
 # BASIC STRING OPERATIONS #######################################################
 #################################################################################
@@ -21,30 +19,38 @@ def separate_left_word(text): # TYPE: Tuple<String>
       substrings.append("")
    return tuple(substrings)
 
-
 def remove_whitespace(text):
    return "".join(text.split()) # TODO: Find a nicer implementation.
+
+def str_asciionly(text):
+   buf = ""
+   try:
+      buf = str(text.encode("unicode_escape"))
+   except:
+      buf = ">>>>>>>>>>>>>>>>>>>>>>>>UNKNOWN"
+      print("ERROR: Failed to convert string.")
+   return buf[2:-1]
 
 #################################################################################
 # FILE I/O ######################################################################
 #################################################################################
 
-_CWD = os.getcwd()
-_ENCODING = "utf-8"
+_cwd = os.getcwd()
+_encoding = "utf-8"
 
 # This overwrites whatever file is specified with the data.
 def json_write(relfilepath, data=None):
    _mkdir_recursive(relfilepath)
-   with open(relfilepath, encoding=_ENCODING, mode="w") as f:
+   with open(relfilepath, encoding=_encoding, mode="w") as f:
       f.write(json.dumps(data, sort_keys=True, indent=3))
    return
 
 def json_read(relfilepath):
-   with open(relfilepath, encoding=_ENCODING, mode="r") as f:
+   with open(relfilepath, encoding=_encoding, mode="r") as f:
       return json.loads(f.read())
 
 def _mkdir_recursive(relfilepath):
-   absfilepath = os.path.join(_CWD, relfilepath)
+   absfilepath = os.path.join(_cwd, relfilepath)
    absdir = os.path.dirname(absfilepath)
    try:
       os.makedirs(absdir)
@@ -92,6 +98,11 @@ _true_strings = ["true","1","t","y", "yes", ""]
 def str_says_true(text):
    return text.lower() in _true_strings
 
+_re_non_alnum_or_dash = re.compile("[^-0-9a-zA-Z]")
+def convert_to_legal_channel_name(text):
+   text.replace(" ", "-")
+   return _re_non_alnum_or_dash.sub("", text)
+
 def member_is_offline(member):
    return str(member.status) == str(discord.Status.offline)
 
@@ -105,11 +116,12 @@ def member_is_online(member):
 # Parses a list of lines, producing a single string with the lines
 # combined, appropriate for the privilege level.
 # TODO: Add examples on this method's usage.
+_re_privlvl_line = re.compile(">>> PRIVILEGE LEVEL \d+")
 def prepare_help_content(raw_lines, cmd_prefix, privilegelevel=0):
    help_content = ""
    line_privlvl = 0
    for line in raw_lines:
-      match = _RE_PRIVLVL_LINE.match(line)
+      match = _re_privlvl_line.match(line)
       if match:
          line_privlvl = int(match.group(0)[len(">>> PRIVILEGE LEVEL "):])
       elif (privilegelevel >= line_privlvl):

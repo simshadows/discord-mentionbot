@@ -31,7 +31,7 @@ class PrivilegeManager:
    def get_privilege_level(self, user):
       if user.id == self._BOTOWNER_ID:
          return PrivilegeLevel.BOT_OWNER
-      elif user.id == self._SERVER_OWNER_ID:
-         return PrivilegeLevel.SERVER_OWNER
+      # elif user.id == self._SERVER_OWNER_ID: # TEMPORARY...
+      #    return PrivilegeLevel.SERVER_OWNER
       else:
          return self._DEFAULT_PRIVILEGE_LEVEL

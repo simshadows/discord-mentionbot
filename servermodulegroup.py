@@ -39,6 +39,16 @@ class ServerModuleGroup:
             raise errors.UnknownCommandError
       return
 
+   async def on_s_channel_delete(self, ch):
+      for module in self._modules_list:
+         await module.on_s_channel_delete(msg)
+      return
+
+   async def on_s_channel_create(self, ch):
+      for module in self._modules_list:
+         await module.on_s_channel_create(msg)
+      return
+
    # Module is referenced by its module name.
    def module_is_installed(self, module_name):
       for module in self._modules_list:
