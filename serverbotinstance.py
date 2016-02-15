@@ -55,10 +55,29 @@ class ServerBotInstance:
 `{pf}bo throwexception`
    """.strip().splitlines()
 
+   @classmethod
+   async def get_instance(cls, client, server):
+      inst = cls(client, server)
+
+      my_ID = inst._client.user.id
+      inst._me = inst._client.search_for_user(my_ID, enablenamesearch=False, serverrestriction=inst._server)
+
+      # Load and apply server settings
+
+      data = inst._storage.get_server_settings()
+      modules = []
+      for module_name in data["Installed Modules"]:
+         modules.append(await inst._module_factory.new_module_instance(module_name, inst))
+      inst._modules = ServerModuleGroup(initial_modules=modules)
+      return inst
+
+   # DO NOT USE OUTSIDE EXCEPT FOR TESTING.
    def __init__(self, client, server):
       self._client = client
       self._server = server
       print(str(server))
+
+      self._me = None
 
       self._data_directory = self._client.CACHE_DIRECTORY + "serverdata/" + self._server.id + "/"
       self._shared_directory = self._client.CACHE_DIRECTORY + "shared/"
@@ -81,13 +100,7 @@ class ServerBotInstance:
 
       self._modules = None # Initialize later
 
-      # Load and apply server settings
-
-      data = self._storage.get_server_settings()
-      modules = []
-      for module_name in data["Installed Modules"]:
-         modules.append(self._module_factory.new_module_instance(module_name, self))
-      self._modules = ServerModuleGroup(initial_modules=modules)
+      
       return
 
 
@@ -98,6 +111,11 @@ class ServerBotInstance:
    @property
    def server(self):
       return self._server
+
+   # The bot's member instance in the server.
+   @property
+   def me(self):
+       return self._me
 
    @property
    def cmd_prefix(self):
@@ -205,7 +223,7 @@ class ServerBotInstance:
                if self._modules.module_is_installed(right):
                   await self._client.send_msg(msg, "`{}` is already installed.".format(right))
                else:
-                  new_module = self._module_factory.new_module_instance(right, self)
+                  new_module = await self._module_factory.new_module_instance(right, self)
                   await self._modules.add_server_module(new_module)
                   self._storage.add_module(right)
                   await self._client.send_msg(msg, "`{}` successfully installed.".format(right))

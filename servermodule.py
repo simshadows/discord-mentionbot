@@ -8,9 +8,16 @@ class ServerModule:
    MODULE_SHORT_DESCRIPTION = NotImplemented
 
    # Defines a standard construction method.
+   # If the async version is to be used instead, then leave this to
+   # throw NotImplementedError.
    @classmethod
    def get_instance(cls, cmd_names, resources):
       raise NotImplementedError # THIS IS TO BE OVERWRITTEN!
+
+   # Implemented if it needs to be.
+   @classmethod
+   async def get_instance_async(cls, cmd_names, resources):
+      raise NotImplementedError
 
    # Return a list of strings to be used to invoke a module command.
    # For example, if command_names=["foo","baz"], then subcommands

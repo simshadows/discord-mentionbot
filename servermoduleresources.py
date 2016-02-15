@@ -26,6 +26,11 @@ class ServerModuleResources:
    def server(self):
       return self._server
 
+   # The bot's member instance in the server.
+   @property
+   def me(self):
+       return self._sbi.me
+
    @property
    def data_directory(self):
       return self._data_directory
