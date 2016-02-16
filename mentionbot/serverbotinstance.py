@@ -22,6 +22,9 @@ from servermodules.mentions.mentions import Mentions
 # ServerBotInstance manages everything to do with a particular server.
 # IMPORTANT: client is a MentionBot instance!!!
 class ServerBotInstance:
+   
+   _SECRET_TOKEN = utils.SecretToken()
+
    _RE_MENTIONSTR = re.compile("<@\d+>")
 
    INIT_MENTIONS_NOTIFY_ENABLED = False
@@ -34,7 +37,6 @@ class ServerBotInstance:
 `{pf}source` - Where to get source code.
 `{pf}allmods` - Get all modules available for installation.
 `{pf}mods` - Get all installed modules.
-`{pf}rip` - Rest in pieces.
 `{pf}status` - Get bot's current status.
 >>> PRIVILEGE LEVEL 8000 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 `{pf}say [text]`
@@ -43,7 +45,6 @@ class ServerBotInstance:
    """.strip().splitlines()
 
    _HELP_ADMIN = """
-
 >>> PRIVILEGE LEVEL 9001 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 `{pf}bo iam [@user] [text]`
 `{pf}bo gettime`
@@ -55,35 +56,41 @@ class ServerBotInstance:
 `{pf}bo throwexception`
    """.strip().splitlines()
 
-   def __init__(self, client, server):
-      self._client = client
-      self._server = server
+   @classmethod
+   async def get_instance(cls, client, server):
+      inst = cls(cls._SECRET_TOKEN)
+      inst._client = client
+      inst._server = server
 
-      self._data_directory = self._client.CACHE_DIRECTORY + "serverdata/" + self._server.id + "/"
-      self._shared_directory = self._client.CACHE_DIRECTORY + "shared/"
+      inst._data_directory = inst._client.CACHE_DIRECTORY + "serverdata/" + inst._server.id + "/"
+      inst._shared_directory = inst._client.CACHE_DIRECTORY + "shared/"
 
-      self._cmd_prefix = self.DEFAULT_COMMAND_PREFIX
-      self._bot_name = self._client.user.name # TODO: Move this somewhere else.
-      self._initialization_timestamp = datetime.datetime.utcnow()
+      inst._cmd_prefix = inst.DEFAULT_COMMAND_PREFIX
+      inst._bot_name = inst._client.user.name # TODO: Move this somewhere else.
+      inst._initialization_timestamp = datetime.datetime.utcnow()
 
-      botowner_ID = self._client.BOTOWNER_ID
-      serverowner_ID = self._server.owner.id
+      botowner_ID = inst._client.BOTOWNER_ID
+      serverowner_ID = inst._server.owner.id
 
-      self._storage = ServerPersistentStorage(self._data_directory + "settings.json", self._server)
-      self._privileges = PrivilegeManager(botowner_ID, serverowner_ID)
-      self._module_factory = ServerModuleFactory(self._client, self._server)
+      inst._storage = ServerPersistentStorage(inst._data_directory + "settings.json", inst._server)
+      inst._privileges = PrivilegeManager(botowner_ID, serverowner_ID)
+      inst._module_factory = ServerModuleFactory(inst._client, inst._server)
 
-      self._modules = None # Initialize later
+      inst._modules = None # Initialize later
 
       # Load and apply server settings
 
-      data = self._storage.get_server_settings()
+      data = inst._storage.get_server_settings()
       modules = []
       for module_name in data["Installed Modules"]:
-         modules.append(self._module_factory.new_module_instance(module_name, self))
-      self._modules = ServerModuleGroup(initial_modules=modules)
-      return
+         modules.append(inst._module_factory.new_module_instance(module_name, inst))
+      inst._modules = ServerModuleGroup(initial_modules=modules)
+      return inst
 
+   def __init__(self, token):
+      if not token is self._SECRET_TOKEN:
+         raise RuntimeError("Not allowed to instantiate directly. Please use get_instance().")
+      return
 
    @property
    def client(self):

@@ -13,7 +13,7 @@ import utils
 import errors
 import clientextended
 
-import serverbotinstance
+from serverbotinstance import ServerBotInstance
 
 LOGIN_DETAILS_FILENAME = "login_details" # This file is used to login. Only contains two lines. Line 1 is email, line 2 is password.
 
@@ -46,7 +46,7 @@ class MentionBot(clientextended.ClientExtended):
 
       self._bot_instances = {}
       for server in self.servers:
-         self._bot_instances[server] = serverbotinstance.ServerBotInstance(self, server)
+         self._bot_instances[server] = await ServerBotInstance.get_instance(self, server)
 
       await self.set_game_status(MentionBot.INITIAL_GAME_STATUS)
       print("Bot owner: " + self.botowner.name)

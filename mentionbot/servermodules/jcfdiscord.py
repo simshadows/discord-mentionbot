@@ -98,9 +98,6 @@ class JCFDiscord(ServerModule):
          buf += "```"
          await self._client.send_msg(msg, buf)
 
-      elif left == "rip":
-         await self._client.send_msg(msg, "doesnt even deserve a funeral")
-
       elif left == "choosetruth":
          topic = msg.channel.topic
          if topic is None:

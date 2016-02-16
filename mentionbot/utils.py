@@ -88,6 +88,11 @@ def change_cmd_prefix(content, old="/", new="$"):
 # OTHERS ########################################################################
 #################################################################################
 
+# Simple class for use to prevent external instantiation where necessary.
+class SecretToken:
+   def __init__(self):
+      return
+
 _true_strings = ["true","1","t","y", "yes", ""]
 def str_says_true(text):
    return text.lower() in _true_strings
