@@ -1,3 +1,4 @@
+import utils
 from servermoduleresources import ServerModuleResources
 
 # Modules
@@ -10,6 +11,8 @@ from servermodules.jcfdiscord import JCFDiscord
 from servermodules.bsistarkravingmadbot import BsiStarkRavingMadBot
 
 class ServerModuleFactory:
+   
+   _SECRET_TOKEN = utils.SecretToken()
 
    # Please hard-code every module class into this list.
    _MODULE_LIST = [
@@ -22,13 +25,20 @@ class ServerModuleFactory:
       BsiStarkRavingMadBot,
    ]
 
-   def __init__(self, client, server):
-      self._client = client
-      self._server = server
-      self._modules = {}
+   @classmethod
+   async def get_instance(cls, client, server):
+      inst = cls(cls._SECRET_TOKEN)
+      inst._client = client
+      inst._server = server
+      inst._modules = {}
 
-      for module in self._MODULE_LIST:
-         self._modules[module.MODULE_NAME] = module
+      for module in inst._MODULE_LIST:
+         inst._modules[module.MODULE_NAME] = module
+      return inst
+
+   def __init__(self, token):
+      if not token is self._SECRET_TOKEN:
+         raise RuntimeError("Not allowed to instantiate directly. Please use get_instance().")
       return
 
    # Generator for iterating through all modules.

@@ -74,7 +74,7 @@ class ServerBotInstance:
 
       inst._storage = ServerPersistentStorage(inst._data_directory + "settings.json", inst._server)
       inst._privileges = PrivilegeManager(botowner_ID, serverowner_ID)
-      inst._module_factory = ServerModuleFactory(inst._client, inst._server)
+      inst._module_factory = await ServerModuleFactory.get_instance(inst._client, inst._server)
 
       inst._modules = None # Initialize later
 
