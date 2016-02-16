@@ -121,6 +121,14 @@ def remove_blank_strings(string_list):
    return list(filter(None, string_list))
 
 
+_re_mention = re.compile("<@\d+>")
+def get_all_mentions(text):
+   mentions = []
+   for mention_string in _re_mention.findall(text):
+      mentions.append(mention_string[2:-1])
+   return mentions
+
+
 # Parses a block of text, returns a list of flags.
 # For every non-flag, "invalid" is instead appended.
 # E.g. "-l hello --flag" -> ["l","invalid","flag"]

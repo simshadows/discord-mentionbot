@@ -1,4 +1,5 @@
 import asyncio
+import random
 
 import discord
 
@@ -16,10 +17,12 @@ class JCFDiscord(ServerModule):
 
    _HELP_SUMMARY_LINES = """
 `{pf}functions [types]` - Get a list of MBTI function stacks.
+`{pf}choosetruth` - Randomly choose a truth player in the channel.
    """.strip().splitlines()
 
    _HELP_DETAIL_LINES = """
 `{pf}functions [types]` - Get a list of MBTI function stacks.
+`{pf}choosetruth` - Randomly choose a truth player in the channel.
    """.strip().splitlines()
 
    _FUNCTION_STACKS = {
@@ -63,10 +66,10 @@ class JCFDiscord(ServerModule):
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
       str_functions = default_cmd_prefix + "functions"
-      str_rip = default_cmd_prefix + "rip"
+      str_choosetruth = default_cmd_prefix + "choosetruth"
       if content.startswith(str_functions + " ") or (content == str_functions): # TODO: IMPORTANT! FIX THE INCONSISTENCY.
          content = utils.add_base_cmd(content, default_cmd_prefix, self._cmd_names[0])
-      elif content.startswith(str_rip + " ") or (content == str_rip): # TODO: IMPORTANT! FIX THE INCONSISTENCY.
+      elif content == str_choosetruth:
          content = utils.add_base_cmd(content, default_cmd_prefix, self._cmd_names[0])
       return content
 
@@ -93,6 +96,40 @@ class JCFDiscord(ServerModule):
          for mbti_type in types:
             buf += mbti_type + " = " + self._FUNCTION_STACKS[mbti_type] + "\n"
          buf += "```"
+         await self._client.send_msg(msg, buf)
+
+      elif left == "rip":
+         await self._client.send_msg(msg, "doesnt even deserve a funeral")
+
+      elif left == "choosetruth":
+         topic = msg.channel.topic
+         if topic is None:
+            await self._client.send_msg(msg, "There doesn't appear to be a truth game in here.")
+            raise errors.OperationAborted
+         
+         mentions = utils.get_all_mentions(topic)
+         if len(mentions) == 0:
+            await self._client.send_msg(msg, "There doesn't appear to be a truth game in here.")
+            raise errors.OperationAborted
+         
+         try:
+            mentions.remove(msg.author.id)
+            if len(mentions) == 0:
+               await self._client.send_msg(msg, "<@{}>".format(msg.author.id))
+               raise errors.OperationAborted
+         except ValueError:
+            pass
+         
+         choice = random.choice(mentions)
+         buf = "<@{}>\n".format(choice)
+         buf += "My choices were: "
+         for mention in mentions:
+            user = self._client.search_for_user(mention, enablenamesearch=False, serverrestriction=self._res.server)
+            if user is None:
+               buf += "<@{}>, ".format(mention)
+            else:
+               buf += "{}, ".format(user.name)
+         buf = buf[:-2]
          await self._client.send_msg(msg, buf)
 
       else:
