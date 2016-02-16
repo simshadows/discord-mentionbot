@@ -80,7 +80,7 @@ class Random(ServerModule):
          choices = list(filter(None, choices)) # Remove empty strings
          if len(choices) == 0:
             raise errors.InvalidCommandArgumentsError
-         buf = "Choice: " + random.choice(choices) + "\n"
+         buf = random.choice(choices) + "\n"
          buf += "My choices were: "
          for choice in choices:
             buf += choice + ";"

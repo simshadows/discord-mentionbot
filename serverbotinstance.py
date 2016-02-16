@@ -55,29 +55,9 @@ class ServerBotInstance:
 `{pf}bo throwexception`
    """.strip().splitlines()
 
-   @classmethod
-   async def get_instance(cls, client, server):
-      inst = cls(client, server)
-
-      my_ID = inst._client.user.id
-      inst._me = inst._client.search_for_user(my_ID, enablenamesearch=False, serverrestriction=inst._server)
-
-      # Load and apply server settings
-
-      data = inst._storage.get_server_settings()
-      modules = []
-      for module_name in data["Installed Modules"]:
-         modules.append(await inst._module_factory.new_module_instance(module_name, inst))
-      inst._modules = ServerModuleGroup(initial_modules=modules)
-      return inst
-
-   # DO NOT USE OUTSIDE EXCEPT FOR TESTING.
    def __init__(self, client, server):
       self._client = client
       self._server = server
-      print(str(server))
-
-      self._me = None
 
       self._data_directory = self._client.CACHE_DIRECTORY + "serverdata/" + self._server.id + "/"
       self._shared_directory = self._client.CACHE_DIRECTORY + "shared/"
@@ -87,12 +67,7 @@ class ServerBotInstance:
       self._initialization_timestamp = datetime.datetime.utcnow()
 
       botowner_ID = self._client.BOTOWNER_ID
-      # TODO: There are cases where self._server.owner is None. If that's solved, remove this.
-      try:
-         serverowner_ID = self._server.owner.id
-      except:
-         print("ERROR: Server owner not found in " + utils.str_asciionly(self._server.name))
-         serverowner_ID = None
+      serverowner_ID = self._server.owner.id
 
       self._storage = ServerPersistentStorage(self._data_directory + "settings.json", self._server)
       self._privileges = PrivilegeManager(botowner_ID, serverowner_ID)
@@ -100,7 +75,13 @@ class ServerBotInstance:
 
       self._modules = None # Initialize later
 
-      
+      # Load and apply server settings
+
+      data = self._storage.get_server_settings()
+      modules = []
+      for module_name in data["Installed Modules"]:
+         modules.append(self._module_factory.new_module_instance(module_name, self))
+      self._modules = ServerModuleGroup(initial_modules=modules)
       return
 
 
@@ -111,11 +92,6 @@ class ServerBotInstance:
    @property
    def server(self):
       return self._server
-
-   # The bot's member instance in the server.
-   @property
-   def me(self):
-       return self._me
 
    @property
    def cmd_prefix(self):
@@ -159,16 +135,6 @@ class ServerBotInstance:
       # elif msg.content.startswith("$blame " + self._client.botowner_mention) or msg.content.startswith("$blame " + self._client.botowner.name):
       #    await self._client.send_msg(msg, "he didnt do shit m8")
       
-      return
-
-
-   async def on_s_channel_delete(self, ch):
-      await self._modules.on_s_channel_delete(ch)
-      return
-
-
-   async def on_s_channel_create(self, ch):
-      await self._modules.on_s_channel_create(ch)
       return
 
 
@@ -223,7 +189,7 @@ class ServerBotInstance:
                if self._modules.module_is_installed(right):
                   await self._client.send_msg(msg, "`{}` is already installed.".format(right))
                else:
-                  new_module = await self._module_factory.new_module_instance(right, self)
+                  new_module = self._module_factory.new_module_instance(right, self)
                   await self._modules.add_server_module(new_module)
                   self._storage.add_module(right)
                   await self._client.send_msg(msg, "`{}` successfully installed.".format(right))
@@ -241,10 +207,7 @@ class ServerBotInstance:
                await self._client.send_msg(msg, "`{}` is not installed.".format(right))
 
          else:
-            try:
-               print("processing command: " + substr)
-            except:
-               print("processing command: (UNKNOWN DISPLAY ERROR)")
+            print("processing command: " + substr)
             privilege_level = self._privileges.get_privilege_level(msg.author)
             await self._modules.process_cmd(substr, msg, privilegelevel=privilege_level, silentfail=True)
       
@@ -347,7 +310,7 @@ class ServerBotInstance:
 
    # RETURNS: Bot's current uptime in seconds
    def get_presence_time(self):
-      timediff = datetime.datetime.utcnow() - self._initialization_timestamp
+      timediff = datetime.datetime.utcnow() - initialization_timestamp
       return timediff.seconds
 
 
