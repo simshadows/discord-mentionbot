@@ -136,12 +136,6 @@ For reference, I require the following modules to be installed:
       else:
          return left + " " + right
 
-   def get_help_summary(self, cmd_prefix, privilegelevel=0):
-      return utils.prepare_help_content(self._HELP_SUMMARY_LINES, cmd_prefix, privilegelevel)
-
-   def get_help_detail(self, substr, cmd_prefix, privilegelevel=0):
-      return utils.prepare_help_content(self._HELP_DETAIL_LINES, cmd_prefix, privilegelevel)
-
    async def process_cmd(self, substr, msg, privilegelevel=0):
       
       # Process the command itself

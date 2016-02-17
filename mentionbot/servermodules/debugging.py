@@ -47,12 +47,6 @@ class Debugging(ServerModule):
       print("DEBUGGING: self.msg_preprocessor(): with content = " + content)
       return content
 
-   def get_help_summary(self, cmd_prefix, privilegelevel=0):
-      return utils.prepare_help_content(self._HELP_SUMMARY_LINES, cmd_prefix, privilegelevel)
-
-   def get_help_detail(self, substr, cmd_prefix, privilegelevel=0):
-      return utils.prepare_help_content(self._HELP_DETAIL_LINES, cmd_prefix, privilegelevel)
-
    async def on_message(self, msg):
       print("DEBUGGING: self.on_message(): with msg.content = " + msg.content)
       return

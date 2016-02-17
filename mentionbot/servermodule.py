@@ -1,3 +1,5 @@
+import utils
+
 # Abstract Class (would've been an interface...)
 # All server modules are subclasses of ServerModule.
 class ServerModule:
@@ -6,6 +8,14 @@ class ServerModule:
 
    MODULE_NAME = NotImplemented
    MODULE_SHORT_DESCRIPTION = NotImplemented
+
+   # Help menu content.
+   # These must be split into a list of lines (done using String.splitlines()).
+   # This allows the use of the help message parser which substitutes
+   # instances of {pf} and hides contents based on permission.
+   # Check the modules for examples.
+   _HELP_SUMMARY_LINES = NotImplemented
+   _HELP_DETAIL_LINES = NotImplemented
 
    # Defines a standard construction method.
    @classmethod
@@ -53,13 +63,13 @@ class ServerModule:
    #       up as "/examplecommand", while "$mb " will make the same
    #       module command show up as "$mb examplecommand".
    def get_help_summary(self, cmd_prefix, privilegelevel=0):
-      raise NotImplementedError
+      return utils.prepare_help_content(self._HELP_SUMMARY_LINES, cmd_prefix, privilegelevel)
 
    # Get a detailed help-message string about the module.
    # String has no leading/trailing whitespace.
    # NOTE: cmd_prefix works the same as in get_help_summary.
    def get_help_detail(self, substr, cmd_prefix, privilegelevel=0):
-      raise NotImplementedError
+      return utils.prepare_help_content(self._HELP_DETAIL_LINES, cmd_prefix, privilegelevel)
 
    # This method is always called every time a message from the module's associated
    # server is received.
