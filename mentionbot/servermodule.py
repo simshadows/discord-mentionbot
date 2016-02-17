@@ -9,7 +9,7 @@ class ServerModule:
 
    # Defines a standard construction method.
    @classmethod
-   def get_instance(cls, cmd_names, resources):
+   async def get_instance(cls, cmd_names, resources):
       raise NotImplementedError
 
    # Return a list of strings to be used to invoke a module command.

@@ -9,6 +9,8 @@ import errors
 from servermodule import ServerModule
 
 class Random(ServerModule):
+   
+   _SECRET_TOKEN = utils.SecretToken()
 
    RECOMMENDED_CMD_NAMES = ["random", "rng", "rnd", "rand"]
 
@@ -35,14 +37,17 @@ class Random(ServerModule):
    _RE_KW_CHOOSE = re.compile("choose|ch|choice|choices")
    _RE_DICE_NOTATION = re.compile("(\d*d)?\d+")
 
-   def __init__(self, cmd_names, client):
-      self._client = client
-      self._cmd_names = cmd_names
-      return
-
    @classmethod
-   def get_instance(cls, cmd_names, resources):
-      return Random(cmd_names, resources.client)
+   async def get_instance(cls, cmd_names, resources):
+      inst = cls(cls._SECRET_TOKEN)
+      inst._client = resources.client
+      inst._cmd_names = cmd_names
+      return inst
+
+   def __init__(self, token):
+      if not token is self._SECRET_TOKEN:
+         raise RuntimeError("Not allowed to instantiate directly. Please use get_instance().")
+      return
 
    @property
    def cmd_names(self):

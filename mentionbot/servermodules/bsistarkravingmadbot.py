@@ -8,6 +8,8 @@ import errors
 from servermodule import ServerModule
 
 class BsiStarkRavingMadBot(ServerModule):
+   
+   _SECRET_TOKEN = utils.SecretToken()
 
    RECOMMENDED_CMD_NAMES = ["bsistarkravingmadbot", "stark"]
 
@@ -58,18 +60,21 @@ For reference, I require the following modules to be installed:
 
    STARKRAVINGMADBOT_DEFAULTID = str(121281613660160000)
 
-   def __init__(self, cmd_names, client, server):
-      self._client = client
-      self._server = server
-      self._cmd_names = cmd_names
+   @classmethod
+   async def get_instance(cls, cmd_names, resources):
+      inst = cls(cls._SECRET_TOKEN)
 
-      # pf = self._client.get_server_bot_instance(self._server).cmd_prefix
+      inst._client = resources.client
+      inst._server = resources.server
+      inst._cmd_names = cmd_names
+
+      # pf = inst._client.get_server_bot_instance(inst._server).cmd_prefix
       pf = "/"
-      this = pf + self._cmd_names[0]
+      this = pf + inst._cmd_names[0]
       cmdnotimplemented = this + " cmdnotimplemented"
 
-      self._stark = self._client.search_for_user(self.STARKRAVINGMADBOT_DEFAULTID, enablenamesearch=False, serverrestriction=self._server)
-      self._preprocessor_replace = { # Maps commands to their exact substitute.
+      inst._stark = inst._client.search_for_user(inst.STARKRAVINGMADBOT_DEFAULTID, enablenamesearch=False, serverrestriction=inst._server)
+      inst._preprocessor_replace = { # Maps commands to their exact substitute.
          "$avatar": pf + "basicinfo avatar",
          "$blame": cmdnotimplemented,
          "$choose": pf + "random choose",
@@ -95,18 +100,19 @@ For reference, I require the following modules to be installed:
          "$whois": pf + "basicinfo user",
       }
 
-      self._sleep_choices = [
+      inst._sleep_choices = [
          "Go to sleep",
          "Git to bed",
          "(ﾉಠ_ಠ)ﾉ*:・ﾟ✧\ngit to sleep"
       ]
 
-      self._c = self._cmd_names[0] # A shorter name. This will be used a LOT.
-      return
+      inst._c = inst._cmd_names[0] # A shorter name. This will be used a LOT.
+      return inst
 
-   @classmethod
-   def get_instance(cls, cmd_names, resources):
-      return BsiStarkRavingMadBot(cmd_names, resources.client, resources.server)
+   def __init__(self, token):
+      if not token is self._SECRET_TOKEN:
+         raise RuntimeError("Not allowed to instantiate directly. Please use get_instance().")
+      return
 
    @property
    def cmd_names(self):

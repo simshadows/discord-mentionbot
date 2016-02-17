@@ -8,7 +8,7 @@ from servermodule import ServerModule
 
 class MentionsNotify(ServerModule):
    
-   # _SECRET_TOKEN = utils.SecretToken()
+   _SECRET_TOKEN = utils.SecretToken()
 
    RECOMMENDED_CMD_NAMES = ["mnotify", "mentionsnotify", "mn"]
 
@@ -28,7 +28,7 @@ This module notifies users of mentions via PM when they're offline.
    """.strip().splitlines()
 
    @classmethod
-   def get_instance(cls, cmd_names, resources):
+   async def get_instance(cls, cmd_names, resources):
       inst = cls(cls._SECRET_TOKEN)
       inst._client = resources.client
       inst._cmd_names = cmd_names

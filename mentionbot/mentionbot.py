@@ -19,7 +19,7 @@ LOGIN_DETAILS_FILENAME = "login_details" # This file is used to login. Only cont
 
 class MentionBot(clientextended.ClientExtended):
    BOTOWNER_ID = str(119384097473822727) # User ID of the owner of this bot
-   INITIAL_GAME_STATUS = "/help"
+   INITIAL_GAME_STATUS = "bot is running"
    CACHE_DIRECTORY = "cache/" # This MUST end with a forward-slash. e.g. "cache/"
    
    def __init__(self, **kwargs):

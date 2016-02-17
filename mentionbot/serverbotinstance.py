@@ -16,9 +16,6 @@ from serverpersistentstorage import ServerPersistentStorage
 from privilegemanager import PrivilegeManager
 from servermodulefactory import ServerModuleFactory
 
-# Modules
-from servermodules.mentions.mentions import Mentions
-
 # ServerBotInstance manages everything to do with a particular server.
 # IMPORTANT: client is a MentionBot instance!!!
 class ServerBotInstance:
@@ -83,7 +80,10 @@ class ServerBotInstance:
       data = inst._storage.get_server_settings()
       modules = []
       for module_name in data["Installed Modules"]:
-         modules.append(inst._module_factory.new_module_instance(module_name, inst))
+         try:
+            modules.append(await inst._module_factory.new_module_instance(module_name, inst))
+         except:
+            print("Error installing module {}. Skipping.".format(module_name))
       inst._modules = ServerModuleGroup(initial_modules=modules)
       return inst
 
@@ -196,7 +196,7 @@ class ServerBotInstance:
                if self._modules.module_is_installed(right):
                   await self._client.send_msg(msg, "`{}` is already installed.".format(right))
                else:
-                  new_module = self._module_factory.new_module_instance(right, self)
+                  new_module = await self._module_factory.new_module_instance(right, self)
                   await self._modules.add_server_module(new_module)
                   self._storage.add_module(right)
                   await self._client.send_msg(msg, "`{}` successfully installed.".format(right))

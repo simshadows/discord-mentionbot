@@ -54,10 +54,10 @@ class ServerModuleFactory:
          return False
 
    # PRECONDITION: self.module_exists(module_name) == True
-   def new_module_instance(self, module_name, server_bot_instance):
+   async def new_module_instance(self, module_name, server_bot_instance):
       module = self._modules[module_name]
       resources = ServerModuleResources(module_name, server_bot_instance)
-      return module.get_instance(module.RECOMMENDED_CMD_NAMES, resources)
+      return await module.get_instance(module.RECOMMENDED_CMD_NAMES, resources)
 
 
 

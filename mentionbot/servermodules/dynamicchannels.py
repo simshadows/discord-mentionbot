@@ -10,6 +10,8 @@ from enums import PrivilegeLevel
 from servermodule import ServerModule
 
 class DynamicChannels(ServerModule):
+   
+   _SECRET_TOKEN = utils.SecretToken()
 
    RECOMMENDED_CMD_NAMES = ["dchannel"]
 
@@ -42,19 +44,28 @@ class DynamicChannels(ServerModule):
       "max active temp channels": 5
    }
 
-   def __init__(self, cmd_names, resources):
-      self._res = resources
+   @classmethod
+   async def get_instance(cls, cmd_names, resources):
+      inst = cls(cls._SECRET_TOKEN)
 
-      self._client = self._res.client
-      self._server = self._res.server
-      self._cmd_names = cmd_names
-      self._default_role = self._server.default_role
+      inst._res = resources
 
-      self._default_channels = None
-      self._channel_timeout = None # Channel timeout in seconds.
-      self._max_active_temp_channels = None # If <0, then there's no limit.
+      inst._client = inst._res.client
+      inst._server = inst._res.server
+      inst._cmd_names = cmd_names
+      inst._default_role = inst._server.default_role
 
-      self._load_settings()
+      inst._default_channels = None
+      inst._channel_timeout = None # Channel timeout in seconds.
+      inst._max_active_temp_channels = None # If <0, then there's no limit.
+
+      inst._load_settings()
+      
+      return inst
+
+   def __init__(self, token):
+      if not token is self._SECRET_TOKEN:
+         raise RuntimeError("Not allowed to instantiate directly. Please use get_instance().")
       return
 
    def _load_settings(self):
@@ -112,10 +123,6 @@ class DynamicChannels(ServerModule):
       settings["default channels"] = default_channels
 
       self._res.save_settings(settings)
-
-   @classmethod
-   def get_instance(cls, cmd_names, resources):
-      return DynamicChannels(cmd_names, resources)
 
    @property
    def cmd_names(self):

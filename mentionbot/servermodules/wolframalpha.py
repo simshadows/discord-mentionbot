@@ -9,6 +9,8 @@ from enums import PrivilegeLevel
 from servermodule import ServerModule
 
 class WolframAlpha(ServerModule):
+   
+   _SECRET_TOKEN = utils.SecretToken()
 
    RECOMMENDED_CMD_NAMES = ["wamanage"]
 
@@ -44,20 +46,27 @@ class WolframAlpha(ServerModule):
       "show img": "false",
    }
 
-   def __init__(self, cmd_names, resources):
-      self._res = resources
+   @classmethod
+   async def get_instance(cls, cmd_names, resources):
+      inst = cls(cls._SECRET_TOKEN)
+      inst._res = resources
 
-      self._client = self._res.client
-      self._cmd_names = cmd_names
+      inst._client = inst._res.client
+      inst._cmd_names = cmd_names
 
-      self._max_pods = 2
-      self._show_text = True
-      self._show_img = False
+      inst._max_pods = 2
+      inst._show_text = True
+      inst._show_img = False
 
-      self._wa_app_ID = "PLACEHOLDER"
-      self._wa_client = None
+      inst._wa_app_ID = "PLACEHOLDER"
+      inst._wa_client = None
 
-      self._load_settings()
+      inst._load_settings()
+      return inst
+
+   def __init__(self, token):
+      if not token is self._SECRET_TOKEN:
+         raise RuntimeError("Not allowed to instantiate directly. Please use get_instance().")
       return
 
    def _load_settings(self):
@@ -89,10 +98,6 @@ class WolframAlpha(ServerModule):
             settings["show img"] = False
             self._res.save_settings(settings)
       return
-
-   @classmethod
-   def get_instance(cls, cmd_names, resources):
-      return WolframAlpha(cmd_names, resources)
 
    @property
    def cmd_names(self):

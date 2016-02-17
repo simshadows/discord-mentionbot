@@ -9,6 +9,8 @@ from enums import PrivilegeLevel
 from servermodule import ServerModule
 
 class JCFDiscord(ServerModule):
+   
+   _SECRET_TOKEN = utils.SecretToken()
 
    RECOMMENDED_CMD_NAMES = ["jcfdiscord"]
 
@@ -49,16 +51,18 @@ class JCFDiscord(ServerModule):
       "ISTJ","ISFJ","ESTJ","ESFJ","ISTP","ISFP","ESTP","ESFP",
    ]
 
-   def __init__(self, cmd_names, resources):
-      self._res = resources
-
-      self._client = self._res.client
-      self._cmd_names = cmd_names
-      return
-
    @classmethod
-   def get_instance(cls, cmd_names, resources):
-      return JCFDiscord(cmd_names, resources)
+   async def get_instance(cls, cmd_names, resources):
+      inst = cls(cls._SECRET_TOKEN)
+      inst._res = resources
+      inst._client = inst._res.client
+      inst._cmd_names = cmd_names
+      return inst
+
+   def __init__(self, token):
+      if not token is self._SECRET_TOKEN:
+         raise RuntimeError("Not allowed to instantiate directly. Please use get_instance().")
+      return
 
    @property
    def cmd_names(self):
