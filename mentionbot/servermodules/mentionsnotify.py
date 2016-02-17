@@ -6,15 +6,17 @@ import utils
 import errors
 from servermodule import ServerModule
 
-class Notify(ServerModule):
+class MentionsNotify(ServerModule):
+   
+   # _SECRET_TOKEN = utils.SecretToken()
 
-   RECOMMENDED_CMD_NAMES = ["notify", "n"]
+   RECOMMENDED_CMD_NAMES = ["mnotify", "mentionsnotify", "mn"]
 
-   MODULE_NAME = "Notify"
+   MODULE_NAME = "Mentions Notify"
    MODULE_SHORT_DESCRIPTION = "PMs offline users when mentioned."
 
    _HELP_SUMMARY_LINES = """
-`{pf}notify` - View and change settings of PM notification system.
+`{pf}mnotify` - View and change settings of PM notification system.
    """.strip().splitlines()
 
    _HELP_DETAIL_LINES = """
@@ -22,23 +24,20 @@ class Notify(ServerModule):
 
 This module notifies users of mentions via PM when they're offline.
 
-`{pf}notify` - View and change settings of PM notification system.
->>> PRIVILEGE LEVEL 1 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-TODO: PLS ADD HELP FOR TOGGLE FEATURE. THX M8
+`{pf}mnotify` - View and change settings of PM notification system.
    """.strip().splitlines()
-
-   # PARAMETER: enabled - If false, the module is disabled.
-   def __init__(self, cmd_names, client, enabled=True):
-      self._client = client
-      self._cmd_names = cmd_names
-
-      self._enabled = enabled
-      return
 
    @classmethod
    def get_instance(cls, cmd_names, resources):
-      return Notify(cmd_names, resources.client, enabled=False)
+      inst = cls(cls._SECRET_TOKEN)
+      inst._client = resources.client
+      inst._cmd_names = cmd_names
+      return inst
+
+   def __init__(self, token):
+      if not token is self._SECRET_TOKEN:
+         raise RuntimeError("Not allowed to instantiate directly. Please use get_instance().")
+      return
 
    @property
    def cmd_names(self):
@@ -52,9 +51,6 @@ TODO: PLS ADD HELP FOR TOGGLE FEATURE. THX M8
 
    # Call this every time a message is received.
    async def on_message(self, msg):
-      if not self._enabled:
-         return
-      
       for member in msg.mentions:
          if str(member.status) != "offline":
             continue
@@ -63,27 +59,13 @@ TODO: PLS ADD HELP FOR TOGGLE FEATURE. THX M8
          buf += "\n" + msg.content
          await self._client.send_msg(member, buf)
          print("MentionNotifyModule: A notification was sent!")
-
       return
 
    # Call this to process a command.
    async def process_cmd(self, substr, msg, privilegelevel=0):
-      await self._client.send_msg(member, "The notify module is still under development. Sorry!")
+      await self._client.send_msg(member, "The notify module currently has no commands. Sorry!")
       return
 
-   # True if notifications is enabled, False otherwise.
-   def is_enabled(self):
-      return self._enabled
-
-   # Enable notifications.
-   def enable(self):
-      self._enabled = True
-      return
-
-   # Disable notifications.
-   def disable(self):
-      self._enabled = False
-      return
 
 
 

@@ -15,7 +15,6 @@ class ServerPersistentStorage:
       "Server Name": "",
       "Installed Modules": [
          "Basic Information",
-         "Mentions",
          "Random",
          "Wolfram Alpha",
       ],

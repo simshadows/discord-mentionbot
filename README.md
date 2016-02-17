@@ -2,6 +2,7 @@
 An extensible, multi-server Discord bot.
 
 **This bot is still at a really early stage in development. I suggest you don't use it just yet...**
+**And additionally, I'm keeping this bot framework
 
 # Key features:
 
@@ -15,12 +16,7 @@ An extensible, multi-server Discord bot.
 # Available Modules
 
 * **Basic Information**: Presents some basic information about the server and the users in it, including user avatars and server icons.
-* **Dynamic Channels**: Gives users the ability to create temporary channels that disappear after a few minutes of inactivity.
-	* "Default channels" can be specified to be ignored by the module.
-	* Warning: Server owners beware! While normal members won't see all the hidden channels, you and the bot will. The solution is to have an "admin acount" separate from your normal account.
-* **Mentions**: Tools for keeping track of mentions.
-	* Mentions can be PMed when users are offline (with the ability to opt-out).
-	* A search tool allows you to scan through channels for mentions.
+* **Mentions Notify**: PMs users of their mentions when they're offline.
 * **Random**: Randomization tools.
 	* Generate random numbers of arbitrary ranges, flip coins, get random RGB colour codes, and use dice notation.
 * **Wolfram Alpha**: Allows users to query Wolfram Alpha.
@@ -30,6 +26,12 @@ Some community-specific modules:
 * **JCFDiscord**: For the [JCFDiscord](https://www.reddit.com/r/JCFDiscord/) community.
 * **BSI StarkRavingMadBot**: A bot stand-in for the [JCFDiscord](https://www.reddit.com/r/JCFDiscord/) community's [StarkRavingMadBot](https://github.com/josh951623/StarkRavingMadBot).
 	* This module is made to mirror some of StarkRavingMadBot's functionality, as well as take over if Stark isn't present on the server.
+
+Currently under development/planned to be made:
+
+* **Dynamic Channels**: Gives users the ability to create temporary channels that disappear after a few minutes of inactivity.
+	* "Default channels" can be specified to be ignored by the module.
+	* Warning: Server owners beware! While normal members won't see all the hidden channels, you and the bot will. The solution is to have an "admin acount" separate from your normal account.
 
 # Notes
 

@@ -4,7 +4,7 @@ from servermoduleresources import ServerModuleResources
 # Modules
 from servermodules.basicinfo import BasicInfo
 from servermodules.dynamicchannels import DynamicChannels
-from servermodules.mentions.mentions import Mentions
+from servermodules.mentionsnotify import MentionsNotify
 from servermodules.random import Random
 from servermodules.wolframalpha import WolframAlpha
 from servermodules.jcfdiscord import JCFDiscord
@@ -18,7 +18,7 @@ class ServerModuleFactory:
    _MODULE_LIST = [
       BasicInfo,
       DynamicChannels,
-      Mentions,
+      MentionsNotify,
       Random,
       WolframAlpha,
       JCFDiscord,
