@@ -149,8 +149,7 @@ class ServerBotInstance:
       substr = substr.strip()
       privilege_level = self._privileges.get_privilege_level(msg.author)
       if substr == "" and not no_default:
-         raise NotImplementedError # TODO !!!
-         # await self._mbSummaryModule.process_cmd("", msg, add_extra_help=False)
+         raise NotImplementedError
       else:
          (left, right) = utils.separate_left_word(substr)
          if left == "help":

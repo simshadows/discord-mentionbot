@@ -1,3 +1,4 @@
+import logging
 import datetime
 import sys
 import copy
@@ -14,6 +15,12 @@ import errors
 import clientextended
 
 from serverbotinstance import ServerBotInstance
+
+logger = logging.getLogger('mentionbot')
+logger.setLevel(logging.INFO)
+handler = logging.FileHandler(filename='mentionbot.log', encoding='utf-8', mode='w')
+handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+logger.addHandler(handler)
 
 LOGIN_DETAILS_FILENAME = "login_details" # This file is used to login. Only contains two lines. Line 1 is email, line 2 is password.
 
@@ -64,13 +71,13 @@ class MentionBot(clientextended.ClientExtended):
          if isinstance(msg.channel, discord.Channel):
             await self._bot_instances[msg.server].process_text(text, msg)
             try:
-               print("msg rcv #" + msg.channel.name + ": " + str(text.encode("unicode_escape")))
+               print("msg rcv #" + msg.channel.name + ": " + utils.str_asciionly(text))
             except Exception:
                print("msg rcv (CAUGHT EXCEPTION; UNKNOWN DISPLAY ERROR)")
          else: # Assumed to be a private message.
             await self.send_msg(msg, "sry m8 im not programmed to do anything fancy with pms yet")
             try:
-               print("private msg rcv from" + msg.author.name + ": " + text)
+               print("private msg rcv from" + utils.str_asciionly(msg.author.name) + ": " + utils.str_asciionly(text))
             except Exception:
                print("private msg rcv (CAUGHT EXCEPTION; UNKNOWN DISPLAY ERROR)")
       

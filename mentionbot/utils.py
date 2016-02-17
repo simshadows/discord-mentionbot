@@ -25,6 +25,15 @@ def separate_left_word(text): # TYPE: Tuple<String>
 def remove_whitespace(text):
    return "".join(text.split()) # TODO: Find a nicer implementation.
 
+def str_asciionly(text):
+   buf = ""
+   try:
+      buf = str(text.encode("unicode_escape"))
+   except:
+      buf = ">>>>>>>>>>>>>>>>>>>>>>>>UNKNOWN"
+      print("ERROR: Failed to convert string.")
+   return buf[2:-1]
+
 #################################################################################
 # FILE I/O ######################################################################
 #################################################################################

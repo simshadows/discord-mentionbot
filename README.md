@@ -1,8 +1,7 @@
-# Discord-mentionbot
-An extensible, multi-server Discord bot.
+# Discord - mentionbot
+An extensible, module-based Discord bot.
 
 **This bot is still at a really early stage in development. I suggest you don't use it just yet...**
-**And additionally, I'm keeping this bot framework
 
 # Key features:
 
@@ -15,11 +14,11 @@ An extensible, multi-server Discord bot.
 
 # Available Modules
 
-* **Basic Information**: Presents some basic information about the server and the users in it, including user avatars and server icons.
+* **Basic Information**: Presents some basic information about the server and the users in it, including user avatars and server icons. *(Installed by default.)*
 * **Mentions Notify**: PMs users of their mentions when they're offline.
-* **Random**: Randomization tools.
+* **Random**: Randomization tools. *(Installed by default.)*
 	* Generate random numbers of arbitrary ranges, flip coins, get random RGB colour codes, and use dice notation.
-* **Wolfram Alpha**: Allows users to query Wolfram Alpha.
+* **Wolfram Alpha**: Allows users to query Wolfram Alpha. *(Installed by default.)*
 
 Some community-specific modules:
 
