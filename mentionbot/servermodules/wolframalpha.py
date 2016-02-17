@@ -132,17 +132,26 @@ class WolframAlpha(ServerModule):
             buf = ""
             pods_to_fetch = self._max_pods
             try:
+               unprinted_pod_titles = []
                for pod in result.pods:
                   if pods_to_fetch <= 0:
-                     buf += "*Unprinted pod: " + str(pod.title) + "*\n"
+                     unprinted_pod_titles.append(str(pod.title))
                   else:
-                     pods_to_fetch += -1
+                     pods_to_fetch -= 1
                      buf += "**" + str(pod.title) + ":**\n"
-                     if self._show_text:
-                        buf += "```\n" + pod.text + "\n```\n"
-                     if self._show_img:
-                        buf += str(pod.img) + "\n"
-               buf = buf[:-1] # Trim off extra newline
+                     try:
+                        if self._show_text:
+                           buf += "```\n" + pod.text + "\n```"
+                        if self._show_img:
+                           buf += str(pod.img) + "\n"
+                        buf += "\n"
+                     except:
+                        buf += str(pod.img) + "\n\n"
+               if len(unprinted_pod_titles) > 0:
+                  buf += "*Unprinted pods: "
+                  for title in unprinted_pod_titles:
+                     buf += title + ", "
+                  buf = buf[:-2] + "*"
             except:
                buf = "Error: Unknown error. Aborting."
             await self._client.send_msg(msg, buf)
