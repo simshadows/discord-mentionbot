@@ -8,7 +8,7 @@ from enums import PrivilegeLevel
 from servermodule import ServerModule
 
 class Debugging(ServerModule):
-   
+
    _SECRET_TOKEN = utils.SecretToken()
 
    RECOMMENDED_CMD_NAMES = ["debugging", "debug", "db"]
@@ -26,22 +26,10 @@ class Debugging(ServerModule):
 
    @classmethod
    async def get_instance(cls, cmd_names, resources):
-      print("DEBUGGING: self.get_instance()")
-      inst = cls(cls._SECRET_TOKEN)
+      inst = cls(cls._SECRET_TOKEN, cmd_names)
       inst._res = resources
       inst._client = inst._res.client
-      inst._cmd_names = cmd_names
       return inst
-
-   def __init__(self, token):
-      print("DEBUGGING: self.__init__()")
-      if not token is self._SECRET_TOKEN:
-         raise RuntimeError("Not allowed to instantiate directly. Please use get_instance().")
-      return
-
-   @property
-   def cmd_names(self):
-      return self._cmd_names
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
       print("DEBUGGING: self.msg_preprocessor(): with content = " + content)

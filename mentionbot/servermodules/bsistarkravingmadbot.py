@@ -62,11 +62,10 @@ For reference, I require the following modules to be installed:
 
    @classmethod
    async def get_instance(cls, cmd_names, resources):
-      inst = cls(cls._SECRET_TOKEN)
+      inst = cls(cls._SECRET_TOKEN, cmd_names)
 
       inst._client = resources.client
       inst._server = resources.server
-      inst._cmd_names = cmd_names
 
       # pf = inst._client.get_server_bot_instance(inst._server).cmd_prefix
       pf = "/"
@@ -108,15 +107,6 @@ For reference, I require the following modules to be installed:
 
       inst._c = inst._cmd_names[0] # A shorter name. This will be used a LOT.
       return inst
-
-   def __init__(self, token):
-      if not token is self._SECRET_TOKEN:
-         raise RuntimeError("Not allowed to instantiate directly. Please use get_instance().")
-      return
-
-   @property
-   def cmd_names(self):
-      return self._cmd_names
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
       if self.dont_run_module():

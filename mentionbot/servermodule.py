@@ -4,6 +4,9 @@ import utils
 # All server modules are subclasses of ServerModule.
 class ServerModule:
    
+   # Must instantiate a token class. Recommended: utils.SecretToken()
+   _SECRET_TOKEN = NotImplemented
+   
    RECOMMENDED_CMD_NAMES = NotImplemented
 
    MODULE_NAME = NotImplemented
@@ -17,19 +20,39 @@ class ServerModule:
    _HELP_SUMMARY_LINES = NotImplemented
    _HELP_DETAIL_LINES = NotImplemented
 
-   # Defines a standard construction method.
    @classmethod
    async def get_instance(cls, cmd_names, resources):
       raise NotImplementedError
+
+   def __init__(self, token, cmd_names):
+      self._cmd_names = cmd_names
+      if not token is self._SECRET_TOKEN:
+         raise RuntimeError("Not allowed to instantiate directly. Please use get_instance().")
+      return
 
    # Return a list of strings to be used to invoke a module command.
    # For example, if command_names=["foo","baz"], then subcommands
    # "foo example" or "baz example" SHOULD both cause the ServerModule
    # process_cmd() function to be called with substr="example".
-   # TODO: Figure out a better way to define abstract attributes!!!
    @property
    def cmd_names(self):
-      raise NotImplementedError
+      return self._cmd_names
+
+   # Get a help-message string summarising the module functionality,
+   # or at least directing the user to more detailed help.
+   # Returned string has no leading/trailing whitespace.
+   # NOTE: cmd_prefix is sensitive to leading/trailing whitespace.
+   #       For example, cmd_prefix="/" will make module commands show
+   #       up as "/examplecommand", while "$mb " will make the same
+   #       module command show up as "$mb examplecommand".
+   def get_help_summary(self, cmd_prefix, privilegelevel=0):
+      return utils.prepare_help_content(self._HELP_SUMMARY_LINES, cmd_prefix, privilegelevel)
+
+   # Get a detailed help-message string about the module.
+   # String has no leading/trailing whitespace.
+   # NOTE: cmd_prefix works the same as in get_help_summary.
+   def get_help_detail(self, substr, cmd_prefix, privilegelevel=0):
+      return utils.prepare_help_content(self._HELP_DETAIL_LINES, cmd_prefix, privilegelevel)
 
    # Every module has the opportunity to pre-process the contents of a message.
    # This is carried out after all modules have carried out their on_message()
@@ -54,22 +77,6 @@ class ServerModule:
    #     commands to itself to serve them.
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
       return content
-
-   # Get a help-message string summarising the module functionality,
-   # or at least directing the user to more detailed help.
-   # Returned string has no leading/trailing whitespace.
-   # NOTE: cmd_prefix is sensitive to leading/trailing whitespace.
-   #       For example, cmd_prefix="/" will make module commands show
-   #       up as "/examplecommand", while "$mb " will make the same
-   #       module command show up as "$mb examplecommand".
-   def get_help_summary(self, cmd_prefix, privilegelevel=0):
-      return utils.prepare_help_content(self._HELP_SUMMARY_LINES, cmd_prefix, privilegelevel)
-
-   # Get a detailed help-message string about the module.
-   # String has no leading/trailing whitespace.
-   # NOTE: cmd_prefix works the same as in get_help_summary.
-   def get_help_detail(self, substr, cmd_prefix, privilegelevel=0):
-      return utils.prepare_help_content(self._HELP_DETAIL_LINES, cmd_prefix, privilegelevel)
 
    # This method is always called every time a message from the module's associated
    # server is received.

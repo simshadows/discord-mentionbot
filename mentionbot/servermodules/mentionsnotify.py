@@ -29,19 +29,9 @@ This module notifies users of mentions via PM when they're offline.
 
    @classmethod
    async def get_instance(cls, cmd_names, resources):
-      inst = cls(cls._SECRET_TOKEN)
+      inst = cls(cls._SECRET_TOKEN, cmd_names)
       inst._client = resources.client
-      inst._cmd_names = cmd_names
       return inst
-
-   def __init__(self, token):
-      if not token is self._SECRET_TOKEN:
-         raise RuntimeError("Not allowed to instantiate directly. Please use get_instance().")
-      return
-
-   @property
-   def cmd_names(self):
-      return self._cmd_names
 
    # Call this every time a message is received.
    async def on_message(self, msg):

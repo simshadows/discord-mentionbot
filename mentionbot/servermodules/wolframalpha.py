@@ -48,11 +48,9 @@ class WolframAlpha(ServerModule):
 
    @classmethod
    async def get_instance(cls, cmd_names, resources):
-      inst = cls(cls._SECRET_TOKEN)
+      inst = cls(cls._SECRET_TOKEN, cmd_names)
       inst._res = resources
-
       inst._client = inst._res.client
-      inst._cmd_names = cmd_names
 
       inst._max_pods = 2
       inst._show_text = True
@@ -63,11 +61,6 @@ class WolframAlpha(ServerModule):
 
       inst._load_settings()
       return inst
-
-   def __init__(self, token):
-      if not token is self._SECRET_TOKEN:
-         raise RuntimeError("Not allowed to instantiate directly. Please use get_instance().")
-      return
 
    def _load_settings(self):
       # Shared Settings
@@ -98,10 +91,6 @@ class WolframAlpha(ServerModule):
             settings["show img"] = False
             self._res.save_settings(settings)
       return
-
-   @property
-   def cmd_names(self):
-      return self._cmd_names
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
       str_wa = default_cmd_prefix + "wa "

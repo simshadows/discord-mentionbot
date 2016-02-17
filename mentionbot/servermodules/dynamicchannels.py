@@ -46,13 +46,12 @@ class DynamicChannels(ServerModule):
 
    @classmethod
    async def get_instance(cls, cmd_names, resources):
-      inst = cls(cls._SECRET_TOKEN)
+      inst = cls(cls._SECRET_TOKEN, cmd_names)
 
       inst._res = resources
 
       inst._client = inst._res.client
       inst._server = inst._res.server
-      inst._cmd_names = cmd_names
       inst._default_role = inst._server.default_role
 
       inst._default_channels = None
@@ -62,11 +61,6 @@ class DynamicChannels(ServerModule):
       inst._load_settings()
       
       return inst
-
-   def __init__(self, token):
-      if not token is self._SECRET_TOKEN:
-         raise RuntimeError("Not allowed to instantiate directly. Please use get_instance().")
-      return
 
    def _load_settings(self):
       # Server Settings
@@ -123,10 +117,6 @@ class DynamicChannels(ServerModule):
       settings["default channels"] = default_channels
 
       self._res.save_settings(settings)
-
-   @property
-   def cmd_names(self):
-      return self._cmd_names
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
       if content.startswith("++"):
