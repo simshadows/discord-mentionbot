@@ -31,11 +31,9 @@ class BasicInfo(ServerModule):
 *Note: Dates are presented in ISO 8601 format.*
    """.strip().splitlines()
 
-   @classmethod
-   async def get_instance(cls, cmd_names, resources):
-      inst = cls(cls._SECRET_TOKEN, cmd_names)
-      inst._client = resources.client
-      return inst
+   async def _initialize(self, resources):
+      self._client = resources.client
+      return
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
       str_avatar = default_cmd_prefix + "avatar"

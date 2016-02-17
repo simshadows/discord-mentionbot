@@ -20,9 +20,15 @@ class ServerModule:
    _HELP_SUMMARY_LINES = NotImplemented
    _HELP_DETAIL_LINES = NotImplemented
 
+   # Do whatever initialization you wish here.
+   async def _initialize(self, resources):
+      raise NotImplementedError
+
    @classmethod
    async def get_instance(cls, cmd_names, resources):
-      raise NotImplementedError
+      inst = cls(cls._SECRET_TOKEN, cmd_names)
+      await inst._initialize(resources)
+      return inst
 
    def __init__(self, token, cmd_names):
       self._cmd_names = cmd_names

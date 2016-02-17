@@ -60,20 +60,17 @@ For reference, I require the following modules to be installed:
 
    STARKRAVINGMADBOT_DEFAULTID = str(121281613660160000)
 
-   @classmethod
-   async def get_instance(cls, cmd_names, resources):
-      inst = cls(cls._SECRET_TOKEN, cmd_names)
+   async def _initialize(self, resources):
+      self._client = resources.client
+      self._server = resources.server
 
-      inst._client = resources.client
-      inst._server = resources.server
-
-      # pf = inst._client.get_server_bot_instance(inst._server).cmd_prefix
+      # pf = self._client.get_server_bot_instance(self._server).cmd_prefix
       pf = "/"
-      this = pf + inst._cmd_names[0]
+      this = pf + self._cmd_names[0]
       cmdnotimplemented = this + " cmdnotimplemented"
 
-      inst._stark = inst._client.search_for_user(inst.STARKRAVINGMADBOT_DEFAULTID, enablenamesearch=False, serverrestriction=inst._server)
-      inst._preprocessor_replace = { # Maps commands to their exact substitute.
+      self._stark = self._client.search_for_user(self.STARKRAVINGMADBOT_DEFAULTID, enablenamesearch=False, serverrestriction=self._server)
+      self._preprocessor_replace = { # Maps commands to their exact substitute.
          "$avatar": pf + "basicinfo avatar",
          "$blame": cmdnotimplemented,
          "$choose": pf + "random choose",
@@ -99,14 +96,14 @@ For reference, I require the following modules to be installed:
          "$whois": pf + "basicinfo user",
       }
 
-      inst._sleep_choices = [
+      self._sleep_choices = [
          "Go to sleep",
          "Git to bed",
          "(ﾉಠ_ಠ)ﾉ*:・ﾟ✧\ngit to sleep"
       ]
 
-      inst._c = inst._cmd_names[0] # A shorter name. This will be used a LOT.
-      return inst
+      self._c = self._cmd_names[0] # A shorter name. This will be used a LOT.
+      return
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
       if self.dont_run_module():

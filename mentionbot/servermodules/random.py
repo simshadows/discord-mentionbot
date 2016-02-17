@@ -37,11 +37,9 @@ class Random(ServerModule):
    _RE_KW_CHOOSE = re.compile("choose|ch|choice|choices")
    _RE_DICE_NOTATION = re.compile("(\d*d)?\d+")
 
-   @classmethod
-   async def get_instance(cls, cmd_names, resources):
-      inst = cls(cls._SECRET_TOKEN, cmd_names)
-      inst._client = resources.client
-      return inst
+   async def _initialize(self, resources):
+      self._client = resources.client
+      return
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
       str_choose = default_cmd_prefix + "choose "

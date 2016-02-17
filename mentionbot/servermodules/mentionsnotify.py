@@ -27,11 +27,9 @@ This module notifies users of mentions via PM when they're offline.
 `{pf}mnotify` - View and change settings of PM notification system.
    """.strip().splitlines()
 
-   @classmethod
-   async def get_instance(cls, cmd_names, resources):
-      inst = cls(cls._SECRET_TOKEN, cmd_names)
-      inst._client = resources.client
-      return inst
+   async def _initialize(self, resources):
+      self._client = resources.client
+      return
 
    # Call this every time a message is received.
    async def on_message(self, msg):

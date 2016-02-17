@@ -44,23 +44,19 @@ class DynamicChannels(ServerModule):
       "max active temp channels": 5
    }
 
-   @classmethod
-   async def get_instance(cls, cmd_names, resources):
-      inst = cls(cls._SECRET_TOKEN, cmd_names)
+   async def _initialize(self, resources):
+      self._res = resources
 
-      inst._res = resources
+      self._client = self._res.client
+      self._server = self._res.server
+      self._default_role = self._server.default_role
 
-      inst._client = inst._res.client
-      inst._server = inst._res.server
-      inst._default_role = inst._server.default_role
+      self._default_channels = None
+      self._channel_timeout = None # Channel timeout in seconds.
+      self._max_active_temp_channels = None # If <0, then there's no limit.
 
-      inst._default_channels = None
-      inst._channel_timeout = None # Channel timeout in seconds.
-      inst._max_active_temp_channels = None # If <0, then there's no limit.
-
-      inst._load_settings()
-      
-      return inst
+      self._load_settings()
+      return
 
    def _load_settings(self):
       # Server Settings

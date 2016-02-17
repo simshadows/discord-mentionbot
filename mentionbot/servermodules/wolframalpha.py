@@ -46,21 +46,19 @@ class WolframAlpha(ServerModule):
       "show img": "false",
    }
 
-   @classmethod
-   async def get_instance(cls, cmd_names, resources):
-      inst = cls(cls._SECRET_TOKEN, cmd_names)
-      inst._res = resources
-      inst._client = inst._res.client
+   async def _initialize(self, resources):
+      self._res = resources
+      self._client = self._res.client
 
-      inst._max_pods = 2
-      inst._show_text = True
-      inst._show_img = False
+      self._max_pods = 2
+      self._show_text = True
+      self._show_img = False
 
-      inst._wa_app_ID = "PLACEHOLDER"
-      inst._wa_client = None
+      self._wa_app_ID = "PLACEHOLDER"
+      self._wa_client = None
 
-      inst._load_settings()
-      return inst
+      self._load_settings()
+      return
 
    def _load_settings(self):
       # Shared Settings

@@ -51,12 +51,10 @@ class JCFDiscord(ServerModule):
       "ISTJ","ISFJ","ESTJ","ESFJ","ISTP","ISFP","ESTP","ESFP",
    ]
 
-   @classmethod
-   async def get_instance(cls, cmd_names, resources):
-      inst = cls(cls._SECRET_TOKEN, cmd_names)
-      inst._res = resources
-      inst._client = inst._res.client
-      return inst
+   async def _initialize(self, resources):
+      self._res = resources
+      self._client = self._res.client
+      return
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
       str_functions = default_cmd_prefix + "functions"
