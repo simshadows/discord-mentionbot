@@ -43,7 +43,7 @@ class ServerModule:
    #     and if so, the module will process messages to redirect
    #     commands to itself to serve them.
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
-      return content # THIS IS TO BE OVERWRITTEN!
+      return content
 
    # Get a help-message string summarising the module functionality,
    # or at least directing the user to more detailed help.

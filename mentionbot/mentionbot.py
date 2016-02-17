@@ -88,7 +88,7 @@ class MentionBot(clientextended.ClientExtended):
          await self.send_msg(msg, buf)
       except errors.CommandPrivilegeError:
          print("Caught CommandPrivilegeError.")
-         await self.send_msg(msg, "im afraid im not allowed to do that for you m8")
+         await self.send_msg(msg, "Permission denied.")
       except errors.NoHelpContentExists:
          print("Caught NoHelpContentExists.")
          await self.send_msg(msg, "No help content exists.")
@@ -120,7 +120,10 @@ class MentionBot(clientextended.ClientExtended):
 client = MentionBot()
 print("\nAttempting to log in using file '" + LOGIN_DETAILS_FILENAME + "'.")
 if not os.path.isfile(LOGIN_DETAILS_FILENAME):
-   print("File does not exist. Terminating.")
+   login_file = open(LOGIN_DETAILS_FILENAME, "w")
+   login_file.write("USERNAME\nPASSWORD")
+   login_file.close()
+   print("File does not exist. Please edit the file {} with your login details.")
    sys.exit()
 login_file = open(LOGIN_DETAILS_FILENAME, "r")
 email = login_file.readline().strip()

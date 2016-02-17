@@ -9,6 +9,7 @@ from servermodules.random import Random
 from servermodules.wolframalpha import WolframAlpha
 from servermodules.jcfdiscord import JCFDiscord
 from servermodules.bsistarkravingmadbot import BsiStarkRavingMadBot
+from servermodules.debugging import Debugging
 
 class ServerModuleFactory:
    
@@ -23,6 +24,7 @@ class ServerModuleFactory:
       WolframAlpha,
       JCFDiscord,
       BsiStarkRavingMadBot,
+      Debugging,
    ]
 
    @classmethod
