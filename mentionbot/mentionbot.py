@@ -25,7 +25,7 @@ logger.addHandler(handler)
 LOGIN_DETAILS_FILENAME = "login_details" # This file is used to login. Only contains two lines. Line 1 is email, line 2 is password.
 
 class MentionBot(clientextended.ClientExtended):
-   BOTOWNER_ID = str(119384097473822727) # User ID of the owner of this bot
+   BOTOWNER_ID = "119384097473822727"
    INITIAL_GAME_STATUS = "bot is running"
    CACHE_DIRECTORY = "cache/" # This MUST end with a forward-slash. e.g. "cache/"
    

@@ -19,13 +19,13 @@ from servermodulefactory import ServerModuleFactory
 # ServerBotInstance manages everything to do with a particular server.
 # IMPORTANT: client is a MentionBot instance!!!
 class ServerBotInstance:
-   
    _SECRET_TOKEN = utils.SecretToken()
+   
+   DEFAULT_COMMAND_PREFIX = "/"
 
    _RE_MENTIONSTR = re.compile("<@\d+>")
 
    INIT_MENTIONS_NOTIFY_ENABLED = False
-   DEFAULT_COMMAND_PREFIX = "/"
 
    # IMPORTANT: This needs to be parsed with ServerModule._prepare_help_content()
    # TODO: Figure out a neater way of doing this.
@@ -39,6 +39,7 @@ class ServerBotInstance:
 `{pf}say [text]`
 `{pf}add [module name]`
 `{pf}remove [module name]`
+`{pf}prefix [new prefix name]`
    """.strip().splitlines()
 
    _HELP_ADMIN = """
@@ -62,7 +63,7 @@ class ServerBotInstance:
       inst._data_directory = inst._client.CACHE_DIRECTORY + "serverdata/" + inst._server.id + "/"
       inst._shared_directory = inst._client.CACHE_DIRECTORY + "shared/"
 
-      inst._cmd_prefix = inst.DEFAULT_COMMAND_PREFIX
+      inst._cmd_prefix = None
       inst._bot_name = inst._client.user.name # TODO: Move this somewhere else.
       inst._initialization_timestamp = datetime.datetime.utcnow()
 
@@ -78,6 +79,7 @@ class ServerBotInstance:
       # Load and apply server settings
 
       data = inst._storage.get_server_settings()
+      
       modules = []
       for module_name in data["Installed Modules"]:
          try:
@@ -85,6 +87,14 @@ class ServerBotInstance:
          except:
             print("Error installing module {}. Skipping.".format(module_name))
       inst._modules = ServerModuleGroup(initial_modules=modules)
+
+      try:
+         inst._cmd_prefix = data["cmd prefix"]
+      except KeyError:
+         inst._cmd_prefix = data["cmd prefix"] = inst.DEFAULT_COMMAND_PREFIX
+         
+      inst._storage.save_server_settings(data)
+
       return inst
 
    def __init__(self, token):
@@ -111,12 +121,9 @@ class ServerBotInstance:
    @property
    def shared_directory(self):
       return self._shared_directory
-   
-
 
    # Call this to process text (to parse for commands).
    async def process_text(self, substr, msg):
-      
       await self._modules.on_message(msg)
 
       privilege_level = self._privileges.get_privilege_level(msg.author)
@@ -124,24 +131,9 @@ class ServerBotInstance:
          return
 
       substr = await self._modules.msg_preprocessor(substr, msg, self._cmd_prefix)
-
       (left, right) = utils.separate_left_word(substr)
-
       if substr.startswith(self._cmd_prefix):
          await self._cmd1(substr[1:].strip(), msg, self._cmd_prefix, no_default=True)
-
-      # # EASTER EGG REPLY.
-      # elif (left == "$blame") and (self._client.bot_mention in substr):
-      #    await self._client.send_msg(msg, "no fk u")
-
-      # TODO: Fix this later.
-      # elif (self._client.bot_mention in substr or substr == self._client.user.name + " pls"):
-      #    await self._mbSummaryModule.process_cmd("", msg, add_extra_help=True)
-      
-      # # EASTER EGG REPLY
-      # elif msg.content.startswith("$blame " + self._client.botowner_mention) or msg.content.startswith("$blame " + self._client.botowner.name):
-      #    await self._client.send_msg(msg, "he didnt do shit m8")
-      
       return
 
 
@@ -212,6 +204,16 @@ class ServerBotInstance:
             else:
                await self._client.send_msg(msg, "`{}` is not installed.".format(right))
 
+         elif (left == "prefix") or (left == "changeprefix"):
+            if privilege_level < PrivilegeLevel.ADMIN:
+               raise errors.CommandPrivilegeError
+            if len(right) == 0:
+               raise errors.InvalidCommandArgumentsError
+            self._cmd_prefix = right
+            buf = "`{}` set as command prefix.".format(self._cmd_prefix)
+            buf += "\nThe help message is now invoked using `{}help`.".format(self._cmd_prefix)
+            await self._client.send_msg(msg, buf)
+
          else:
             print("processing command: " + substr)
             privilege_level = self._privileges.get_privilege_level(msg.author)
@@ -243,22 +245,6 @@ class ServerBotInstance:
 
       if left1 == "iam":
          await self._cmd_botowner_iam(right1, msg)
-
-      # TODO: Reimplement this pls.
-      # elif left1 == "toggle":
-      #    (left2, right2) = utils.separate_left_word(right1)
-      #    if (left2 == "mentions") or (left2 == "mb") or (left2 == "mentionbot"):
-      #       (left3, right3) = utils.separate_left_word(right2)
-      #       if (left3 == "notify") or (left3 == "n"):
-      #          if mentionNotifyModule.is_enabled():
-      #             self._mbNotifyModule.disable()
-      #          else:
-      #             self._mbNotifyModule.enable()
-      #          await self._client.send_msg(msg, "Notification system enabled = " + str(self._mbNotifyModule.is_enabled()))
-      #       else:
-      #          raise errors.UnknownCommandError
-      #    else:
-      #       raise errors.UnknownCommandError
 
       elif left1 == "gettime":
          await self._client.send_msg(msg, datetime.datetime.utcnow().strftime("My current system time: %c UTC"))
@@ -318,6 +304,9 @@ class ServerBotInstance:
    def get_presence_time(self):
       timediff = datetime.datetime.utcnow() - initialization_timestamp
       return timediff.seconds
+
+
+
 
 
 # def msg_list_to_string(mentions, verbose=False): # TYPE: String

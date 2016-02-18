@@ -1,5 +1,5 @@
 # Discord - mentionbot
-An extensible, module-based Discord bot.
+An extensible, module-based chatroom bot for [Discord](https://discordapp.com/).
 
 **This bot is still at a really early stage in development. I suggest you don't use it just yet...**
 
@@ -8,9 +8,9 @@ An extensible, module-based Discord bot.
 * **Persistent data and settings**
 * **Modularity**: Modules give the bot functionality.
 	* Each module has the ability to pre-process incoming commands, allowing for some very interesting uses.
-* **Server-wise Customizability**: Server owners are able to set up installed modules and change settings as desired.
-* **Hierarchical Permissions System**: Assign roles different permission levels. Apart from the bot owner and server owner, there are 9 assignable permission levels, including a "No Privileges" level. *(Still under development)*
-* **Server-isolation**: Each server is treated separately with their own installed modules, settings, and functionality.<sup>[1]</sup>
+* **Server-wise customizability**: Server owners are able to set up installed modules and change settings as desired.
+* **Hierarchical permissions system**: Assign roles different permission levels. Apart from the bot owner and server owner, there are 9 assignable permission levels, including a "No Privileges" level. *(Still under development)*
+* **Server-isolation**: Each server is treated separately with their own installed modules and settings.<sup>[1]</sup>
 
 # Available Modules
 
