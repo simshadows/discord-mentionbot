@@ -72,7 +72,7 @@ class BasicInfo(ServerModule):
       return
 
    async def _cmd_avatar(self, substr, msg):
-      substr = substr.split()
+      substr = substr.strip()
       user = None
       if len(substr) == 0:
          user = msg.author
