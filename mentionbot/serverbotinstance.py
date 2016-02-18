@@ -27,14 +27,16 @@ class ServerBotInstance:
 
    INIT_MENTIONS_NOTIFY_ENABLED = False
 
+   # Command Dictionaries
+   _cmd = {}
+
    # IMPORTANT: This needs to be parsed with ServerModule._prepare_help_content()
    # TODO: Figure out a neater way of doing this.
    _HELP_SUMMARY_TO_BEGIN = """
 **The following commands are available:**
 `{pf}source` - Where to get source code.
-`{pf}allmods` - Get all modules available for installation.
-`{pf}mods` - Get all installed modules.
-`{pf}status` - Get bot's current status.
+`{pf}mods` - Get all installed/available modules.
+`{pf}uptime` - Get bot uptime.
 >>> PRIVILEGE LEVEL 8000 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 `{pf}say [text]`
 `{pf}add [module name]`
@@ -122,113 +124,129 @@ class ServerBotInstance:
    def shared_directory(self):
       return self._shared_directory
 
+   @property
+   def initialization_timestamp(self):
+      return self._initialization_timestamp
+   
+
    # Call this to process text (to parse for commands).
    async def process_text(self, substr, msg):
       await self._modules.on_message(msg)
-
       privilege_level = self._privileges.get_privilege_level(msg.author)
       if privilege_level == PrivilegeLevel.NO_PRIVILEGE:
          return
-
       substr = await self._modules.msg_preprocessor(substr, msg, self._cmd_prefix)
-      (left, right) = utils.separate_left_word(substr)
       if substr.startswith(self._cmd_prefix):
-         await self._cmd1(substr[1:].strip(), msg, self._cmd_prefix, no_default=True)
-      return
-
-
-   async def _cmd1(self, substr, msg, cmd_prefix, no_default=False):
-      substr = substr.strip()
-      privilege_level = self._privileges.get_privilege_level(msg.author)
-      if substr == "" and not no_default:
-         raise NotImplementedError
-      else:
-         (left, right) = utils.separate_left_word(substr)
-         if left == "help":
-            help_content = self._get_help_content(right, msg, cmd_prefix)
-            await self._client.send_msg(msg, help_content)
-
-         elif (left == "mods") or (left == "modules"):
-            installed_mods = list(self._modules.gen_module_info())
-            if len(installed_mods) == 0:
-               buf = "**No modules are installed.**"
-            else:
-               buf = "**The following modules are installed:**"
-               for val in installed_mods:
-                  buf += "\n`{0}`: {1}".format(val[0], val[1])
-            
-            buf2 = "\n\n**The following modules are available for installation:**"
-            buf3 = ""
-            for val in self._module_factory.gen_available_modules():
-               not_installed = True
-               for val2 in installed_mods:
-                  if val2[0] == val[0]:
-                     not_installed = False
-                     break
-               if not_installed:
-                  buf3 += "\n`{0}`: {1}".format(val[0], val[1])
-            if len(buf3) == 0:
-               buf += "\n\n**No modules are available for installation.**"
-            else:
-               buf += buf2 + buf3
-
-            await self._client.send_msg(msg, buf)
-
-         elif left == "source":
-            await self._client.send_msg(msg, "https://github.com/simshadows/discord-mentionbot")
-
-         elif left == "status":
-            buf = "**Status:**"
-            buf += "\nBot current uptime: {}. ".format(utils.seconds_to_string(self.get_presence_time()))
-            await self._client.send_msg(msg, buf)
-
-         elif (left == "botowner") or (left == "bo"):
-            await self._cmd_botowner(right, msg)
-
-         elif left == "say":
-            if privilege_level < PrivilegeLevel.ADMIN:
-               raise errors.CommandPrivilegeError
-            await self._client.send_msg(msg, right)
-
-         elif (left == "add") or (left == "install") or (left == "addmodule"):
-            if privilege_level < PrivilegeLevel.ADMIN:
-               raise errors.CommandPrivilegeError
-            if self._module_factory.module_exists(right):
-               if self._modules.module_is_installed(right):
-                  await self._client.send_msg(msg, "`{}` is already installed.".format(right))
-               else:
-                  new_module = await self._module_factory.new_module_instance(right, self)
-                  await self._modules.add_server_module(new_module)
-                  self._storage.add_module(right)
-                  await self._client.send_msg(msg, "`{}` successfully installed.".format(right))
-            else:
-               await self._client.send_msg(msg, "`{}` does not exist.".format(right))
-
-         elif (left == "remove") or (left == "uninstall") or (left == "removemodule"):
-            if privilege_level < PrivilegeLevel.ADMIN:
-               raise errors.CommandPrivilegeError
-            if self._modules.module_is_installed(right):
-               await self._modules.remove_server_module(right)
-               self._storage.remove_module(right)
-               await self._client.send_msg(msg, "`{}` successfully uninstalled.".format(right))
-            else:
-               await self._client.send_msg(msg, "`{}` is not installed.".format(right))
-
-         elif (left == "prefix") or (left == "changeprefix"):
-            if privilege_level < PrivilegeLevel.ADMIN:
-               raise errors.CommandPrivilegeError
-            if len(right) == 0:
-               raise errors.InvalidCommandArgumentsError
-            self._cmd_prefix = right
-            buf = "`{}` set as command prefix.".format(self._cmd_prefix)
-            buf += "\nThe help message is now invoked using `{}help`.".format(self._cmd_prefix)
-            await self._client.send_msg(msg, buf)
-
-         else:
-            print("processing command: " + substr)
+         substr = substr[len(self._cmd_prefix):].strip()
+         print("processing command: {pf}" + substr) # Intentional un-substituted "{pf}"
+         cmd_to_execute = None
+         try:
+            (left, right) = utils.separate_left_word(substr)
+            await self._cmd[left](self, right, msg) # TODO: Execute the command outside of try block.
+         except KeyError:
             privilege_level = self._privileges.get_privilege_level(msg.author)
             await self._modules.process_cmd(substr, msg, privilegelevel=privilege_level, silentfail=True)
+      return
+
+   @utils.cmd(_cmd, "help")
+   async def _cmd_help(self, substr, msg):
+      help_content = self._get_help_content(substr, msg, self.cmd_prefix)
+      await self._client.send_msg(msg, help_content)
+      return
+
+   @utils.cmd(_cmd, "mods", "modules")
+   async def _cmd_mods(self, substr, msg):
+      installed_mods = list(self._modules.gen_module_info())
+      if len(installed_mods) == 0:
+         buf = "**No modules are installed.**"
+      else:
+         buf = "**The following modules are installed:**"
+         for val in installed_mods:
+            buf += "\n`{0}`: {1}".format(val[0], val[1])
       
+      buf2 = "\n\n**The following modules are available for installation:**"
+      buf3 = ""
+      for val in self._module_factory.gen_available_modules():
+         not_installed = True
+         for val2 in installed_mods:
+            if val2[0] == val[0]:
+               not_installed = False
+               break
+         if not_installed:
+            buf3 += "\n`{0}`: {1}".format(val[0], val[1])
+      if len(buf3) == 0:
+         buf += "\n\n**No modules are available for installation.**"
+      else:
+         buf += buf2 + buf3
+
+      await self._client.send_msg(msg, buf)
+      return
+
+   @utils.cmd(_cmd, "source", "src")
+   async def _cmd_source(self, substr, msg):
+      await self._client.send_msg(msg, "https://github.com/simshadows/discord-mentionbot")
+      return
+
+   @utils.cmd(_cmd, "uptime")
+   async def _cmd_uptime(self, substr, msg):
+      buf = "**Bot current uptime:** {}. ".format(utils.seconds_to_string(self.get_presence_time()))
+      await self._client.send_msg(msg, buf)
+      return
+
+   @utils.cmd(_cmd, "botowner", "bo")
+   async def _cmd_uptime(self, substr, msg):
+      await self._cmd_botowner(substr, msg)
+      return
+
+   @utils.cmd(_cmd, "say")
+   async def _cmd_say(self, substr, msg):
+      privilege_level = self._privileges.get_privilege_level(msg.author)
+      if privilege_level < PrivilegeLevel.ADMIN:
+         raise errors.CommandPrivilegeError
+      await self._client.send_msg(msg, substr)
+      return
+
+   @utils.cmd(_cmd, "add", "install", "addmodule")
+   async def _cmd_add(self, substr, msg):
+      privilege_level = self._privileges.get_privilege_level(msg.author)
+      if privilege_level < PrivilegeLevel.ADMIN:
+         raise errors.CommandPrivilegeError
+      if self._module_factory.module_exists(substr):
+         if self._modules.module_is_installed(substr):
+            await self._client.send_msg(msg, "`{}` is already installed.".format(substr))
+         else:
+            new_module = await self._module_factory.new_module_instance(substr, self)
+            await self._modules.add_server_module(new_module)
+            self._storage.add_module(substr)
+            await self._client.send_msg(msg, "`{}` successfully installed.".format(substr))
+      else:
+         await self._client.send_msg(msg, "`{}` does not exist.".format(substr))
+      return
+
+   @utils.cmd(_cmd, "remove", "uninstall", "removemodule")
+   async def _cmd_remove(self, substr, msg):
+      privilege_level = self._privileges.get_privilege_level(msg.author)
+      if privilege_level < PrivilegeLevel.ADMIN:
+         raise errors.CommandPrivilegeError
+      if self._modules.module_is_installed(substr):
+         await self._modules.remove_server_module(substr)
+         self._storage.remove_module(substr)
+         await self._client.send_msg(msg, "`{}` successfully uninstalled.".format(substr))
+      else:
+         await self._client.send_msg(msg, "`{}` is not installed.".format(substr))
+      return
+
+   @utils.cmd(_cmd, "prefix", "prefix")
+   async def _cmd_prefix(self, substr, msg):
+      privilege_level = self._privileges.get_privilege_level(msg.author)
+      if privilege_level < PrivilegeLevel.ADMIN:
+         raise errors.CommandPrivilegeError
+      if len(substr) == 0:
+         raise errors.InvalidCommandArgumentsError
+      self._cmd_prefix = substr
+      buf = "`{}` set as command prefix.".format(self._cmd_prefix)
+      buf += "\nThe help message is now invoked using `{}help`.".format(self._cmd_prefix)
+      await self._client.send_msg(msg, buf)
       return
 
 
@@ -312,7 +330,7 @@ class ServerBotInstance:
 
    # RETURNS: Bot's current uptime in seconds
    def get_presence_time(self):
-      timediff = datetime.datetime.utcnow() - initialization_timestamp
+      timediff = datetime.datetime.utcnow() - self.initialization_timestamp
       return timediff.seconds
 
 

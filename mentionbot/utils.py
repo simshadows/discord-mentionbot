@@ -102,6 +102,16 @@ class SecretToken:
    def __init__(self):
       return
 
+# Decorator for adding commands to a dictionary.
+# PARAMETER: dict - The dictionary in which the command is to be added to.
+# PARAMETER: *cmd_names - List of names the command is to be mapped to.
+def cmd(cmd_dict, *cmd_names):
+   def cmd_decorator(function):
+      for cmd_name in cmd_names:
+         cmd_dict[cmd_name] = function
+      return function
+   return cmd_decorator
+
 _true_strings = ["true","1","t","y", "yes", ""]
 def str_says_true(text):
    return text.lower() in _true_strings
