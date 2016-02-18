@@ -44,7 +44,7 @@ class ServerModuleFactory:
       return
 
    # Generator for iterating through all modules.
-   def module_list_gen(self):
+   def gen_available_modules(self):
       for (name, module) in self._modules.items():
          yield (name, module.MODULE_SHORT_DESCRIPTION)
 

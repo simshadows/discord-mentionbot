@@ -102,11 +102,9 @@ class ServerModuleGroup:
    # Returns list of all installed modules in this instance.
    # RETURNS: A list of tuples, each tuple in the format:
    #          (module_name, module_short_description)
-   def get_module_info(self):
-      names = []
+   def gen_module_info(self):
       for module in self._modules_list:
-         names.append((module.MODULE_NAME, module.MODULE_SHORT_DESCRIPTION))
-      return names
+         yield (module.MODULE_NAME, module.MODULE_SHORT_DESCRIPTION)
 
 
 # servermodules.mentions.notify.MentionNotifyModule(client, enabled=self.INIT_MENTIONS_NOTIFY_ENABLED),

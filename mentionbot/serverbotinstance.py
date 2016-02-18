@@ -148,20 +148,30 @@ class ServerBotInstance:
             help_content = self._get_help_content(right, msg, cmd_prefix)
             await self._client.send_msg(msg, help_content)
 
-         elif (left == "allmods") or (left == "allmodules"):
-            buf = "**The following modules are available for installation:**"
-            for val in self._module_factory.module_list_gen():
-               buf += "\n`{0}`: {1}".format(val[0], val[1])
-            await self._client.send_msg(msg, buf)
-
          elif (left == "mods") or (left == "modules"):
-            info = self._modules.get_module_info()
-            if len(info) == 0:
-               buf = "No modules are installed."
+            installed_mods = list(self._modules.gen_module_info())
+            if len(installed_mods) == 0:
+               buf = "**No modules are installed.**"
             else:
                buf = "**The following modules are installed:**"
-               for val in info:
+               for val in installed_mods:
                   buf += "\n`{0}`: {1}".format(val[0], val[1])
+            
+            buf2 = "\n\n**The following modules are available for installation:**"
+            buf3 = ""
+            for val in self._module_factory.gen_available_modules():
+               not_installed = True
+               for val2 in installed_mods:
+                  if val2[0] == val[0]:
+                     not_installed = False
+                     break
+               if not_installed:
+                  buf3 += "\n`{0}`: {1}".format(val[0], val[1])
+            if len(buf3) == 0:
+               buf += "\n\n**No modules are available for installation.**"
+            else:
+               buf += buf2 + buf3
+
             await self._client.send_msg(msg, buf)
 
          elif left == "source":

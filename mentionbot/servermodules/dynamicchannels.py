@@ -16,7 +16,7 @@ class DynamicChannels(ServerModule):
    RECOMMENDED_CMD_NAMES = ["dchannel"]
 
    MODULE_NAME = "Dynamic Channels"
-   MODULE_SHORT_DESCRIPTION = "Allows users to create temporary channels."
+   MODULE_SHORT_DESCRIPTION = "Allows users to create temporary channels. (NOT YET FUNCTIONAL.)"
 
    _HELP_SUMMARY_LINES = """
 (DYNAMIC CHANNELS HAS NOT YET BEEN IMPLEMENTED!)
