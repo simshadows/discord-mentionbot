@@ -9,7 +9,7 @@ import discord
 import utils
 from enums import PrivilegeLevel
 import errors
-import clientextended
+import cmd
 
 from servermodulegroup import ServerModuleGroup
 from serverpersistentstorage import ServerPersistentStorage
@@ -134,7 +134,7 @@ class ServerBotInstance:
       await self._modules.on_message(msg)
       privilege_level = self._privileges.get_privilege_level(msg.author)
       if privilege_level == PrivilegeLevel.NO_PRIVILEGE:
-         return
+         return # Without warning.
       substr = await self._modules.msg_preprocessor(substr, msg, self._cmd_prefix)
       if substr.startswith(self._cmd_prefix):
          substr = substr[len(self._cmd_prefix):].strip()
@@ -152,6 +152,11 @@ class ServerBotInstance:
             await self._modules.process_cmd(substr, msg, privilegelevel=privilege_level, silentfail=True)
          else:
             # Execute the core command.
+            try:
+               if privilege_level < cmd_to_execute.minimum_privilege:
+                  raise errors.CommandPrivilegeError
+            except AttributeError:
+               pass
             await cmd_to_execute(self, right, msg, privilege_level)
       return
 
@@ -159,24 +164,24 @@ class ServerBotInstance:
    # CORE COMMANDS ########################################################################
    ########################################################################################
 
-   @utils.cmd(_cmd, "help")
+   @cmd.add(_cmd, "help")
    async def _help(self, substr, msg, privilege_level):
       help_content = self._get_help_content(substr, msg, self.cmd_prefix, privilege_level)
       await self._client.send_msg(msg, help_content)
       return
 
-   @utils.cmd(_cmd, "source", "src")
+   @cmd.add(_cmd, "source", "src")
    async def _source(self, substr, msg, privilege_level):
       await self._client.send_msg(msg, "https://github.com/simshadows/discord-mentionbot")
       return
 
-   @utils.cmd(_cmd, "uptime")
+   @cmd.add(_cmd, "uptime")
    async def _uptime(self, substr, msg, privilege_level):
       buf = "**Bot current uptime:** {}. ".format(utils.seconds_to_string(self.get_presence_time()))
       await self._client.send_msg(msg, buf)
       return
 
-   @utils.cmd(_cmd, "mods", "modules")
+   @cmd.add(_cmd, "mods", "modules")
    async def _mods(self, substr, msg, privilege_level):
       installed_mods = list(self._modules.gen_module_info())
       if len(installed_mods) == 0:
@@ -204,22 +209,20 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   @utils.cmd(_cmd, "time", "gettime")
+   @cmd.add(_cmd, "time", "gettime")
    async def _PLACEHOLDER(self, substr, msg, privilege_level):
       await self._client.send_msg(msg, datetime.datetime.utcnow().strftime("My current system time: %c UTC"))
       return
 
-   @utils.cmd(_cmd, "say")
+   @cmd.add(_cmd, "say")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _say(self, substr, msg, privilege_level):
-      if privilege_level < PrivilegeLevel.ADMIN:
-         raise errors.CommandPrivilegeError
       await self._client.send_msg(msg, substr)
       return
 
-   @utils.cmd(_cmd, "add", "install", "addmodule")
+   @cmd.add(_cmd, "add", "install", "addmodule")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _add(self, substr, msg, privilege_level):
-      if privilege_level < PrivilegeLevel.ADMIN:
-         raise errors.CommandPrivilegeError
       if self._module_factory.module_exists(substr):
          if self._modules.module_is_installed(substr):
             await self._client.send_msg(msg, "`{}` is already installed.".format(substr))
@@ -232,10 +235,9 @@ class ServerBotInstance:
          await self._client.send_msg(msg, "`{}` does not exist.".format(substr))
       return
 
-   @utils.cmd(_cmd, "remove", "uninstall", "removemodule")
+   @cmd.add(_cmd, "remove", "uninstall", "removemodule")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _remove(self, substr, msg, privilege_level):
-      if privilege_level < PrivilegeLevel.ADMIN:
-         raise errors.CommandPrivilegeError
       if self._modules.module_is_installed(substr):
          await self._modules.remove_server_module(substr)
          self._storage.remove_module(substr)
@@ -244,10 +246,9 @@ class ServerBotInstance:
          await self._client.send_msg(msg, "`{}` is not installed.".format(substr))
       return
 
-   @utils.cmd(_cmd, "prefix", "prefix")
+   @cmd.add(_cmd, "prefix", "prefix")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _prefix(self, substr, msg, privilege_level):
-      if privilege_level < PrivilegeLevel.ADMIN:
-         raise errors.CommandPrivilegeError
       if len(substr) == 0:
          raise errors.InvalidCommandArgumentsError
       self._cmd_prefix = substr
@@ -256,10 +257,9 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   @utils.cmd(_cmd, "iam")
-   async def _PLACEHOLDER(self, substr, msg, privilege_level):
-      if privilege_level != PrivilegeLevel.BOT_OWNER:
-         raise errors.CommandPrivilegeError
+   @cmd.add(_cmd, "iam")
+   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
+   async def _iam(self, substr, msg, privilege_level):
       (left, right) = utils.separate_left_word(substr)
       if self._RE_MENTIONSTR.fullmatch(left):
          user_to_pose_as = left[2:-1]
@@ -273,34 +273,30 @@ class ServerBotInstance:
          await self.process_text(right, replacement_msg) # TODO: Make this call on_message()
       return
 
-   @utils.cmd(_cmd, "setgame")
-   async def _PLACEHOLDER(self, substr, msg, privilege_level):
-      if privilege_level != PrivilegeLevel.BOT_OWNER:
-         raise errors.CommandPrivilegeError
+   @cmd.add(_cmd, "setgame")
+   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
+   async def _setgame(self, substr, msg, privilege_level):
       await self._client.set_game_status(substr)
       await self._client.send_msg(msg, "**Game set to:** " + substr)
       return
 
-   @utils.cmd(_cmd, "setusername")
-   async def _PLACEHOLDER(self, substr, msg, privilege_level):
-      if privilege_level != PrivilegeLevel.BOT_OWNER:
-         raise errors.CommandPrivilegeError
+   @cmd.add(_cmd, "setusername")
+   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
+   async def _setusername(self, substr, msg, privilege_level):
       await self._client.edit_profile(password, username=substr)
       self._bot_name = substr # TODO: Consider making this a function. Or stop using bot_name...
       await self._client.send_msg(msg, "**Username set to:** " + substr)
       return
 
-   @utils.cmd(_cmd, "getemail")
-   async def _PLACEHOLDER(self, substr, msg, privilege_level):
-      if privilege_level != PrivilegeLevel.BOT_OWNER:
-         raise errors.CommandPrivilegeError
+   @cmd.add(_cmd, "getemail")
+   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
+   async def _getemail(self, substr, msg, privilege_level):
       await self._client.send_msg(msg, "My email is: " + email)
       return
 
-   @utils.cmd(_cmd, "joinserver")
-   async def _PLACEHOLDER(self, substr, msg, privilege_level):
-      if privilege_level != PrivilegeLevel.BOT_OWNER:
-         raise errors.CommandPrivilegeError
+   @cmd.add(_cmd, "joinserver")
+   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
+   async def _joinserver(self, substr, msg, privilege_level):
       try:
          await self._client.accept_invite(substr)
          await self._client.send_msg(msg, "Successfully joined a new server.")
@@ -308,24 +304,21 @@ class ServerBotInstance:
          await self._client.send_msg(msg, "Failed to join a new server.")
       return
 
-   @utils.cmd(_cmd, "leaveserver")
-   async def _PLACEHOLDER(self, substr, msg, privilege_level):
-      if privilege_level != PrivilegeLevel.BOT_OWNER:
-         raise errors.CommandPrivilegeError
+   @cmd.add(_cmd, "leaveserver")
+   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
+   async def _leaveserver(self, substr, msg, privilege_level):
       await self._client.send_msg(msg, "Bye!")
       await self._client.leave_server(msg.channel.server)
       return
 
-   @utils.cmd(_cmd, "throwexception")
-   async def _PLACEHOLDER(self, substr, msg, privilege_level):
-      if privilege_level != PrivilegeLevel.BOT_OWNER:
-         raise errors.CommandPrivilegeError
+   @cmd.add(_cmd, "throwexception")
+   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
+   async def _throwexception(self, substr, msg, privilege_level):
       raise Exception
 
-   @utils.cmd(_cmd, "throwexception2")
-   async def _PLACEHOLDER(self, substr, msg, privilege_level):
-      if privilege_level != PrivilegeLevel.BOT_OWNER:
-         raise errors.CommandPrivilegeError
+   @cmd.add(_cmd, "throwexception2")
+   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
+   async def _throwexception2(self, substr, msg, privilege_level):
       await self._client.send_message(msg, "A" * 2001)
       await self._client.send_message(msg, "If you're reading this, it failed to throw...")
       return

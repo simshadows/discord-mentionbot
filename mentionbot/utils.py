@@ -21,7 +21,6 @@ def separate_left_word(text): # TYPE: Tuple<String>
       substrings.append("")
    return tuple(substrings)
 
-
 def remove_whitespace(text):
    return "".join(text.split()) # TODO: Find a nicer implementation.
 
@@ -60,7 +59,6 @@ def _mkdir_recursive(relfilepath):
    except FileExistsError:
       pass
    return
-
 
 #################################################################################
 # COMMAND PREPROCESSOR HELPER FUNCTIONS #########################################
@@ -102,17 +100,7 @@ class SecretToken:
    def __init__(self):
       return
 
-# Decorator for adding commands to a dictionary.
-# PARAMETER: dict - The dictionary in which the command is to be added to.
-# PARAMETER: *cmd_names - List of names the command is to be mapped to.
-def cmd(cmd_dict, *cmd_names):
-   def cmd_decorator(function):
-      for cmd_name in cmd_names:
-         cmd_dict[cmd_name] = function
-      return function
-   return cmd_decorator
-
-_true_strings = ["true","1","t","y", "yes", ""]
+_true_strings = ["true","1","t","y", "yes"]
 def str_says_true(text):
    return text.lower() in _true_strings
 
