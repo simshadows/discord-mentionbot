@@ -161,7 +161,7 @@ class ServerBotInstance:
 
    @utils.cmd(_cmd, "help")
    async def _help(self, substr, msg, privilege_level):
-      help_content = self._get_help_content(substr, msg, self.cmd_prefix)
+      help_content = self._get_help_content(substr, msg, self.cmd_prefix, privilege_level)
       await self._client.send_msg(msg, help_content)
       return
 
@@ -260,7 +260,17 @@ class ServerBotInstance:
    async def _PLACEHOLDER(self, substr, msg, privilege_level):
       if privilege_level != PrivilegeLevel.BOT_OWNER:
          raise errors.CommandPrivilegeError
-      await self._cmd_botowner_iam(substr, msg)
+      (left, right) = utils.separate_left_word(substr)
+      if self._RE_MENTIONSTR.fullmatch(left):
+         user_to_pose_as = left[2:-1]
+         replacement_msg = copy.deepcopy(msg)
+         replacement_msg.author = self._client.search_for_user(user_to_pose_as)
+         if replacement_msg.author == None:
+            return await self._client.send_msg(msg, "Unknown user.")
+         replacement_msg.content = right
+         await self._client.send_msg(msg, "Executing command as {}: {}".format(replacement_msg.author, replacement_msg.content))
+         await self._client.send_msg(msg, "**WARNING: There are no guarantees of the safety of this operation.**")
+         await self.process_text(right, replacement_msg) # TODO: Make this call on_message()
       return
 
    @utils.cmd(_cmd, "setgame")
@@ -320,8 +330,7 @@ class ServerBotInstance:
       await self._client.send_message(msg, "If you're reading this, it failed to throw...")
       return
 
-
-   def _get_help_content(self, substr, msg, cmd_prefix):
+   def _get_help_content(self, substr, msg, cmd_prefix, privilege_level):
       if substr == "":
          buf = utils.prepare_help_content(self._HELP_SUMMARY_TO_BEGIN, cmd_prefix, privilegelevel=privilege_level)
          buf += "\n"
@@ -329,24 +338,6 @@ class ServerBotInstance:
          buf = ""
       buf += self._modules.get_help_content(substr, cmd_prefix, privilege_level=privilege_level)
       return buf
-
-
-   async def _cmd_botowner_iam(self, substr, msg):
-      substr = substr.strip()
-      (left, right) = utils.separate_left_word(substr)
-      
-      if self._RE_MENTIONSTR.fullmatch(left):
-         user_to_pose_as = left[2:-1]
-         replacement_msg = copy.deepcopy(msg)
-         replacement_msg.author = self._client.search_for_user(user_to_pose_as)
-         if replacement_msg.author == None:
-            return await self._client.send_msg(msg, "Unknown user.")
-         replacement_msg.content = right
-         await self._client.send_msg(msg, "Executing command as {}: {}".format(replacement_msg.author, replacement_msg.content))
-         await self._client.send_msg(msg, "**WARNING: There are no guarantees of the safety of this operation.**")
-         await self.process_cmd(right, replacement_msg) # TODO: Make this call on_message()
-      return
-
 
    # RETURNS: Bot's current uptime in seconds
    def get_presence_time(self):
