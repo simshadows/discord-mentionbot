@@ -139,23 +139,45 @@ class ServerBotInstance:
       if substr.startswith(self._cmd_prefix):
          substr = substr[len(self._cmd_prefix):].strip()
          print("processing command: {pf}" + substr) # Intentional un-substituted "{pf}"
+         
          cmd_to_execute = None
+         (left, right) = utils.separate_left_word(substr)
          try:
-            (left, right) = utils.separate_left_word(substr)
-            await self._cmd[left](self, right, msg) # TODO: Execute the command outside of try block.
+            cmd_to_execute = self._cmd[left]
          except KeyError:
-            privilege_level = self._privileges.get_privilege_level(msg.author)
+            pass
+
+         if cmd_to_execute is None:
+            # Execute a module command. This will also handle command failure.
             await self._modules.process_cmd(substr, msg, privilegelevel=privilege_level, silentfail=True)
+         else:
+            # Execute the core command.
+            await cmd_to_execute(self, right, msg, privilege_level)
       return
 
+   ########################################################################################
+   # CORE COMMANDS ########################################################################
+   ########################################################################################
+
    @utils.cmd(_cmd, "help")
-   async def _cmd_help(self, substr, msg):
+   async def _help(self, substr, msg, privilege_level):
       help_content = self._get_help_content(substr, msg, self.cmd_prefix)
       await self._client.send_msg(msg, help_content)
       return
 
+   @utils.cmd(_cmd, "source", "src")
+   async def _source(self, substr, msg, privilege_level):
+      await self._client.send_msg(msg, "https://github.com/simshadows/discord-mentionbot")
+      return
+
+   @utils.cmd(_cmd, "uptime")
+   async def _uptime(self, substr, msg, privilege_level):
+      buf = "**Bot current uptime:** {}. ".format(utils.seconds_to_string(self.get_presence_time()))
+      await self._client.send_msg(msg, buf)
+      return
+
    @utils.cmd(_cmd, "mods", "modules")
-   async def _cmd_mods(self, substr, msg):
+   async def _mods(self, substr, msg, privilege_level):
       installed_mods = list(self._modules.gen_module_info())
       if len(installed_mods) == 0:
          buf = "**No modules are installed.**"
@@ -182,33 +204,20 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   @utils.cmd(_cmd, "source", "src")
-   async def _cmd_source(self, substr, msg):
-      await self._client.send_msg(msg, "https://github.com/simshadows/discord-mentionbot")
-      return
-
-   @utils.cmd(_cmd, "uptime")
-   async def _cmd_uptime(self, substr, msg):
-      buf = "**Bot current uptime:** {}. ".format(utils.seconds_to_string(self.get_presence_time()))
-      await self._client.send_msg(msg, buf)
-      return
-
-   @utils.cmd(_cmd, "botowner", "bo")
-   async def _cmd_uptime(self, substr, msg):
-      await self._cmd_botowner(substr, msg)
+   @utils.cmd(_cmd, "time", "gettime")
+   async def _PLACEHOLDER(self, substr, msg, privilege_level):
+      await self._client.send_msg(msg, datetime.datetime.utcnow().strftime("My current system time: %c UTC"))
       return
 
    @utils.cmd(_cmd, "say")
-   async def _cmd_say(self, substr, msg):
-      privilege_level = self._privileges.get_privilege_level(msg.author)
+   async def _say(self, substr, msg, privilege_level):
       if privilege_level < PrivilegeLevel.ADMIN:
          raise errors.CommandPrivilegeError
       await self._client.send_msg(msg, substr)
       return
 
    @utils.cmd(_cmd, "add", "install", "addmodule")
-   async def _cmd_add(self, substr, msg):
-      privilege_level = self._privileges.get_privilege_level(msg.author)
+   async def _add(self, substr, msg, privilege_level):
       if privilege_level < PrivilegeLevel.ADMIN:
          raise errors.CommandPrivilegeError
       if self._module_factory.module_exists(substr):
@@ -224,8 +233,7 @@ class ServerBotInstance:
       return
 
    @utils.cmd(_cmd, "remove", "uninstall", "removemodule")
-   async def _cmd_remove(self, substr, msg):
-      privilege_level = self._privileges.get_privilege_level(msg.author)
+   async def _remove(self, substr, msg, privilege_level):
       if privilege_level < PrivilegeLevel.ADMIN:
          raise errors.CommandPrivilegeError
       if self._modules.module_is_installed(substr):
@@ -237,8 +245,7 @@ class ServerBotInstance:
       return
 
    @utils.cmd(_cmd, "prefix", "prefix")
-   async def _cmd_prefix(self, substr, msg):
-      privilege_level = self._privileges.get_privilege_level(msg.author)
+   async def _prefix(self, substr, msg, privilege_level):
       if privilege_level < PrivilegeLevel.ADMIN:
          raise errors.CommandPrivilegeError
       if len(substr) == 0:
@@ -249,9 +256,72 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
+   @utils.cmd(_cmd, "iam")
+   async def _PLACEHOLDER(self, substr, msg, privilege_level):
+      if privilege_level != PrivilegeLevel.BOT_OWNER:
+         raise errors.CommandPrivilegeError
+      await self._cmd_botowner_iam(substr, msg)
+      return
+
+   @utils.cmd(_cmd, "setgame")
+   async def _PLACEHOLDER(self, substr, msg, privilege_level):
+      if privilege_level != PrivilegeLevel.BOT_OWNER:
+         raise errors.CommandPrivilegeError
+      await self._client.set_game_status(substr)
+      await self._client.send_msg(msg, "**Game set to:** " + substr)
+      return
+
+   @utils.cmd(_cmd, "setusername")
+   async def _PLACEHOLDER(self, substr, msg, privilege_level):
+      if privilege_level != PrivilegeLevel.BOT_OWNER:
+         raise errors.CommandPrivilegeError
+      await self._client.edit_profile(password, username=substr)
+      self._bot_name = substr # TODO: Consider making this a function. Or stop using bot_name...
+      await self._client.send_msg(msg, "**Username set to:** " + substr)
+      return
+
+   @utils.cmd(_cmd, "getemail")
+   async def _PLACEHOLDER(self, substr, msg, privilege_level):
+      if privilege_level != PrivilegeLevel.BOT_OWNER:
+         raise errors.CommandPrivilegeError
+      await self._client.send_msg(msg, "My email is: " + email)
+      return
+
+   @utils.cmd(_cmd, "joinserver")
+   async def _PLACEHOLDER(self, substr, msg, privilege_level):
+      if privilege_level != PrivilegeLevel.BOT_OWNER:
+         raise errors.CommandPrivilegeError
+      try:
+         await self._client.accept_invite(substr)
+         await self._client.send_msg(msg, "Successfully joined a new server.")
+      except discord.InvalidArgument:
+         await self._client.send_msg(msg, "Failed to join a new server.")
+      return
+
+   @utils.cmd(_cmd, "leaveserver")
+   async def _PLACEHOLDER(self, substr, msg, privilege_level):
+      if privilege_level != PrivilegeLevel.BOT_OWNER:
+         raise errors.CommandPrivilegeError
+      await self._client.send_msg(msg, "Bye!")
+      await self._client.leave_server(msg.channel.server)
+      return
+
+   @utils.cmd(_cmd, "throwexception")
+   async def _PLACEHOLDER(self, substr, msg, privilege_level):
+      if privilege_level != PrivilegeLevel.BOT_OWNER:
+         raise errors.CommandPrivilegeError
+      raise Exception
+
+   @utils.cmd(_cmd, "throwexception2")
+   async def _PLACEHOLDER(self, substr, msg, privilege_level):
+      if privilege_level != PrivilegeLevel.BOT_OWNER:
+         raise errors.CommandPrivilegeError
+      await self._client.send_message(msg, "A" * 2001)
+      await self._client.send_message(msg, "If you're reading this, it failed to throw...")
+      return
+
 
    def _get_help_content(self, substr, msg, cmd_prefix):
-      privilege_level = self._privileges.get_privilege_level(msg.author)
       if substr == "":
          buf = utils.prepare_help_content(self._HELP_SUMMARY_TO_BEGIN, cmd_prefix, privilegelevel=privilege_level)
          buf += "\n"
@@ -259,56 +329,6 @@ class ServerBotInstance:
          buf = ""
       buf += self._modules.get_help_content(substr, cmd_prefix, privilege_level=privilege_level)
       return buf
-
-   async def _cmd_botowner(self, substr, msg):
-      privilege_level = self._privileges.get_privilege_level(msg.author)
-      if privilege_level != PrivilegeLevel.BOT_OWNER:
-         raise errors.CommandPrivilegeError
-
-      substr = substr.strip()
-      if substr == "":
-         raise errors.UnknownCommandError
-      
-      (left1, right1) = utils.separate_left_word(substr)
-
-      if left1 == "iam":
-         await self._cmd_botowner_iam(right1, msg)
-
-      elif left1 == "gettime":
-         await self._client.send_msg(msg, datetime.datetime.utcnow().strftime("My current system time: %c UTC"))
-
-      elif left1 == "setgame":
-         await self._client.set_game_status(right1)
-         await self._client.send_msg(msg, "Game set to: " + right1)
-
-      elif left1 == "setusername":
-         await self._client.edit_profile(password, username=right1)
-         self._bot_name = right1 # TODO: Consider making this a function. Or stop using bot_name...
-         await self._client.send_msg(msg, "Username set to: " + right1)
-
-      elif left1 == "getemail":
-         await self._client.send_msg(msg, "My email is: " + email)
-
-      elif left1 == "joinserver":
-         try:
-            await self._client.accept_invite(right1)
-            await self._client.send_msg(msg, "Successfully joined a new server.")
-         except discord.InvalidArgument:
-            await self._client.send_msg(msg, "Failed to join a new server.")
-
-      elif left1 == "leaveserver":
-         await self._client.send_msg(msg, "Bye!")
-         await self._client.leave_server(msg.channel.server)
-
-      elif left1 == "throwexception":
-         raise Exception
-
-      elif left1 == "throwexception2":
-         await self._client.send_message(msg, "A" * 2001)
-      
-      else:
-         raise errors.UnknownCommandError
-      return
 
 
    async def _cmd_botowner_iam(self, substr, msg):
@@ -332,23 +352,5 @@ class ServerBotInstance:
    def get_presence_time(self):
       timediff = datetime.datetime.utcnow() - self.initialization_timestamp
       return timediff.seconds
-
-
-
-
-
-# def msg_list_to_string(mentions, verbose=False): # TYPE: String
-#    now = datetime.datetime.utcnow()
-#    buf = "" # FORMAT: String
-#    for i in mentions:
-#       timediff = now - i.timestamp
-#       if verbose:
-#          buf += "Message ID: " + i.id + "\n"
-#          # buf += "Timestamp: " + i.timestamp.strftime("%c UTC") + "\n" # Unnecessary
-#       buf += "By " + i.author.name + " in " + "<#{}>".format(i.channel.id) + ", " + utils.seconds_to_string(timediff.seconds) + " ago\n"
-#       buf += i.content + "\n\n"
-#    if buf != "":
-#       buf = buf[:-2]
-#    return buf
 
 
