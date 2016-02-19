@@ -8,6 +8,7 @@ import utils
 import errors
 from enums import PrivilegeLevel
 from servermodule import ServerModule
+import cmd
 
 class DynamicChannels(ServerModule):
    
@@ -43,6 +44,8 @@ class DynamicChannels(ServerModule):
       "channel timeout": 10,
       "max active temp channels": 5
    }
+
+   _cmd_dict = {} # Command Dictionary
 
    async def _initialize(self, resources):
       self._res = resources
@@ -122,94 +125,101 @@ class DynamicChannels(ServerModule):
       return content
 
    async def process_cmd(self, substr, msg, privilegelevel=0):
-
-      # Command pre-processing
       if substr == "":
          substr = "settings"
-      
-      # Process the command itself
-      # Here, each query command has a different format, as a way of
-      # documenting old formats I tried using.
       (left, right) = utils.separate_left_word(substr)
-      if left == "search":
-         await self._client.send_msg(msg, "Channel search not yet implemented.")
+      cmd_to_execute = cmd.get(self._cmd_dict, left, privilegelevel)
+      await cmd_to_execute(self, right, msg, privilegelevel)
+      return
 
-      elif (left == "open") or (left == "create"):
-         await self._client.send_msg(msg, "Channel opening not yet implemented.")
+   @cmd.add(_cmd_dict, "search")
+   async def _cmdf_search(self, substr, msg, privilege_level):
+      await self._client.send_msg(msg, "Channel search not yet implemented.")
+      return
 
-      elif left == "settings":
-         buf = "**Timeout**: " + str(self._channel_timeout) + " seconds"
-         if self._max_active_temp_channels < 0:
-            buf += "\n**Max Active**: unlimited channels"
-         else:
-            buf += "\n**Max Active**: " + str(self._max_active_temp_channels) + " channels"
-         buf += "\n**Default Channels**:"
-         if len(self._default_channels) == 0:
-            buf += "\nNONE."
-         else:
-            for ch in self._default_channels:
-               buf += "\n<#{0}> (ID: {0})".format(ch.id)
-         if privilegelevel >= PrivilegeLevel.ADMIN:
-            pf = self._res.cmd_prefix
-            base_cmd = self._cmd_names[0]
-            buf += "\n\nChange settings using the following commands:"
-            buf += "\n`{} adddefault [channel]`".format(pf + base_cmd)
-            buf += "\n`{} removedefault [channel]`".format(pf + base_cmd)
-            buf += "\n`{} settimeout [int]`".format(pf + base_cmd)
-            buf += "\n`{} setmaxactive [int]`".format(pf + base_cmd)
-            buf += " (for unlimited max active, enter `-1`.)"
-         await self._client.send_msg(msg, buf)
+   @cmd.add(_cmd_dict, "open", "create")
+   async def _cmdf_open(self, substr, msg, privilege_level):
+      await self._client.send_msg(msg, "Channel opening not yet implemented.")
+      return
 
-      elif left == "adddefault":
-         new_default = self._client.search_for_channel(right, serverrestriction=self._server)
-         if new_default is None:
-            await self._client.send_msg(msg, "Error: Channel not found.")
-         else:
-            self._default_channels.append(new_default)
-            self._save_settings()
-            await self._client.send_msg(msg, "<#{}> successfully added to default list.".format(new_default.id))
-
-      elif left == "removedefault":
-         to_remove = self._client.search_for_channel(right, serverrestriction=self._server)
-         if to_remove is None:
-            await self._client.send_msg(msg, "Error: Channel not found.")
-         if to_remove in self._default_channels:
-            self._default_channels.remove(to_remove)
-            self._save_settings()
-            await self._client.send_msg(msg, "<#{}> successfully removed to default list.".format(to_remove.id))
-         else:
-            await self._client.send_msg(msg, "Error: Channel is not default.")
-
-      elif left == "settimeout":
-         if privilegelevel < PrivilegeLevel.ADMIN:
-            raise errors.CommandPrivilegeError
-         try:
-            new_timeout = int(right)
-            if new_timeout < 1:
-               await self._client.send_msg(msg, "Error: Timeout must be >0 seconds.")
-            else:
-               self._channel_timeout = new_timeout
-               self._save_settings()
-               await self._client.send_msg(msg, "Timeout set to {} seconds.".format(str(self._channel_timeout)))
-         except ValueError:
-            await self._client.send_msg(msg, "Error: Must enter an integer.")
-
-      elif left == "setmaxactive":
-         if privilegelevel < PrivilegeLevel.ADMIN:
-            raise errors.CommandPrivilegeError
-         try:
-            self._max_active_temp_channels = int(right)
-            self._save_settings()
-            if self._max_active_temp_channels < 0:
-               await self._client.send_msg(msg, "Max active channels set to unlimited.")
-            else:
-               await self._client.send_msg(msg, "Max active channels set to {}.".format(str(self._max_active_temp_channels)))
-         except ValueError:
-            await self._client.send_msg(msg, "Error: Must enter an integer.")
-
+   @cmd.add(_cmd_dict, "settings")
+   async def _cmdf_settings(self, substr, msg, privilege_level):
+      buf = "**Timeout**: " + str(self._channel_timeout) + " seconds"
+      if self._max_active_temp_channels < 0:
+         buf += "\n**Max Active**: unlimited channels"
       else:
-         raise errors.InvalidCommandArgumentsError
+         buf += "\n**Max Active**: " + str(self._max_active_temp_channels) + " channels"
+      buf += "\n**Default Channels**:"
+      if len(self._default_channels) == 0:
+         buf += "\nNONE."
+      else:
+         for ch in self._default_channels:
+            buf += "\n<#{0}> (ID: {0})".format(ch.id)
+      if privilegelevel >= PrivilegeLevel.ADMIN:
+         pf = self._res.cmd_prefix
+         base_cmd = self._cmd_names[0]
+         buf += "\n\nChange settings using the following commands:"
+         buf += "\n`{} adddefault [channel]`".format(pf + base_cmd)
+         buf += "\n`{} removedefault [channel]`".format(pf + base_cmd)
+         buf += "\n`{} settimeout [int]`".format(pf + base_cmd)
+         buf += "\n`{} setmaxactive [int]`".format(pf + base_cmd)
+         buf += " (for unlimited max active, enter `-1`.)"
+      await self._client.send_msg(msg, buf)
+      return
 
+   @cmd.add(_cmd_dict, "adddefault")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   async def _cmdf_adddefault(self, substr, msg, privilege_level):
+      new_default = self._client.search_for_channel(substr, serverrestriction=self._server)
+      if new_default is None:
+         await self._client.send_msg(msg, "Error: Channel not found.")
+      else:
+         self._default_channels.append(new_default)
+         self._save_settings()
+         await self._client.send_msg(msg, "<#{}> successfully added to default list.".format(new_default.id))
+      return
+
+   @cmd.add(_cmd_dict, "removedefault")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   async def _cmdf_removedefault(self, substr, msg, privilege_level):
+      to_remove = self._client.search_for_channel(substr, serverrestriction=self._server)
+      if to_remove is None:
+         await self._client.send_msg(msg, "Error: Channel not found.")
+      if to_remove in self._default_channels:
+         self._default_channels.remove(to_remove)
+         self._save_settings()
+         await self._client.send_msg(msg, "<#{}> successfully removed to default list.".format(to_remove.id))
+      else:
+         await self._client.send_msg(msg, "Error: Channel is not default.")
+      return
+
+   @cmd.add(_cmd_dict, "settimeout")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   async def _cmdf_settimeout(self, substr, msg, privilege_level):
+      try:
+         new_timeout = int(right)
+         if new_timeout < 1:
+            await self._client.send_msg(msg, "Error: Timeout must be >0 seconds.")
+         else:
+            self._channel_timeout = new_timeout
+            self._save_settings()
+            await self._client.send_msg(msg, "Timeout set to {} seconds.".format(str(self._channel_timeout)))
+      except ValueError:
+         await self._client.send_msg(msg, "Error: Must enter an integer.")
+      return
+
+   @cmd.add(_cmd_dict, "setmaxactive")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   async def _cmdf_setmaxactive(self, substr, msg, privilege_level):
+      try:
+         self._max_active_temp_channels = int(right)
+         self._save_settings()
+         if self._max_active_temp_channels < 0:
+            await self._client.send_msg(msg, "Max active channels set to unlimited.")
+         else:
+            await self._client.send_msg(msg, "Max active channels set to {}.".format(str(self._max_active_temp_channels)))
+      except ValueError:
+         await self._client.send_msg(msg, "Error: Must enter an integer.")
       return
 
    # Generator, yields all temporary channels.

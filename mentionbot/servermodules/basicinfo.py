@@ -60,7 +60,7 @@ class BasicInfo(ServerModule):
       return
 
    @cmd.add(_cmd_dict, "avatar", "dp", "avatarurl")
-   async def _cmd_avatar(self, substr, msg, privilege_level):
+   async def _cmdf_avatar(self, substr, msg, privilege_level):
       substr = substr.strip()
       user = None
       if len(substr) == 0:
@@ -78,7 +78,7 @@ class BasicInfo(ServerModule):
          return await self._client.send_msg(msg, avatar)
 
    @cmd.add(_cmd_dict, "user", "whois", "who")
-   async def _cmd_user(self, substr, msg, privilege_level):
+   async def _cmdf_user(self, substr, msg, privilege_level):
       # Get user. Copied from _cmd_avatar()...
       substr = substr.strip()
       user = None
@@ -108,7 +108,7 @@ class BasicInfo(ServerModule):
       return await self._client.send_msg(msg, buf)
 
    @cmd.add(_cmd_dict, "server", "thisserver")
-   async def _cmd_server(self, substr, msg, privilege_level):
+   async def _cmdf_server(self, substr, msg, privilege_level):
       s = msg.server
       # Count voice and text channels
       text_ch_total = 0
@@ -137,7 +137,7 @@ class BasicInfo(ServerModule):
       return await self._client.send_msg(msg, buf)
 
    @cmd.add(_cmd_dict, "servericon")
-   async def _servericon(self, substr, msg, privilege_level):
+   async def _cmdf_servericon(self, substr, msg, privilege_level):
       if msg.server.icon_url == "":
          return await self._client.send_msg(msg, "This server has no icon.")
       else:

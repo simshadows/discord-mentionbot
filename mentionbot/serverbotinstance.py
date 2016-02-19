@@ -161,24 +161,24 @@ class ServerBotInstance:
    ########################################################################################
 
    @cmd.add(_cmd_dict, "help")
-   async def _help(self, substr, msg, privilege_level):
+   async def _cmdf_help(self, substr, msg, privilege_level):
       help_content = self._get_help_content(substr, msg, self.cmd_prefix, privilege_level)
       await self._client.send_msg(msg, help_content)
       return
 
    @cmd.add(_cmd_dict, "source", "src")
-   async def _source(self, substr, msg, privilege_level):
+   async def _cmdf_source(self, substr, msg, privilege_level):
       await self._client.send_msg(msg, "https://github.com/simshadows/discord-mentionbot")
       return
 
    @cmd.add(_cmd_dict, "uptime")
-   async def _uptime(self, substr, msg, privilege_level):
+   async def _cmdf_uptime(self, substr, msg, privilege_level):
       buf = "**Bot current uptime:** {}. ".format(utils.seconds_to_string(self.get_presence_time()))
       await self._client.send_msg(msg, buf)
       return
 
    @cmd.add(_cmd_dict, "mods", "modules")
-   async def _mods(self, substr, msg, privilege_level):
+   async def _cmdf_mods(self, substr, msg, privilege_level):
       installed_mods = list(self._modules.gen_module_info())
       if len(installed_mods) == 0:
          buf = "**No modules are installed.**"
@@ -206,19 +206,19 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmd_dict, "time", "gettime", "utc")
-   async def _PLACEHOLDER(self, substr, msg, privilege_level):
+   async def _cmdf_time(self, substr, msg, privilege_level):
       await self._client.send_msg(msg, datetime.datetime.utcnow().strftime("My current system time: %c UTC"))
       return
 
    @cmd.add(_cmd_dict, "say")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
-   async def _say(self, substr, msg, privilege_level):
+   async def _cmdf_say(self, substr, msg, privilege_level):
       await self._client.send_msg(msg, substr)
       return
 
    @cmd.add(_cmd_dict, "add", "install", "addmodule")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
-   async def _add(self, substr, msg, privilege_level):
+   async def _cmdf_add(self, substr, msg, privilege_level):
       if self._module_factory.module_exists(substr):
          if self._modules.module_is_installed(substr):
             await self._client.send_msg(msg, "`{}` is already installed.".format(substr))
@@ -233,7 +233,7 @@ class ServerBotInstance:
 
    @cmd.add(_cmd_dict, "remove", "uninstall", "removemodule")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
-   async def _remove(self, substr, msg, privilege_level):
+   async def _cmdf_remove(self, substr, msg, privilege_level):
       if self._modules.module_is_installed(substr):
          await self._modules.remove_server_module(substr)
          self._storage.remove_module(substr)
@@ -244,7 +244,7 @@ class ServerBotInstance:
 
    @cmd.add(_cmd_dict, "prefix", "prefix")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
-   async def _prefix(self, substr, msg, privilege_level):
+   async def _cmdf_prefix(self, substr, msg, privilege_level):
       if len(substr) == 0:
          raise errors.InvalidCommandArgumentsError
       self._cmd_prefix = substr
@@ -255,7 +255,7 @@ class ServerBotInstance:
 
    @cmd.add(_cmd_dict, "iam")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
-   async def _iam(self, substr, msg, privilege_level):
+   async def _cmdf_iam(self, substr, msg, privilege_level):
       (left, right) = utils.separate_left_word(substr)
       if self._RE_MENTIONSTR.fullmatch(left):
          user_to_pose_as = left[2:-1]
@@ -271,14 +271,14 @@ class ServerBotInstance:
 
    @cmd.add(_cmd_dict, "setgame")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
-   async def _setgame(self, substr, msg, privilege_level):
+   async def _cmdf_setgame(self, substr, msg, privilege_level):
       await self._client.set_game_status(substr)
       await self._client.send_msg(msg, "**Game set to:** " + substr)
       return
 
    @cmd.add(_cmd_dict, "setusername")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
-   async def _setusername(self, substr, msg, privilege_level):
+   async def _cmdf_setusername(self, substr, msg, privilege_level):
       await self._client.edit_profile(password, username=substr)
       self._bot_name = substr # TODO: Consider making this a function. Or stop using bot_name...
       await self._client.send_msg(msg, "**Username set to:** " + substr)
@@ -286,13 +286,13 @@ class ServerBotInstance:
 
    @cmd.add(_cmd_dict, "getemail")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
-   async def _getemail(self, substr, msg, privilege_level):
+   async def _cmdf_getemail(self, substr, msg, privilege_level):
       await self._client.send_msg(msg, "My email is: " + email)
       return
 
    @cmd.add(_cmd_dict, "joinserver")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
-   async def _joinserver(self, substr, msg, privilege_level):
+   async def _cmdf_joinserver(self, substr, msg, privilege_level):
       try:
          await self._client.accept_invite(substr)
          await self._client.send_msg(msg, "Successfully joined a new server.")
@@ -302,19 +302,19 @@ class ServerBotInstance:
 
    @cmd.add(_cmd_dict, "leaveserver")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
-   async def _leaveserver(self, substr, msg, privilege_level):
+   async def _cmdf_leaveserver(self, substr, msg, privilege_level):
       await self._client.send_msg(msg, "Bye!")
       await self._client.leave_server(msg.channel.server)
       return
 
    @cmd.add(_cmd_dict, "throwexception")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
-   async def _throwexception(self, substr, msg, privilege_level):
+   async def _cmdf_throwexception(self, substr, msg, privilege_level):
       raise Exception
 
    @cmd.add(_cmd_dict, "throwexception2")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
-   async def _throwexception2(self, substr, msg, privilege_level):
+   async def _cmdf_throwexception2(self, substr, msg, privilege_level):
       await self._client.send_message(msg, "A" * 2001)
       await self._client.send_message(msg, "If you're reading this, it failed to throw...")
       return

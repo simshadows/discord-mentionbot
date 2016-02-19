@@ -6,6 +6,7 @@ import discord
 import utils
 import errors
 from servermodule import ServerModule
+import cmd
 
 class BsiStarkRavingMadBot(ServerModule):
    
@@ -58,7 +59,9 @@ For reference, I require the following modules to be installed:
 `Random`
    """.strip()
 
-   STARKRAVINGMADBOT_DEFAULTID = str(121281613660160000)
+   STARKRAVINGMADBOT_DEFAULTID = "121281613660160000"
+
+   _cmd_dict = {} # Command Dictionary
 
    async def _initialize(self, resources):
       self._client = resources.client
@@ -124,33 +127,42 @@ For reference, I require the following modules to be installed:
          return left + " " + right
 
    async def process_cmd(self, substr, msg, privilegelevel=0):
-      
-      # Process the command itself
       (left, right) = utils.separate_left_word(substr)
-      if left == "cmdnotimplemented":
-         buf = "Sorry, I haven't implemented my own version of that command yet."
-         await self._client.send_msg(msg, buf)
+      cmd_to_execute = cmd.get(self._cmd_dict, left, privilegelevel)
+      await cmd_to_execute(self, right, msg, privilegelevel)
+      return
 
-      elif left == "help":
-         await self._client.send_msg(msg, self.STARK_HELP)
+   @cmd.add(_cmd_dict, "cmdnotimplemented")
+   async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):
+      buf = "Sorry, I haven't implemented my own version of that command yet."
+      await self._client.send_msg(msg, buf)
+      return
 
-      elif left == "git":
-         buf = "*Now, I'm not StarkRavingMadBot, but here's a copy-paste of what it would've said:*"
-         buf += "\n\"You can find my source at https://github.com/josh951623/StarkRavingMadBot/tree/master. If you'd like to suggest a feature, go ahead and join me in my dev server: https://discord.gg/0ktzcmJwmeWuQtiM.\""
-         await self._client.send_msg(msg, buf)
+   @cmd.add(_cmd_dict, "help")
+   async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):
+      await self._client.send_msg(msg, self.STARK_HELP)
+      return
 
-      elif left == "say":
-         await self._client.send_msg(msg, "m8")
+   @cmd.add(_cmd_dict, "git")
+   async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):
+      buf = "*Now, I'm not StarkRavingMadBot, but here's a copy-paste of what it would've said:*"
+      buf += "\n\"You can find my source at https://github.com/josh951623/StarkRavingMadBot/tree/master. If you'd like to suggest a feature, go ahead and join me in my dev server: https://discord.gg/0ktzcmJwmeWuQtiM.\""
+      await self._client.send_msg(msg, buf)
+      return
 
-      elif left == "sleep":
-         await self._client.send_msg(msg, random.choice(self._sleep_choices))
+   @cmd.add(_cmd_dict, "say")
+   async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):
+      await self._client.send_msg(msg, "m8")
+      return
 
-      elif left == "rip":
-         await self._client.send_msg(msg, "doesnt even deserve a funeral")
+   @cmd.add(_cmd_dict, "sleep")
+   async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):
+      await self._client.send_msg(msg, random.choice(self._sleep_choices))
+      return
 
-      else:
-         raise errors.InvalidCommandArgumentsError
-
+   @cmd.add(_cmd_dict, "rip")
+   async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):
+      await self._client.send_msg(msg, "doesnt even deserve a funeral")
       return
 
    def dont_run_module(self):

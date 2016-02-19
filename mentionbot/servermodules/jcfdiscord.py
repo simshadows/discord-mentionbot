@@ -7,6 +7,7 @@ import utils
 import errors
 from enums import PrivilegeLevel
 from servermodule import ServerModule
+import cmd
 
 class JCFDiscord(ServerModule):
    
@@ -51,6 +52,8 @@ class JCFDiscord(ServerModule):
       "ISTJ","ISFJ","ESTJ","ESFJ","ISTP","ISFP","ESTP","ESFP",
    ]
 
+   _cmd_dict = {} # Command Dictionary
+
    async def _initialize(self, resources):
       self._res = resources
       self._client = self._res.client
@@ -66,57 +69,58 @@ class JCFDiscord(ServerModule):
       return content
 
    async def process_cmd(self, substr, msg, privilegelevel=0):
-      
-      # Process the command itself
       (left, right) = utils.separate_left_word(substr)
-      if (left == "functions") or (left == "fn") or (left == "stack"):
-         args = right.split()
-         types = []
-         for arg in args:
-            arg = arg.upper()
-            if arg in self._MBTI_TYPES:
-               types.append(arg)
-         if len(types) == 0:
-            types = self._MBTI_TYPES
-         buf = "```\n"
-         for mbti_type in types:
-            buf += mbti_type + " = " + self._FUNCTION_STACKS[mbti_type] + "\n"
-         buf += "```"
-         await self._client.send_msg(msg, buf)
+      cmd_to_execute = cmd.get(self._cmd_dict, left, privilegelevel)
+      await cmd_to_execute(self, right, msg, privilegelevel)
+      return
 
-      elif left == "choosetruth":
-         topic = msg.channel.topic
-         if topic is None:
-            await self._client.send_msg(msg, "There doesn't appear to be a truth game in here.")
-            raise errors.OperationAborted
-         
-         mentions = utils.get_all_mentions(topic)
+   @cmd.add(_cmd_dict, "functions", "fn", "stack")
+   async def _cmdf_functions(self, substr, msg, privilege_level):
+      args = substr.split()
+      types = []
+      for arg in args:
+         arg = arg.upper()
+         if arg in self._MBTI_TYPES:
+            types.append(arg)
+      if len(types) == 0:
+         types = self._MBTI_TYPES
+      buf = "```\n"
+      for mbti_type in types:
+         buf += mbti_type + " = " + self._FUNCTION_STACKS[mbti_type] + "\n"
+      buf += "```"
+      await self._client.send_msg(msg, buf)
+      return
+
+   @cmd.add(_cmd_dict, "choosetruth")
+   async def _cmdf_choosetruth(self, substr, msg, privilege_level):
+      topic = msg.channel.topic
+      if topic is None:
+         await self._client.send_msg(msg, "There doesn't appear to be a truth game in here.")
+         raise errors.OperationAborted
+      
+      mentions = utils.get_all_mentions(topic)
+      if len(mentions) == 0:
+         await self._client.send_msg(msg, "There doesn't appear to be a truth game in here.")
+         raise errors.OperationAborted
+      
+      try:
+         mentions.remove(msg.author.id)
          if len(mentions) == 0:
-            await self._client.send_msg(msg, "There doesn't appear to be a truth game in here.")
+            await self._client.send_msg(msg, "<@{}>".format(msg.author.id))
             raise errors.OperationAborted
-         
-         try:
-            mentions.remove(msg.author.id)
-            if len(mentions) == 0:
-               await self._client.send_msg(msg, "<@{}>".format(msg.author.id))
-               raise errors.OperationAborted
-         except ValueError:
-            pass
-         
-         choice = random.choice(mentions)
-         buf = "<@{}>\n".format(choice)
-         buf += "My choices were: "
-         for mention in mentions:
-            user = self._client.search_for_user(mention, enablenamesearch=False, serverrestriction=self._res.server)
-            if user is None:
-               buf += "<@{}>, ".format(mention)
-            else:
-               buf += "{}, ".format(user.name)
-         buf = buf[:-2]
-         await self._client.send_msg(msg, buf)
-
-      else:
-         raise errors.InvalidCommandArgumentsError
-
+      except ValueError:
+         pass
+      
+      choice = random.choice(mentions)
+      buf = "<@{}>\n".format(choice)
+      buf += "My choices were: "
+      for mention in mentions:
+         user = self._client.search_for_user(mention, enablenamesearch=False, serverrestriction=self._res.server)
+         if user is None:
+            buf += "<@{}>, ".format(mention)
+         else:
+            buf += "{}, ".format(user.name)
+      buf = buf[:-2]
+      await self._client.send_msg(msg, buf)
       return
 
