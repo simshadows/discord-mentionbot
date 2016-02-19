@@ -126,10 +126,10 @@ For reference, I require the following modules to be installed:
       else:
          return left + " " + right
 
-   async def process_cmd(self, substr, msg, privilegelevel=0):
+   async def process_cmd(self, substr, msg, privilege_level):
       (left, right) = utils.separate_left_word(substr)
-      cmd_to_execute = cmd.get(self._cmd_dict, left, privilegelevel)
-      await cmd_to_execute(self, right, msg, privilegelevel)
+      cmd_to_execute = cmd.get(self._cmd_dict, left, privilege_level)
+      await cmd_to_execute(self, right, msg, privilege_level)
       return
 
    @cmd.add(_cmd_dict, "cmdnotimplemented")

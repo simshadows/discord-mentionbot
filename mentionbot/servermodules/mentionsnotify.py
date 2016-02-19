@@ -44,7 +44,7 @@ This module notifies users of mentions via PM when they're offline.
       return
 
    # Call this to process a command.
-   async def process_cmd(self, substr, msg, privilegelevel=0):
+   async def process_cmd(self, substr, msg, privilege_level):
       await self._client.send_msg(member, "The notify module currently has no commands. Sorry!")
       return
 

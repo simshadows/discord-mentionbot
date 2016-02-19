@@ -51,14 +51,14 @@ class ServerModule:
    #       For example, cmd_prefix="/" will make module commands show
    #       up as "/examplecommand", while "$mb " will make the same
    #       module command show up as "$mb examplecommand".
-   def get_help_summary(self, cmd_prefix, privilegelevel=0):
-      return utils.prepare_help_content(self._HELP_SUMMARY_LINES, cmd_prefix, privilegelevel)
+   def get_help_summary(self, cmd_prefix, privilege_level):
+      return utils.prepare_help_content(self._HELP_SUMMARY_LINES, cmd_prefix, privilege_level)
 
    # Get a detailed help-message string about the module.
    # String has no leading/trailing whitespace.
    # NOTE: cmd_prefix works the same as in get_help_summary.
-   def get_help_detail(self, substr, cmd_prefix, privilegelevel=0):
-      return utils.prepare_help_content(self._HELP_DETAIL_LINES, cmd_prefix, privilegelevel)
+   def get_help_detail(self, substr, cmd_prefix, privilege_level):
+      return utils.prepare_help_content(self._HELP_DETAIL_LINES, cmd_prefix, privilege_level)
 
    # Every module has the opportunity to pre-process the contents of a message.
    # This is carried out after all modules have carried out their on_message()
@@ -90,7 +90,7 @@ class ServerModule:
       pass
 
    # This method is called if a command is to be handled by the module.
-   async def process_cmd(self, substr, msg, privilegelevel=0):
+   async def process_cmd(self, substr, msg, privilege_level):
       pass
 
 

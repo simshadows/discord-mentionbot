@@ -50,7 +50,7 @@ class Random(ServerModule):
          content = utils.add_base_cmd(content, default_cmd_prefix, self._cmd_names[0])
       return content
 
-   async def process_cmd(self, substr, msg, privilegelevel=0):
+   async def process_cmd(self, substr, msg, privilege_level):
       if substr == "": # Default Case
          substr = "number"
       elif self._RE_INT.match(substr):
@@ -58,8 +58,8 @@ class Random(ServerModule):
       elif (not self._RE_KW_CHOOSE.match(substr)) and (";" in substr):
          substr = "choose " + substr
       (left, right) = utils.separate_left_word(substr)
-      cmd_to_execute = cmd.get(self._cmd_dict, left, privilegelevel)
-      await cmd_to_execute(self, right, msg, privilegelevel)
+      cmd_to_execute = cmd.get(self._cmd_dict, left, privilege_level)
+      await cmd_to_execute(self, right, msg, privilege_level)
       return
 
    @cmd.add(_cmd_dict, "number", "num", "int", "integer")

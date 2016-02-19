@@ -145,7 +145,7 @@ class ServerBotInstance:
 
          if cmd_to_execute is None:
             # Execute a module command. This will also handle command failure.
-            await self._modules.process_cmd(substr, msg, privilegelevel=privilege_level, silentfail=True)
+            await self._modules.process_cmd(substr, msg, privilege_level, silentfail=True)
          else:
             # Execute the core command.
             try:
@@ -325,7 +325,7 @@ class ServerBotInstance:
          buf += "\n"
       else:
          buf = ""
-      buf += self._modules.get_help_content(substr, cmd_prefix, privilege_level=privilege_level)
+      buf += self._modules.get_help_content(substr, cmd_prefix, privilege_level)
       return buf
 
    # RETURNS: Bot's current uptime in seconds

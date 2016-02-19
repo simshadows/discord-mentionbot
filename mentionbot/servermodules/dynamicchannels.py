@@ -124,12 +124,12 @@ class DynamicChannels(ServerModule):
          content = default_cmd_prefix + self._cmd_names[0] + " search " + content[1:]
       return content
 
-   async def process_cmd(self, substr, msg, privilegelevel=0):
+   async def process_cmd(self, substr, msg, privilege_level):
       if substr == "":
          substr = "settings"
       (left, right) = utils.separate_left_word(substr)
-      cmd_to_execute = cmd.get(self._cmd_dict, left, privilegelevel)
-      await cmd_to_execute(self, right, msg, privilegelevel)
+      cmd_to_execute = cmd.get(self._cmd_dict, left, privilege_level)
+      await cmd_to_execute(self, right, msg, privilege_level)
       return
 
    @cmd.add(_cmd_dict, "search")
@@ -155,7 +155,7 @@ class DynamicChannels(ServerModule):
       else:
          for ch in self._default_channels:
             buf += "\n<#{0}> (ID: {0})".format(ch.id)
-      if privilegelevel >= PrivilegeLevel.ADMIN:
+      if privilege_level >= PrivilegeLevel.ADMIN:
          pf = self._res.cmd_prefix
          base_cmd = self._cmd_names[0]
          buf += "\n\nChange settings using the following commands:"
