@@ -13,6 +13,9 @@ class ClientExtended(discord.Client):
       self._re_mentionstr = re.compile("<@\d+>")
       self._re_chmentionstr = re.compile("<#\d+>")
 
+      self._normal_game_status = ""
+      return
+
    # Search for a Member object.
    # Strings that may yield a Member object:
    #     A valid user ID
@@ -81,12 +84,26 @@ class ClientExtended(discord.Client):
 
    # Sets game status. Clears it if None is passed.
    async def set_game_status(self, text):
+      self._normal_game_status = text
       if text is None:
          await self.change_status(game=None)
       else:
          await self.change_status(discord.Game(name=text))
       return
 
+   async def set_temp_game_status(self, text):
+      if text is None:
+         await self.change_status(game=None)
+      else:
+         await self.change_status(discord.Game(name=text))
+      return
+
+   async def remove_temp_game_status(self):
+      if self._normal_game_status == "":
+         await self.change_status(game=None)
+      else:
+         await self.change_status(discord.Game(name=self._normal_game_status))
+      return
 
    # Send a message to a channel specified by a Channel, PrivateChannel, Server, or Message object.
    # TODO: Consider renaming this. It's kinda awkward to have both send_msg() and send_message().

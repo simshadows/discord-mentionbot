@@ -45,6 +45,8 @@ class ServerBotInstance:
 >>> PRIVILEGE LEVEL 9001 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 `{pf}iam [@user] [text]`
 `{pf}setgame [text]`
+`{pf}tempgame [text]`
+`{pf}revertgame`
 `{pf}setusername [text]`
 `{pf}getemail`
 `{pf}joinserver [invitelink]`
@@ -274,6 +276,20 @@ class ServerBotInstance:
    async def _cmdf_setgame(self, substr, msg, privilege_level):
       await self._client.set_game_status(substr)
       await self._client.send_msg(msg, "**Game set to:** " + substr)
+      return
+
+   @cmd.add(_cmd_dict, "tempgame")
+   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
+   async def _cmdf_setgame(self, substr, msg, privilege_level):
+      await self._client.set_temp_game_status(substr)
+      await self._client.send_msg(msg, "**Game temporarily set to:** " + substr)
+      return
+
+   @cmd.add(_cmd_dict, "revertgame")
+   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
+   async def _cmdf_setgame(self, substr, msg, privilege_level):
+      await self._client.remove_temp_game_status()
+      await self._client.send_msg(msg, "**Reverted game.**")
       return
 
    @cmd.add(_cmd_dict, "setusername")

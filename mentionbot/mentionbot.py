@@ -82,11 +82,11 @@ class MentionBot(clientextended.ClientExtended):
          self._delayed_messages = []
          for delayed_message in delayed_messages:
             print("PROCESSING DELAYED MESSAGE: " + utils.str_asciionly(delayed_message.content))
-            await self._on_message(delayed_message)
+            await self._on_message_process(delayed_message)
          self._on_message_delayed = False
-      await self._on_message(msg)
+      await self._on_message_process(msg)
 
-   async def _on_message(self, msg):
+   async def _on_message_process(self, msg):
       await self.message_cache.record_message(msg)
       if msg.author == self.user:
          return # Should no longer process own messages.
