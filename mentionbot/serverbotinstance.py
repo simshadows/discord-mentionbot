@@ -27,8 +27,7 @@ class ServerBotInstance:
 
    INIT_MENTIONS_NOTIFY_ENABLED = False
 
-   # Command Dictionaries
-   _cmd = {}
+   _cmd_dict = {} # Command Dictionary
 
    # IMPORTANT: This needs to be parsed with ServerModule._prepare_help_content()
    # TODO: Figure out a neater way of doing this.
@@ -37,23 +36,20 @@ class ServerBotInstance:
 `{pf}source` - Where to get source code.
 `{pf}mods` - Get all installed/available modules.
 `{pf}uptime` - Get bot uptime.
+`{pf}gettime`
 >>> PRIVILEGE LEVEL 8000 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 `{pf}say [text]`
 `{pf}add [module name]`
 `{pf}remove [module name]`
 `{pf}prefix [new prefix name]`
-   """.strip().splitlines()
-
-   _HELP_ADMIN = """
 >>> PRIVILEGE LEVEL 9001 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-`{pf}bo iam [@user] [text]`
-`{pf}bo gettime`
-`{pf}bo setgame [text]`
-`{pf}bo setusername [text]`
-`{pf}bo getemail`
-`{pf}bo joinserver [invitelink]`
-`{pf}bo leaveserver`
-`{pf}bo throwexception`
+`{pf}iam [@user] [text]`
+`{pf}setgame [text]`
+`{pf}setusername [text]`
+`{pf}getemail`
+`{pf}joinserver [invitelink]`
+`{pf}leaveserver`
+`{pf}throwexception`
    """.strip().splitlines()
 
    @classmethod
@@ -143,7 +139,7 @@ class ServerBotInstance:
          cmd_to_execute = None
          (left, right) = utils.separate_left_word(substr)
          try:
-            cmd_to_execute = self._cmd[left]
+            cmd_to_execute = self._cmd_dict[left]
          except KeyError:
             pass
 
@@ -164,24 +160,24 @@ class ServerBotInstance:
    # CORE COMMANDS ########################################################################
    ########################################################################################
 
-   @cmd.add(_cmd, "help")
+   @cmd.add(_cmd_dict, "help")
    async def _help(self, substr, msg, privilege_level):
       help_content = self._get_help_content(substr, msg, self.cmd_prefix, privilege_level)
       await self._client.send_msg(msg, help_content)
       return
 
-   @cmd.add(_cmd, "source", "src")
+   @cmd.add(_cmd_dict, "source", "src")
    async def _source(self, substr, msg, privilege_level):
       await self._client.send_msg(msg, "https://github.com/simshadows/discord-mentionbot")
       return
 
-   @cmd.add(_cmd, "uptime")
+   @cmd.add(_cmd_dict, "uptime")
    async def _uptime(self, substr, msg, privilege_level):
       buf = "**Bot current uptime:** {}. ".format(utils.seconds_to_string(self.get_presence_time()))
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd, "mods", "modules")
+   @cmd.add(_cmd_dict, "mods", "modules")
    async def _mods(self, substr, msg, privilege_level):
       installed_mods = list(self._modules.gen_module_info())
       if len(installed_mods) == 0:
@@ -209,18 +205,18 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd, "time", "gettime")
+   @cmd.add(_cmd_dict, "time", "gettime", "utc")
    async def _PLACEHOLDER(self, substr, msg, privilege_level):
       await self._client.send_msg(msg, datetime.datetime.utcnow().strftime("My current system time: %c UTC"))
       return
 
-   @cmd.add(_cmd, "say")
+   @cmd.add(_cmd_dict, "say")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _say(self, substr, msg, privilege_level):
       await self._client.send_msg(msg, substr)
       return
 
-   @cmd.add(_cmd, "add", "install", "addmodule")
+   @cmd.add(_cmd_dict, "add", "install", "addmodule")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _add(self, substr, msg, privilege_level):
       if self._module_factory.module_exists(substr):
@@ -235,7 +231,7 @@ class ServerBotInstance:
          await self._client.send_msg(msg, "`{}` does not exist.".format(substr))
       return
 
-   @cmd.add(_cmd, "remove", "uninstall", "removemodule")
+   @cmd.add(_cmd_dict, "remove", "uninstall", "removemodule")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _remove(self, substr, msg, privilege_level):
       if self._modules.module_is_installed(substr):
@@ -246,7 +242,7 @@ class ServerBotInstance:
          await self._client.send_msg(msg, "`{}` is not installed.".format(substr))
       return
 
-   @cmd.add(_cmd, "prefix", "prefix")
+   @cmd.add(_cmd_dict, "prefix", "prefix")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _prefix(self, substr, msg, privilege_level):
       if len(substr) == 0:
@@ -257,7 +253,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd, "iam")
+   @cmd.add(_cmd_dict, "iam")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _iam(self, substr, msg, privilege_level):
       (left, right) = utils.separate_left_word(substr)
@@ -273,14 +269,14 @@ class ServerBotInstance:
          await self.process_text(right, replacement_msg) # TODO: Make this call on_message()
       return
 
-   @cmd.add(_cmd, "setgame")
+   @cmd.add(_cmd_dict, "setgame")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _setgame(self, substr, msg, privilege_level):
       await self._client.set_game_status(substr)
       await self._client.send_msg(msg, "**Game set to:** " + substr)
       return
 
-   @cmd.add(_cmd, "setusername")
+   @cmd.add(_cmd_dict, "setusername")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _setusername(self, substr, msg, privilege_level):
       await self._client.edit_profile(password, username=substr)
@@ -288,13 +284,13 @@ class ServerBotInstance:
       await self._client.send_msg(msg, "**Username set to:** " + substr)
       return
 
-   @cmd.add(_cmd, "getemail")
+   @cmd.add(_cmd_dict, "getemail")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _getemail(self, substr, msg, privilege_level):
       await self._client.send_msg(msg, "My email is: " + email)
       return
 
-   @cmd.add(_cmd, "joinserver")
+   @cmd.add(_cmd_dict, "joinserver")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _joinserver(self, substr, msg, privilege_level):
       try:
@@ -304,19 +300,19 @@ class ServerBotInstance:
          await self._client.send_msg(msg, "Failed to join a new server.")
       return
 
-   @cmd.add(_cmd, "leaveserver")
+   @cmd.add(_cmd_dict, "leaveserver")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _leaveserver(self, substr, msg, privilege_level):
       await self._client.send_msg(msg, "Bye!")
       await self._client.leave_server(msg.channel.server)
       return
 
-   @cmd.add(_cmd, "throwexception")
+   @cmd.add(_cmd_dict, "throwexception")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _throwexception(self, substr, msg, privilege_level):
       raise Exception
 
-   @cmd.add(_cmd, "throwexception2")
+   @cmd.add(_cmd_dict, "throwexception2")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _throwexception2(self, substr, msg, privilege_level):
       await self._client.send_message(msg, "A" * 2001)

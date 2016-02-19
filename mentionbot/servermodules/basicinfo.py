@@ -5,6 +5,7 @@ import discord
 import utils
 import errors
 from servermodule import ServerModule
+import cmd
 
 class BasicInfo(ServerModule):
    
@@ -31,6 +32,8 @@ class BasicInfo(ServerModule):
 *Note: Dates are presented in ISO 8601 format.*
    """.strip().splitlines()
 
+   _cmd_dict = {} # Command Dictionary
+
    async def _initialize(self, resources):
       self._client = resources.client
       return
@@ -51,27 +54,13 @@ class BasicInfo(ServerModule):
       return content
 
    async def process_cmd(self, substr, msg, privilegelevel=0):
-      
-      # Process the command itself
       (left, right) = utils.separate_left_word(substr)
-      if (left == "avatar") or (left == "dp") or (left == "avatarurl"):
-         await self._cmd_avatar(right, msg)
-
-      elif (left == "user") or (left == "whois") or (left == "who"):
-         await self._cmd_user(right, msg)
-
-      elif (left == "server") or (left == "thisserver"):
-         await self._cmd_server(right, msg)
-
-      elif (left == "servericon"):
-         await self._cmd_servericon(right, msg)
-
-      else:
-         raise errors.InvalidCommandArgumentsError
-
+      cmd_to_execute = cmd.get(self._cmd_dict, left, privilegelevel)
+      await cmd_to_execute(self, right, msg, privilegelevel)
       return
 
-   async def _cmd_avatar(self, substr, msg):
+   @cmd.add(_cmd_dict, "avatar", "dp", "avatarurl")
+   async def _cmd_avatar(self, substr, msg, privilege_level):
       substr = substr.strip()
       user = None
       if len(substr) == 0:
@@ -84,11 +73,12 @@ class BasicInfo(ServerModule):
       # Guaranteed to have a user.
       avatar = user.avatar_url
       if avatar == "":
-         return await self._client.send_msg(msg, left + " m8 get an avatar")
+         return await self._client.send_msg(msg, substr + " m8 get an avatar")
       else:
          return await self._client.send_msg(msg, avatar)
 
-   async def _cmd_user(self, substr, msg):
+   @cmd.add(_cmd_dict, "user", "whois", "who")
+   async def _cmd_user(self, substr, msg, privilege_level):
       # Get user. Copied from _cmd_avatar()...
       substr = substr.strip()
       user = None
@@ -117,7 +107,8 @@ class BasicInfo(ServerModule):
       buf += "\n```"
       return await self._client.send_msg(msg, buf)
 
-   async def _cmd_server(self, substr, msg):
+   @cmd.add(_cmd_dict, "server", "thisserver")
+   async def _cmd_server(self, substr, msg, privilege_level):
       s = msg.server
       # Count voice and text channels
       text_ch_total = 0
@@ -145,7 +136,8 @@ class BasicInfo(ServerModule):
       buf += "\n```"
       return await self._client.send_msg(msg, buf)
 
-   async def _cmd_servericon(self, substr, msg):
+   @cmd.add(_cmd_dict, "servericon")
+   async def _servericon(self, substr, msg, privilege_level):
       if msg.server.icon_url == "":
          return await self._client.send_msg(msg, "This server has no icon.")
       else:
