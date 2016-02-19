@@ -43,10 +43,13 @@ class MentionBot(clientextended.ClientExtended):
       self.botowner = None
 
       self._bot_instances = None
+      self._delayed_messages = []
+      self._on_message_delayed = True
       return
 
 
    async def on_ready(self):
+      self._on_message_locked = True
       self.bot_mention = "<@{}>".format(self.user.id)
       self.bot_name = self.user.name
       self.botowner_mention = "<@{}>".format(MentionBot.BOTOWNER_ID)
@@ -63,11 +66,30 @@ class MentionBot(clientextended.ClientExtended):
       print("Bot name: " + self.bot_name)
       print("")
       print("Initialization complete.")
+      self._on_message_delayed = False
+      return
 
-
+   # My feeble attempt at getting around async initialization.
+   # TODO: Do this better somehow? idk what cases this can fail on.
    async def on_message(self, msg):
+      if self._on_message_delayed:
+         print("MESSAGE DELAYED: " + utils.str_asciionly(msg.content))
+         self._delayed_messages.append(msg)
+         return
+      if len(self._delayed_messages) != 0:
+         delayed_messages = self._delayed_messages
+         self._on_message_delayed = True
+         self._delayed_messages = []
+         for delayed_message in delayed_messages:
+            print("PROCESSING DELAYED MESSAGE: " + utils.str_asciionly(delayed_message.content))
+            await self._on_message(delayed_message)
+         self._on_message_delayed = False
+      await self._on_message(msg)
+
+   async def _on_message(self, msg):
+      await self.message_cache.record_message(msg)
       if msg.author == self.user:
-         return # never process own messages.
+         return # Should no longer process own messages.
 
       try:
          text = msg.content.strip()

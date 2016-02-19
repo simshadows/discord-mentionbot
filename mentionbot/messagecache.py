@@ -19,6 +19,7 @@ class MessageCache:
       inst = cls(cls._SECRET_TOKEN)
       inst._client = client
       inst._data_dir = cache_directory + "messagecache/"
+      inst._messages_before_initialization = []
       
       inst._data = {}
       # A tree of dictionaries in this arrangement:
@@ -35,7 +36,6 @@ class MessageCache:
             ch = inst._client.search_for_channel(ch_id, enablenamesearch=False, serverrestriction=None)
             print("#" + ch.name + " has len " + str(len(ch_data)))
       print("DEBUGGING MESSAGE CACHE DONE!")
-
       return inst
 
    def __init__(self, token):
@@ -43,8 +43,8 @@ class MessageCache:
          raise RuntimeError("Not allowed to instantiate directly. Please use get_instance().")
       return
 
-   def record_message(self):
-      pass
+   async def record_message(self, msg):
+      return
 
    async def _refresh_buffers(self):
       for server in self._client.servers:

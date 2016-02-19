@@ -64,6 +64,7 @@ Currently under development/planned to be made:
 * Implement module enabling/disabling.
 * Reimplement abstract classes with the `abc` library.
 * Find all uses of utils.remove_blank_strings() and ensure none of them have a redundant list() around them.
+* (LOW PRIORITY) Implement better locking for `MentionBot.on_message()`.
 * (LOW PRIORITY) Implement data cache backups. The bot should also back up files if they're found to be corrupted (to allow for manual recovery in the case of a bug during runtime).
 * (LOW PRIORITY) Implement deeper module information infrastructure.
 * (LOW PRIORITY) Implement scheduling for module enable/disable, or "alternative command" enable/disable. For example, a feature may turn off if another bot is offline or not responding. I'm not too sure if this is necessary though, especially given the added complexity such a feature would bring. Modules may even be specially built for this purpose anyway...
