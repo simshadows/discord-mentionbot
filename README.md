@@ -14,6 +14,8 @@ An extensible, module-based chatroom bot for [Discord](https://discordapp.com/).
 
 # Available Modules
 
+View installed modules
+
 * **Basic Information**: Presents some basic information about the server and the users in it, including user avatars and server icons. *(Installed by default.)*
 * **Mentions Notify**: PMs users of their mentions when they're offline.
 * **Random**: Randomization tools. *(Installed by default.)*
@@ -31,6 +33,12 @@ Currently under development/planned to be made:
 * **Dynamic Channels**: Gives users the ability to create temporary channels that disappear after a few minutes of inactivity.
 	* "Default channels" can be specified to be ignored by the module.
 	* Warning: Server owners beware! While normal members won't see all the hidden channels, you and the bot will. The solution is to have an "admin acount" separate from your normal account.
+
+# Running the bot
+
+1. Run `mentionbot.py` once (inside the `mentionbot` directory). A file named `login_details` should appear.
+2. Open `login_details` and replace `USERNAME` and `PASSWORD` with your bot's username and password. (Make sure the file only contains those two lines of text and no other lines.)
+3. Run `mentionbot.py` again. Your bot should be running now.
 
 # Notes
 
@@ -66,6 +74,7 @@ Currently under development/planned to be made:
 # Dependencies:
 
 * `pip install git+https://github.com/Rapptz/discord.py@async`
+* `pip install git+https://github.com/dateutil/dateutil/`
 * `pip install wolframalpha`
 * ~~`pip install git+https://github.com/Julian/jsonschema`~~ (Planned to be used.)
 

@@ -15,6 +15,7 @@ import errors
 import clientextended
 
 from serverbotinstance import ServerBotInstance
+from messagecache import MessageCache
 
 logger = logging.getLogger('mentionbot')
 logger.setLevel(logging.CRITICAL)
@@ -54,6 +55,8 @@ class MentionBot(clientextended.ClientExtended):
       self._bot_instances = {}
       for server in self.servers:
          self._bot_instances[server] = await ServerBotInstance.get_instance(self, server)
+
+      self.message_cache = await MessageCache.get_instance(self, self.CACHE_DIRECTORY)
 
       await self.set_game_status(MentionBot.INITIAL_GAME_STATUS)
       print("Bot owner: " + self.botowner.name)

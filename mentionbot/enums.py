@@ -22,7 +22,7 @@ class PrivilegeLevel(enum.IntEnum):
    @classmethod
    def get_all_values(self):
       all_values = []
-      for (enum_type, enum_str) in _privilegelevel_dict.iteritems():
+      for (enum_type, enum_str) in _privilegelevel_dict.items():
          all_values.append((enum_type, int(enum_type), enum_str))
       return get_all_values
 
