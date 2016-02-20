@@ -184,14 +184,20 @@ class MessageCache:
       ch_dict = self._data[server_id]
 
       # Split off the messages to be stored.
-      to_store = ch_dict[ch_id][:messages]
-      ch_dict[ch_id] = ch_dict[ch_id][messages:]
+      if messages is None:
+         to_store = ch_dict[ch_id]
+         ch_dict[ch_id] = []
+      else:
+         to_store = ch_dict[ch_id][:messages]
+         ch_dict[ch_id] = ch_dict[ch_id][messages:]
 
       latest_message = to_store[-1:][0]
       latest_timestamp_isoformat = latest_message["t"].isoformat()
       ch_json_data["last message timestamp"] = latest_timestamp_isoformat
 
       for msg_dict in to_store:
+         # TODO: I still don't know what's causing this to be a string...
+         # This temporary fix will have to do for now.
          if isinstance(msg_dict["t"], str):
             print("WARNING: msg_dict[t] is already a string. contents: " + msg_dict["t"])
          else:
@@ -241,11 +247,20 @@ class MessageCache:
       return self._data_dir + server_id + "/" + ch_id + "/"
 
    def get_debugging_info(self):
-      buf = "**Currently buffered messages:**\n"
+      # buf = "**Currently buffered messages:**\n"
+      # for (serv_id, serv_dict) in self._data.items():
+      #    for (ch_id, ch_data) in serv_dict.items():
+      #       ch = self._client.search_for_channel(ch_id, enablenamesearch=False, serverrestriction=None)
+      #       buf += str(len(ch_data)) + " (#" + ch.name + ")\n"
+      # return buf[:-1]
+      buf = "In cache:\n"
       for (serv_id, serv_dict) in self._data.items():
          for (ch_id, ch_data) in serv_dict.items():
             ch = self._client.search_for_channel(ch_id, enablenamesearch=False, serverrestriction=None)
-            buf += str(len(ch_data)) + " (#" + ch.name + ")\n"
-      return buf[:-1]
-
+            strcount = 0
+            for msg_dict in ch_data:
+               if isinstance(msg_dict["t"], str):
+                  strcount += 1
+            buf += str(len(ch_data)) + " with " + str(strcount) + " str (#" + ch.name + ")\n"
+      return buf
 
