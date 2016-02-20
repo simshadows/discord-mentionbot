@@ -64,75 +64,12 @@ class ServerActivityStatistics(ServerModule):
    @cmd.add(_cmd_dict, "daychars")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_daychars(self, substr, msg, privilege_level):
-      await self._client.send_msg(msg, "Generating graph. Please wait...")
       now = utils.datetime_rounddown_to_day(datetime.datetime.utcnow())
       now += datetime.timedelta(days=1)
-      data_temp = {} # Maps day delta -> chars sent
-      for ch in self._res.server.channels:
-         for msg_dict in self._res.message_cache_read(self._res.server.id, ch.id):
-            delta = now - msg_dict["t"]
-            days_ago = delta.days
-            try:
-               data_temp[days_ago] += len(msg_dict["c"])
-            except KeyError: # May also catch msg_dict keyerror...
-               data_temp[days_ago] = len(msg_dict["c"])
-      days_ago = 0
-      data = []
-      while bool(data_temp): # While dictionary still has data
-         content_len = 0
-         try:
-            content_len = data_temp[days_ago]
-            del data_temp[days_ago]
-         except KeyError:
-            pass
-         data.insert(0, content_len)
-         print(str(days_ago))
-         days_ago += 1
+      bins = lambda d: (now - d["t"]).days
+      measured = lambda d: len(d["c"])
 
-      # Front of the list is number of chars from the
-      # earliest day.
-
-      # buf = "Number of characters entered on this server:\n"
-
-      # day_index = 0
-      # for point in data:
-      #    buf += "(day{0}:{1}), ".format(day_index, point)
-      #    day_index += 1
-
-      # if day_index == 0:
-      #    buf = "NONE."
-      # else:
-      #    buf = buf[:-2]
-
-      temp_filename = "temp" + str(random.getrandbits(128))
-      temp_file_ext = ".png"
-
-      x_vals = []
-      i = 1
-      for point in data:
-         x_vals.append(i)
-         i += 1
-
-      plotly_data = [
-         go.Bar(
-               x = x_vals,
-               y = data
-            )
-      ]
-
-      try:
-         py.image.save_as({'data':plotly_data}, temp_filename, format='png')
-      except:
-         print(traceback.format_exc())
-         await self._client.send_msg(msg, "Unknown error occurred. Maybe you forgot to sign in...")
-         raise errors.OperationAborted
-
-      await self._client.perm_send_file(msg.channel, temp_filename + temp_file_ext)
-
-      os.remove(temp_filename + temp_file_ext)
-
-      print("GRAPH SENT!")
-
+      await self._send_bar_graph(msg.channel, measured, bins)
       return
    
    ##################
@@ -161,5 +98,73 @@ class ServerActivityStatistics(ServerModule):
       py.sign_in(username, api_key)
 
       self._res.save_shared_settings(shared_settings)
+      return
+
+   async def _send_bar_graph(self, channel, measured, bins):
+      await self._client.send_msg(channel, "Generating graph. Please wait...")
+      data_temp = {} # Maps day delta -> chars sent
+      for ch in self._res.server.channels:
+         for msg_dict in self._res.message_cache_read(self._res.server.id, ch.id):
+            bin_value = bins(msg_dict)
+            try:
+               data_temp[bin_value] += measured(msg_dict)
+            except KeyError: # May also catch msg_dict keyerror...
+               data_temp[bin_value] = measured(msg_dict)
+      days_ago = 0
+      data = []
+      while bool(data_temp): # While dictionary still has data
+         content_len = 0
+         try:
+            content_len = data_temp[days_ago]
+            del data_temp[days_ago]
+         except KeyError:
+            pass
+         data.insert(0, content_len)
+         print(str(days_ago))
+         days_ago += 1
+
+      # Front of the list is number of chars from the
+      # earliest day.
+
+      # buf = "Number of characters entered on this server:\n"
+
+      # day_index = 0
+      # for point in data:
+      #    buf += "(day{0}:{1}), ".format(day_index, point)
+      #    day_index += 1
+
+      # if day_index == 0:
+      #    buf = "NONE."
+      # else:
+      #    buf = buf[:-2]
+
+      x_vals = []
+      i = 1
+      for point in data:
+         x_vals.append(i)
+         i += 1
+
+      plotly_data = [
+         go.Bar(
+               x = x_vals,
+               y = data
+            )
+      ]
+
+      await self._send_graph(channel, plotly_data)
+      return
+
+   async def _send_graph(self, channel, plotly_data):
+      temp_filename = "temp" + str(random.getrandbits(128))
+      temp_file_ext = ".png"
+      try:
+         py.image.save_as({'data':plotly_data}, temp_filename, format='png')
+      except:
+         print(traceback.format_exc())
+         await self._client.send_msg(msg, "Unknown error occurred. Maybe you forgot to sign in...")
+         raise errors.OperationAborted
+      await self._client.perm_send_file(channel, temp_filename + temp_file_ext)
+      os.remove(temp_filename + temp_file_ext)
+      print("GRAPH SENT!")
       return
 
