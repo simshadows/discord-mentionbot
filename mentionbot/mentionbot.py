@@ -28,6 +28,7 @@ LOGIN_DETAILS_FILENAME = "login_details" # This file is used to login. Only cont
 class MentionBot(clientextended.ClientExtended):
    BOTOWNER_ID = "119384097473822727"
    INITIAL_GAME_STATUS = "bot is running"
+   INITIALIZING_GAME_STATUS = "bot is initializing"
    CACHE_DIRECTORY = "cache/" # This MUST end with a forward-slash. e.g. "cache/"
    
    def __init__(self, **kwargs):
@@ -49,6 +50,7 @@ class MentionBot(clientextended.ClientExtended):
 
 
    async def on_ready(self):
+      await self.set_game_status(MentionBot.INITIALIZING_GAME_STATUS)
       self._on_message_locked = True
       self.bot_mention = "<@{}>".format(self.user.id)
       self.bot_name = self.user.name

@@ -43,10 +43,38 @@ class MessageCache:
          raise RuntimeError("Not allowed to instantiate directly. Please use get_instance().")
       return
 
+   # PRECONDITION: Currently not operating on the buffers.
    async def record_message(self, msg):
+      if not isinstance(msg.channel, discord.Channel):
+         return # Never caches private messages.
+
+      server_dict = None
+      try:
+         server_dict = self._data[msg.server.id]
+      except KeyError:
+         server_dict = {}
+         self._data[msg.server.id] = server_dict
+
+      ch_list = None
+      try:
+         ch_list = server_dict[msg.channel.id]
+      except KeyError:
+         ch_list = []
+         server_dict[msg.channel.id] = ch_list
+
+      ch_list.append(self._message_dict(msg))
+
+      print("DEBUGGING MESSAGE CACHE:")
+      for (serv_id, serv_dict) in self._data.items():
+         for (ch_id, ch_data) in serv_dict.items():
+            ch = self._client.search_for_channel(ch_id, enablenamesearch=False, serverrestriction=None)
+            print("#" + ch.name + " has len " + str(len(ch_data)))
+      print("DEBUGGING MESSAGE CACHE DONE!")
+
       return
 
    async def _refresh_buffers(self):
+      await self._client.set_temp_game_status("Filling cache buffers.")
       for server in self._client.servers:
          server_dict = None
          try:
@@ -85,12 +113,13 @@ class MessageCache:
                async for msg in self._client.logs_from(ch, limit=ARBITRARILY_LARGE_NUMBER):
                   if msg.timestamp <= ch_stored_timestamp:
                      break
+                  # Insert in front since we're reading messages starting from most recent.
                   msg_buffer.insert(0, self._message_dict(msg))
             except discord.errors.Forbidden:
                pass
 
             server_dict[ch.id] = msg_buffer
-
+      await self._client.remove_temp_game_status()
       return
 
    @classmethod
