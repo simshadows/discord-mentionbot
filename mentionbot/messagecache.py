@@ -2,6 +2,7 @@ import asyncio
 import re
 import datetime
 import os
+import copy
 
 import discord
 import dateutil.parser
@@ -66,6 +67,29 @@ class MessageCache:
 
       return
 
+   # Generator reads cached messages from a channel, starting from the earliest.
+   def read_messages(self, server_id, ch_id):
+      ch_dir = self._get_ch_dir(server_id, ch_id)
+
+      file_number = 0
+      while True:
+         file_number += 1
+         file_contents = None
+         try:
+            file_contents = utils.json_read(ch_dir + str(file_number) + ".json")
+         except FileNotFoundError:
+            break
+         for msg_dict in file_contents:
+            msg_dict["t"] = dateutil.parser.parse(msg_dict["t"])
+            yield msg_dict
+
+      # After having read all files, output buffered messages.
+      try:
+         for msg_dict in self._data[server_id][ch_id]:
+            yield msg_dict
+      except KeyError:
+         pass
+
    async def _fill_buffers(self):
       await self._client.set_temp_game_status("Filling cache buffers.")
       for server in self._client.servers:
@@ -111,7 +135,8 @@ class MessageCache:
                   # Insert in front since we're reading messages starting from most recent.
                   msg_buffer.insert(0, self._message_dict(msg))
             except discord.errors.Forbidden:
-               pass
+               print("MessageCache unable to read #" + ch.name)
+               continue
 
             ch_dict[ch.id] = msg_buffer
 

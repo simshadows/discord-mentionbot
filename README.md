@@ -6,6 +6,7 @@ An extensible, module-based chatroom bot for [Discord](https://discordapp.com/).
 # Key features:
 
 * **Persistent data and settings**
+	* A message caching service is also provided to speed up the operation of message searches and statistics generation.
 * **Modularity**: Modules give the bot functionality.
 	* Each module has the ability to pre-process incoming commands, allowing for some very interesting uses.
 * **Server-wise customizability**: Server owners are able to set up installed modules and change settings as desired.

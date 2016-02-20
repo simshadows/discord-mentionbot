@@ -151,6 +151,9 @@ class MentionBot(clientextended.ClientExtended):
    # Other Services #
    ##################
 
+   def message_cache_read(self, server_id, ch_id):
+      return self.message_cache.read_messages(server_id, ch_id)
+
    def message_cache_debug_str(self):
       return self.message_cache.get_debugging_info()
 

@@ -51,6 +51,7 @@ class ServerBotInstance:
 `{pf}getemail`
 `{pf}joinserver [invitelink]`
 `{pf}msgcachedebug`
+`{pf}msgcachefirst`
 `{pf}leaveserver`
 `{pf}throwexception`
    """.strip().splitlines()
@@ -329,6 +330,20 @@ class ServerBotInstance:
    async def _cmdf_msgcachedebug(self, substr, msg, privilege_level):
       buf = self._client.message_cache_debug_str()
       await self._client.send_msg(msg, buf)
+      return
+
+   @cmd.add(_cmd_dict, "msgcachefirst")
+   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
+   async def _cmdf_msgcachedebug(self, substr, msg, privilege_level):
+      buf = "**Here are the first 20 messages in this channel:**\n"
+      count = 1
+      for msg_dict in self._client.message_cache_read(msg.server.id, msg.channel.id):
+         buf += msg_dict["c"] + "\n"
+         if count > 20:
+            break
+         else:
+            count += 1
+      await self._client.send_msg(msg, buf[:-1])
       return
 
    @cmd.add(_cmd_dict, "throwexception")
