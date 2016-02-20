@@ -64,17 +64,93 @@ class ServerActivityStatistics(ServerModule):
    @cmd.add(_cmd_dict, "daychars")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_daychars(self, substr, msg, privilege_level):
+      measured = self._g1_total_chars()
+      bins = self._g2_each_day_bins()
+      (data, x_vals) = await self._g3_generate_graph_data(msg.channel, measured, bins)
+      await self._g4_bar_graph(msg.channel, data, x_vals)
+      return
+
+   ###############################################
+   ### SIMPLE GRAPHING - STEP 1 (GRAPH VALUES) ###
+   ###############################################
+
+   # These return value evaluation functions.
+   # Sees every message once with parameter "d" to evaluate.
+   # Returned value accumulates, and this cumulative value is passed in with parameter "p".
+
+   # You can think of this as the function that generates the y-value.
+
+   def _g1_total_chars(self):
+      return lambda p, d: p + len(d["c"])
+
+   #############################################
+   ### SIMPLE GRAPHING - STEP 2 (GRAPH BINS) ###
+   #############################################
+
+   # These return binning functions, which determines which x-value a message will be binned in.
+
+   def _g2_each_day_bins(self):
       now = utils.datetime_rounddown_to_day(datetime.datetime.utcnow())
       now += datetime.timedelta(days=1)
-      bins = lambda d: (now - d["t"]).days
-      measured = lambda d: len(d["c"])
-
-      await self._send_bar_graph(msg.channel, measured, bins)
-      return
+      return lambda d: (now - d["t"]).days
    
-   ##################
-   # OTHER SERVICES #
-   ##################
+   ########################################################
+   ### SIMPLE GRAPHING - STEP 3 (GENERATING GRAPH DATA) ###
+   ########################################################
+
+   # This function generates graph data based on the value evaluation
+   # and binning functions.
+
+   async def _g3_generate_graph_data(self, channel, measured, bins):
+      await self._client.send_msg(channel, "Generating graph. Please wait...")
+      data_temp = {} # Maps day delta -> chars sent
+      for ch in self._res.server.channels:
+         for msg_dict in self._res.message_cache_read(self._res.server.id, ch.id):
+            bin_value = bins(msg_dict)
+            prev = 0
+            try:
+               prev = data_temp[bin_value]
+            except KeyError: # May also catch msg_dict keyerror...
+               pass
+            data_temp[bin_value] = measured(prev, msg_dict)
+      days_ago = 0
+      data = []
+      while bool(data_temp): # While dictionary still has data
+         content_len = 0
+         try:
+            content_len = data_temp[days_ago]
+            del data_temp[days_ago]
+         except KeyError:
+            pass
+         data.insert(0, content_len)
+         print(str(days_ago))
+         days_ago += 1
+
+      x_vals = []
+      i = 1
+      for point in data:
+         x_vals.append(i)
+         i += 1
+
+      return (data, x_vals)
+
+   ##############################################
+   ### SIMPLE GRAPHING - STEP 4 (DATA OUTPUT) ###
+   ##############################################
+
+   async def _g4_bar_graph(self, channel, data, x_vals, **kwargs):
+      plotly_data = [
+         go.Bar(
+               x = x_vals,
+               y = data
+            )
+      ]
+      await self._send_plotly_graph_object(channel, plotly_data)
+      return
+
+   ######################
+   ### OTHER SERVICES ###
+   ######################
 
    def _log_in_from_file(self):
       shared_settings = self._res.get_shared_settings()
@@ -100,61 +176,8 @@ class ServerActivityStatistics(ServerModule):
       self._res.save_shared_settings(shared_settings)
       return
 
-   async def _send_bar_graph(self, channel, measured, bins):
-      await self._client.send_msg(channel, "Generating graph. Please wait...")
-      data_temp = {} # Maps day delta -> chars sent
-      for ch in self._res.server.channels:
-         for msg_dict in self._res.message_cache_read(self._res.server.id, ch.id):
-            bin_value = bins(msg_dict)
-            try:
-               data_temp[bin_value] += measured(msg_dict)
-            except KeyError: # May also catch msg_dict keyerror...
-               data_temp[bin_value] = measured(msg_dict)
-      days_ago = 0
-      data = []
-      while bool(data_temp): # While dictionary still has data
-         content_len = 0
-         try:
-            content_len = data_temp[days_ago]
-            del data_temp[days_ago]
-         except KeyError:
-            pass
-         data.insert(0, content_len)
-         print(str(days_ago))
-         days_ago += 1
-
-      # Front of the list is number of chars from the
-      # earliest day.
-
-      # buf = "Number of characters entered on this server:\n"
-
-      # day_index = 0
-      # for point in data:
-      #    buf += "(day{0}:{1}), ".format(day_index, point)
-      #    day_index += 1
-
-      # if day_index == 0:
-      #    buf = "NONE."
-      # else:
-      #    buf = buf[:-2]
-
-      x_vals = []
-      i = 1
-      for point in data:
-         x_vals.append(i)
-         i += 1
-
-      plotly_data = [
-         go.Bar(
-               x = x_vals,
-               y = data
-            )
-      ]
-
-      await self._send_graph(channel, plotly_data)
-      return
-
-   async def _send_graph(self, channel, plotly_data):
+   # This is a utility function used by graph generating functions.
+   async def _send_plotly_graph_object(self, channel, plotly_data):
       temp_filename = "temp" + str(random.getrandbits(128))
       temp_file_ext = ".png"
       try:
