@@ -50,8 +50,54 @@ class ServerActivityStatistics(ServerModule):
 
    async def process_cmd(self, substr, msg, privilege_level):
       (left, right) = utils.separate_left_word(substr)
-      cmd_to_execute = cmd.get(self._cmd_dict, left, privilege_level)
-      await cmd_to_execute(self, right, msg, privilege_level)
+      execute_regular_cmd = False
+      try:
+         cmd_to_execute = cmd.get(self._cmd_dict, left, privilege_level)
+         execute_regular_cmd = True
+      except (errors.InvalidCommandArgumentsError, errors.CommandPrivilegeError):
+         pass
+      if execute_regular_cmd:
+         await cmd_to_execute(self, right, msg, privilege_level)
+      else: # Now, let's process 
+
+         eval_fn = None
+         try:
+            eval_fn = self._sg_argument1[left]
+         except KeyError:
+            buf = "Error: Unknown evaluation function."
+            buf += "\n\n" + self._get_usage_info()
+            await self._client.send_msg(msg, buf)
+            raise errors.OperationAborted
+         eval_fn = eval_fn(self) # Get the eval function
+
+         bin_fn = None
+         (left2, right2) = utils.separate_left_word(right)
+         try:
+            bin_fn = self._sg_argument2[left2]
+         except KeyError:
+            buf = "Error: Unknown binning function."
+            buf += "\n\n" + self._get_usage_info()
+            await self._client.send_msg(msg, buf)
+            raise errors.OperationAborted
+         bin_fn = bin_fn(self) # Get the bin function
+
+         graph_fn = None
+         (left3, right3) = utils.separate_left_word(right2)
+         try:
+            graph_fn = self._sg_argument3[left3]
+         except KeyError:
+            buf = "Error: Unknown graphing function."
+            buf += "\n\n" + self._get_usage_info()
+            await self._client.send_msg(msg, buf)
+            raise errors.OperationAborted
+         graph_fn = graph_fn(self) # Get the graphing function
+
+         # right3 can be used for other things if need be...
+
+         await self._client.send_msg(msg, "Generating graph. Please wait...")
+         (data, x_vals) = await self._sg3_generate_graph_data(msg.channel, eval_fn, bin_fn)
+         await graph_fn(msg.channel, data, x_vals)
+
       return
 
    @cmd.add(_cmd_dict, "login")
@@ -59,15 +105,6 @@ class ServerActivityStatistics(ServerModule):
    async def _cmdf_login(self, substr, msg, privilege_level):
       self._log_in_from_file()
       await self._client.send_msg(msg, "Login details have been loaded.")
-      return
-
-   @cmd.add(_cmd_dict, "daychars")
-   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
-   async def _cmdf_daychars(self, substr, msg, privilege_level):
-      measured = self._g1_total_chars()
-      bins = self._g2_each_day_bins()
-      (data, x_vals) = await self._g3_generate_graph_data(msg.channel, measured, bins)
-      await self._g4_bar_graph(msg.channel, data, x_vals)
       return
 
    ###############################################
@@ -80,7 +117,10 @@ class ServerActivityStatistics(ServerModule):
 
    # You can think of this as the function that generates the y-value.
 
-   def _g1_total_chars(self):
+   _sg_argument1 = {} # Command Dictionary
+
+   @cmd.add(_sg_argument1, "chars")
+   def _sg1_chars(self):
       return lambda p, d: p + len(d["c"])
 
    #############################################
@@ -89,7 +129,10 @@ class ServerActivityStatistics(ServerModule):
 
    # These return binning functions, which determines which x-value a message will be binned in.
 
-   def _g2_each_day_bins(self):
+   _sg_argument2 = {} # Command Dictionary
+
+   @cmd.add(_sg_argument2, "eachday")
+   def _sg2_eachday(self):
       now = utils.datetime_rounddown_to_day(datetime.datetime.utcnow())
       now += datetime.timedelta(days=1)
       return lambda d: (now - d["t"]).days
@@ -101,8 +144,7 @@ class ServerActivityStatistics(ServerModule):
    # This function generates graph data based on the value evaluation
    # and binning functions.
 
-   async def _g3_generate_graph_data(self, channel, measured, bins):
-      await self._client.send_msg(channel, "Generating graph. Please wait...")
+   async def _sg3_generate_graph_data(self, channel, measured, bins):
       data_temp = {} # Maps day delta -> chars sent
       for ch in self._res.server.channels:
          for msg_dict in self._res.message_cache_read(self._res.server.id, ch.id):
@@ -123,7 +165,6 @@ class ServerActivityStatistics(ServerModule):
          except KeyError:
             pass
          data.insert(0, content_len)
-         print(str(days_ago))
          days_ago += 1
 
       x_vals = []
@@ -138,15 +179,20 @@ class ServerActivityStatistics(ServerModule):
    ### SIMPLE GRAPHING - STEP 4 (DATA OUTPUT) ###
    ##############################################
 
-   async def _g4_bar_graph(self, channel, data, x_vals, **kwargs):
-      plotly_data = [
-         go.Bar(
-               x = x_vals,
-               y = data
-            )
-      ]
-      await self._send_plotly_graph_object(channel, plotly_data)
-      return
+   _sg_argument3 = {} # Command Dictionary
+
+   @cmd.add(_sg_argument3, "vbar")
+   def _sg4_vbar(self):
+      async def function(channel, data, x_vals, **kwargs):
+         plotly_data = [
+            go.Bar(
+                  x = x_vals,
+                  y = data
+               )
+         ]
+         await self._send_plotly_graph_object(channel, plotly_data)
+         return
+      return function
 
    ######################
    ### OTHER SERVICES ###
@@ -190,4 +236,18 @@ class ServerActivityStatistics(ServerModule):
       os.remove(temp_filename + temp_file_ext)
       print("GRAPH SENT!")
       return
+
+   def _get_usage_info(self):
+      return """
+**Argument 1 (Message Evaluation) is one of:**
+`chars` - Total characters of all messages belonging to a bin.
+
+**Argument 2 (Binning) is one of:**
+`eachday` - A bin for each day of the calendar.
+
+**Argument 3 (Graph Type) is one of:**
+`vbar` - Vertical bar graph.
+
+**Example:** `{} chars eachday vbar` - Bar graph of all characters received by the server each day.
+      """.strip().format(self._res.cmd_prefix + self._cmd_names[0])
 
