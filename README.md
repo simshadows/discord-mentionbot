@@ -19,6 +19,7 @@ View installed modules
 
 * **Basic Information**: Presents some basic information about the server and the users in it, including user avatars and server icons. *(Installed by default.)*
 * **Mentions Notify**: PMs users of their mentions when they're offline.
+* **Server Activity Statistics**: Generates server statistics such as message characters sent per day.
 * **Random**: Randomization tools. *(Installed by default.)*
 	* Generate random numbers of arbitrary ranges, flip coins, get random RGB colour codes, and use dice notation.
 * **Wolfram Alpha**: Allows users to query Wolfram Alpha. *(Installed by default.)*
@@ -57,6 +58,7 @@ Every time the bot starts running, it will take a bit of time to locally cache m
 
 # TODO:
 
+* (IMPORTANT) Fix weird issue in `MessageCache` where message where, while moving messages to disk, some timestamps would already be strings. They should all be `datetime` objects.
 * Implement module safe-shutdown. Modules such as `Dynamic Channels` will need a method to end threads.
 * Fix the issue in `bsistarkravingmadbot` where the command prefix is hard-coded.
 * (IMPORTANT) Implement additional utility functions to make message pre-processing faster, and with neater code.
@@ -80,7 +82,9 @@ Every time the bot starts running, it will take a bit of time to locally cache m
 * `pip install git+https://github.com/Rapptz/discord.py@async`
 * `pip install git+https://github.com/dateutil/dateutil/`
 * `pip install wolframalpha`
+* `pip install plotly`
 * ~~`pip install git+https://github.com/Julian/jsonschema`~~ (Planned to be used.)
+* ~~`pip install git+https://github.com/matplotlib/matplotlib.git`~~ (This package will not be used to avoid system-level dependencies.)
 
 ---
 

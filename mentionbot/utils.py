@@ -2,6 +2,7 @@ import sys
 import re
 import os
 import json
+import datetime
 
 import discord
 
@@ -128,10 +129,12 @@ def prepare_help_content(raw_lines, cmd_prefix, privilegelevel=0):
          help_content += line + "\n"
    return help_content[:-1].format(pf=cmd_prefix)
 
-
 def remove_blank_strings(string_list):
    return list(filter(None, string_list))
 
+def datetime_rounddown_to_day(datetime_object):
+   date_object = datetime_object.date()
+   return datetime.datetime(year=date_object.year, month=date_object.month, day=date_object.day)
 
 _re_mention = re.compile("<@\d+>")
 def get_all_mentions(text):
