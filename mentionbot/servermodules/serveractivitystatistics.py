@@ -127,7 +127,7 @@ class ServerActivityStatistics(ServerModule):
          await self._client.send_msg(msg, "Unknown error occurred. Maybe you forgot to sign in...")
          raise errors.OperationAborted
 
-      await self._client.send_file(msg.channel, temp_filename + temp_file_ext)
+      await self._client.perm_send_file(msg.channel, temp_filename + temp_file_ext)
 
       os.remove(temp_filename + temp_file_ext)
 

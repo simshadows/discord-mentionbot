@@ -119,7 +119,18 @@ class ClientExtended(discord.Client):
          destination = destination.channel
 
       print("SENDING MESSAGE...")
-      await self.send_message(destination, text)
+      try:
+         await self.send_message(destination, text)
+      except:
+         print("MESSAGE FAILED TO SEND!!!")
+      return
+
+   # This method also handles permission issues.
+   async def perm_send_file(self, destination, fp, filename=None):
+      try:
+         await self.send_file(destination, fp, filename=filename)
+      except:
+         await send_msg(destination, "Error: Unable to post file. Are permissions set up?")
       return
 
 
