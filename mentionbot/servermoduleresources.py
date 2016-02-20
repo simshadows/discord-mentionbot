@@ -65,3 +65,6 @@ class ServerModuleResources:
       utils.json_write(self._shared_settings_filepath, data=data)
       return
 
+   def message_cache_read(self, server_id, ch_id):
+      return self.client.message_cache_read(server_id, ch_id)
+

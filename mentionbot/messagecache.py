@@ -192,7 +192,10 @@ class MessageCache:
       ch_json_data["last message timestamp"] = latest_timestamp_isoformat
 
       for msg_dict in to_store:
-         msg_dict["t"] = msg_dict["t"].isoformat() # Make serializable
+         if isinstance(msg_dict["t"], str):
+            print("WARNING: msg_dict[t] is already a string. contents: " + msg_dict["t"])
+         else:
+            msg_dict["t"] = msg_dict["t"].isoformat() # Make serializable
 
       # Check the highest numbered json file.
       highest_json_file_number = 0

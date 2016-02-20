@@ -41,6 +41,8 @@ Currently under development/planned to be made:
 2. Open `login_details` and replace `USERNAME` and `PASSWORD` with your bot's username and password. (Make sure the file only contains those two lines of text and no other lines.)
 3. Run `mentionbot.py` again. Your bot should be running now.
 
+Every time the bot starts running, it will take a bit of time to locally cache messages. For bigger servers (or bots running on many servers), running this the first time will take a considerable amount of time, and until caching is complete, messages are not processed as commands.
+
 # Notes
 
 * To run the *Wolfram Alpha* module, you must add your Wolfram Alpha app ID to `cache/shared/m-WolframAlpha/settings.json`. This file appears the first time you use the module.
