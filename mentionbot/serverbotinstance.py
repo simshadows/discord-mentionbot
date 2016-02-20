@@ -50,6 +50,7 @@ class ServerBotInstance:
 `{pf}setusername [text]`
 `{pf}getemail`
 `{pf}joinserver [invitelink]`
+`{pf}msgcachedebug`
 `{pf}leaveserver`
 `{pf}throwexception`
    """.strip().splitlines()
@@ -321,6 +322,13 @@ class ServerBotInstance:
    async def _cmdf_leaveserver(self, substr, msg, privilege_level):
       await self._client.send_msg(msg, "Bye!")
       await self._client.leave_server(msg.channel.server)
+      return
+
+   @cmd.add(_cmd_dict, "msgcachedebug")
+   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
+   async def _cmdf_msgcachedebug(self, substr, msg, privilege_level):
+      buf = self._client.message_cache_debug_str()
+      await self._client.send_msg(msg, buf)
       return
 
    @cmd.add(_cmd_dict, "throwexception")

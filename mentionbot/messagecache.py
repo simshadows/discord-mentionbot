@@ -31,12 +31,7 @@ class MessageCache:
       print("This will take a while if a lot of messages are being read.")
       await inst._fill_buffers()
       
-      print("DEBUGGING MESSAGE CACHE:")
-      for (serv_id, serv_dict) in inst._data.items():
-         for (ch_id, ch_data) in serv_dict.items():
-            ch = inst._client.search_for_channel(ch_id, enablenamesearch=False, serverrestriction=None)
-            print("#" + ch.name + " has len " + str(len(ch_data)))
-      print("DEBUGGING MESSAGE CACHE DONE!")
+      print(inst.get_debugging_info())
       return inst
 
    def __init__(self, token):
@@ -69,13 +64,6 @@ class MessageCache:
       if len(self._data[msg.server.id][msg.channel.id]) >= 200:
          self._move_to_disk(msg.server.id, msg.channel.id)
 
-      print("DEBUGGING MESSAGE CACHE:")
-      for (serv_id, serv_dict) in self._data.items():
-         for (ch_id, ch_data) in serv_dict.items():
-            ch = self._client.search_for_channel(ch_id, enablenamesearch=False, serverrestriction=None)
-            print("#" + ch.name + " has len " + str(len(ch_data)))
-      print("DEBUGGING MESSAGE CACHE DONE!")
-
       return
 
    async def _fill_buffers(self):
@@ -91,7 +79,7 @@ class MessageCache:
          for ch in server.channels:
             if ch.type is discord.ChannelType.voice:
                continue
-            print("FOUND CHANNEL " + ch.name)
+            print("MessageCache caching messages in #" + ch.name)
 
             # TODO: Rename these variable names.
             # TODO: Turn this into a function? (see duplicated code...)
@@ -129,17 +117,14 @@ class MessageCache:
 
             # Move every 5000 messages to disk.
             while len(ch_dict[ch.id]) >= 5000:
-               print("MOVING 5000 MESSAGES ON DISK. MSG_BUFFER LEN = " + str(len(ch_dict[ch.id])))
                self._move_to_disk(server.id, ch.id, messages=5000)
 
             # Move every 1000 messages to disk.
             while len(ch_dict[ch.id]) >= 1000:
-               print("MOVING 1000 MESSAGES ON DISK. MSG_BUFFER LEN = " + str(len(ch_dict[ch.id])))
                self._move_to_disk(server.id, ch.id, messages=1000)
 
             # Now move every 200 messages to disk.
             while len(ch_dict[ch.id]) >= 200:
-               print("MOVING 200 MESSAGES ON DISK. MSG_BUFFER LEN = " + str(len(ch_dict[ch.id])))
                self._move_to_disk(server.id, ch.id, messages=200)
 
       await self._client.remove_temp_game_status()
@@ -151,7 +136,7 @@ class MessageCache:
    # PRECONDITION: messages > 0
    # PRECONDITION: server_id and ch_id are both valid keys.
    def _move_to_disk(self, server_id, ch_id, messages=None):
-      print("STORING MESSAGES ON DISK")
+      print("MessageCache moving messages to disk.")
       ch_dir = self._get_ch_dir(server_id, ch_id)
       ch_json_filepath = ch_dir + self._CH_JSON_FILENAME
 
@@ -172,14 +157,10 @@ class MessageCache:
          utils.json_write(ch_json_filepath, data=ch_json_data)
 
       ch_dict = self._data[server_id]
-      print("DATA LEN = " + str(len(ch_dict[ch_id])))
 
       # Split off the messages to be stored.
       to_store = ch_dict[ch_id][:messages]
       ch_dict[ch_id] = ch_dict[ch_id][messages:]
-
-      print("TOSTORE LEN = " + str(len(to_store)))
-      print("NEW DATA LEN = " + str(len(ch_dict[ch_id])))
 
       latest_message = to_store[-1:][0]
       latest_timestamp_isoformat = latest_message["t"].isoformat()
@@ -231,5 +212,12 @@ class MessageCache:
    def _get_ch_dir(self, server_id, ch_id):
       return self._data_dir + server_id + "/" + ch_id + "/"
 
+   def get_debugging_info(self):
+      buf = "**Currently buffered messages:**\n"
+      for (serv_id, serv_dict) in self._data.items():
+         for (ch_id, ch_data) in serv_dict.items():
+            ch = self._client.search_for_channel(ch_id, enablenamesearch=False, serverrestriction=None)
+            buf += str(len(ch_data)) + " (#" + ch.name + ")\n"
+      return buf[:-1]
 
 
