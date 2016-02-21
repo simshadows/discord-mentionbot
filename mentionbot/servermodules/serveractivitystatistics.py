@@ -3,6 +3,7 @@ import datetime
 import traceback
 import random
 import os
+import csv
 
 import discord
 import plotly.plotly as py
@@ -437,6 +438,21 @@ class ServerActivityStatistics(ServerModule):
          for point in data:
             buf += str(point) + ", "
          await self._client.send_msg(channel, buf[:-2] + "\n```")
+         return
+      return function
+
+   _sg_arghelp3.append("`csv` - Outputs raw numbers in a csv file (excel dialect).")
+   @cmd.add(_sg_argument3, "csv")
+   def _sg4_csv(self):
+      CSV_DIALECT = "excel"
+      async def function(channel, **kwargs):
+         temp_filename = "temp" + str(random.getrandbits(128)) + ".csv"
+         with open(temp_filename, "w", newline="") as f:
+            csv_obj = csv.writer(f, dialect=CSV_DIALECT)
+            for (x, y) in zip(kwargs["x_vals"], kwargs["y_vals"]):
+               csv_obj.writerow([x, y])
+         await self._client.perm_send_file(channel, temp_filename)
+         os.remove(temp_filename)
          return
       return function
 
