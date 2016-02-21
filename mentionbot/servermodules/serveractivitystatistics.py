@@ -24,11 +24,15 @@ class ServerActivityStatistics(ServerModule):
    MODULE_SHORT_DESCRIPTION = "Bot debugging tools."
 
    _HELP_SUMMARY_LINES = """
-(NOT WRITTEN)
+>>> PRIVILEGE LEVEL 8000 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+`{pf}stats [eval] [bin] [graph]` - Generate server statistics graph. (`{pf}stats` for details.)
    """.strip().splitlines()
 
    _HELP_DETAIL_LINES = """
-(NOT WRITTEN)
+>>> PRIVILEGE LEVEL 8000 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+`{pf}stats [eval] [bin] [graph]` - Generate server statistics graph. (`{pf}stats` for details.)
+>>> PRIVILEGE LEVEL 9001 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+`{pf}stats login` - Re-read settings file to log into plotly.
    """.strip().splitlines()
 
    DEFAULT_SHARED_SETTINGS = {
@@ -60,26 +64,29 @@ class ServerActivityStatistics(ServerModule):
          await cmd_to_execute(self, right, msg, privilege_level)
       else: # Now, let's process 
 
-         eval_fn = None
+         if privilege_level < PrivilegeLevel.ADMIN:
+            raise errors.CommandPrivilegeError
+
+         eval_obj = None
          try:
-            eval_fn = self._sg_argument1[left]
+            eval_obj = self._sg_argument1[left]
          except KeyError:
             buf = "Error: Unknown evaluation function."
             buf += "\n\n" + self._get_usage_info()
             await self._client.send_msg(msg, buf)
             raise errors.OperationAborted
-         eval_fn = eval_fn(self) # Get the eval function
+         eval_obj = eval_obj(self) # Get the eval function
 
-         bin_fn = None
+         bin_obj = None
          (left2, right2) = utils.separate_left_word(right)
          try:
-            bin_fn = self._sg_argument2[left2]
+            bin_obj = self._sg_argument2[left2]
          except KeyError:
             buf = "Error: Unknown binning function."
             buf += "\n\n" + self._get_usage_info()
             await self._client.send_msg(msg, buf)
             raise errors.OperationAborted
-         bin_fn = bin_fn(self) # Get the bin function
+         bin_obj = bin_obj(self) # Get the bin function
 
          graph_fn = None
          (left3, right3) = utils.separate_left_word(right2)
@@ -95,13 +102,26 @@ class ServerActivityStatistics(ServerModule):
          # right3 can be used for other things if need be...
 
          await self._client.send_msg(msg, "Generating graph. Please wait...")
-         (data, x_vals) = await self._sg3_generate_graph_data(msg.channel, eval_fn, bin_fn)
-         await graph_fn(msg.channel, data, x_vals)
+         (data, x_vals) = await self._sg3_generate_graph_data(msg.channel, eval_obj["fn"], bin_obj["fn"])
+         
+         # Compile graph function kwargs
+         graph_kwargs = {
+            "title": eval_obj["title"] + " " + bin_obj["title"],
+
+            "x_vals": x_vals,
+            "y_vals": data,
+
+            "x_axis_title": bin_obj["axis"],
+
+            "y_axis_title": eval_obj["axis"],
+         }
+
+         await graph_fn(msg.channel, **graph_kwargs)
 
       return
 
    @cmd.add(_cmd_dict, "login")
-   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_login(self, substr, msg, privilege_level):
       self._log_in_from_file()
       await self._client.send_msg(msg, "Login details have been loaded.")
@@ -117,11 +137,21 @@ class ServerActivityStatistics(ServerModule):
 
    # You can think of this as the function that generates the y-value.
 
+   # This factory method must return a dict where:
+   #     fn    -> The value evaluation function.
+   #     axis  -> Axis title
+   #     title -> Customized text to use in the graph title.
+
    _sg_argument1 = {} # Command Dictionary
 
    @cmd.add(_sg_argument1, "chars")
    def _sg1_chars(self):
-      return lambda p, d: p + len(d["c"])
+      ret = {
+         "fn": lambda p, d: p + len(d["c"]),
+         "axis": "Total characters typed into messages",
+         "title": "Characters Entered",
+      }
+      return ret
 
    #############################################
    ### SIMPLE GRAPHING - STEP 2 (GRAPH BINS) ###
@@ -129,13 +159,23 @@ class ServerActivityStatistics(ServerModule):
 
    # These return binning functions, which determines which x-value a message will be binned in.
 
+   # This factory method must return a dict where:
+   #     fn    -> The bin evaluation function.
+   #     axis  -> Axis title
+   #     title -> Customized text to use in the graph title.
+
    _sg_argument2 = {} # Command Dictionary
 
    @cmd.add(_sg_argument2, "eachday")
    def _sg2_eachday(self):
       now = utils.datetime_rounddown_to_day(datetime.datetime.utcnow())
       now += datetime.timedelta(days=1)
-      return lambda d: (now - d["t"]).days
+      ret = {
+         "fn": lambda d: (now - d["t"]).days,
+         "axis": "Each day of the server's life (left = earliest)",
+         "title": "Each Day",
+      }
+      return ret
    
    ########################################################
    ### SIMPLE GRAPHING - STEP 3 (GENERATING GRAPH DATA) ###
@@ -179,18 +219,29 @@ class ServerActivityStatistics(ServerModule):
    ### SIMPLE GRAPHING - STEP 4 (DATA OUTPUT) ###
    ##############################################
 
+   # This determines what form the output takes.
+
    _sg_argument3 = {} # Command Dictionary
 
    @cmd.add(_sg_argument3, "vbar")
    def _sg4_vbar(self):
-      async def function(channel, data, x_vals, **kwargs):
+      async def function(channel, **kwargs):
          plotly_data = [
             go.Bar(
-                  x = x_vals,
-                  y = data
-               )
+               x = kwargs["x_vals"],
+               y = kwargs["y_vals"]
+            )
          ]
-         await self._send_plotly_graph_object(channel, plotly_data)
+         plotly_layout = go.Layout( 
+            title = kwargs["title"],
+            xaxis = dict(
+               title = kwargs["x_axis_title"],
+            ),
+            yaxis = dict(
+               title = kwargs["y_axis_title"],
+            ),
+         )
+         await self._send_plotly_graph_object(channel, plotly_data, plotly_layout)
          return
       return function
 
@@ -223,14 +274,17 @@ class ServerActivityStatistics(ServerModule):
       return
 
    # This is a utility function used by graph generating functions.
-   async def _send_plotly_graph_object(self, channel, plotly_data):
+   async def _send_plotly_graph_object(self, channel, data, layout):
       temp_filename = "temp" + str(random.getrandbits(128))
       temp_file_ext = ".png"
       try:
-         py.image.save_as({'data':plotly_data}, temp_filename, format='png')
+         py.image.save_as({'data':data, 'layout':layout}, temp_filename, format='png')
       except:
          print(traceback.format_exc())
-         await self._client.send_msg(msg, "Unknown error occurred. Maybe you forgot to sign in...")
+         buf = "Unknown error occurred. Maybe you forgot to sign in..."
+         buf += "\n(Bot owner must manually enter plotly login details in settings files,"
+         buf += " and use `/stats login` for it take effect.)"
+         await self._client.send_msg(msg, buf)
          raise errors.OperationAborted
       await self._client.perm_send_file(channel, temp_filename + temp_file_ext)
       os.remove(temp_filename + temp_file_ext)
