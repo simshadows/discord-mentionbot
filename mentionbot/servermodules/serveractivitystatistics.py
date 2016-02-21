@@ -140,6 +140,7 @@ class ServerActivityStatistics(ServerModule):
    # These return value evaluation functions.
    # Sees every message once with parameter "d" to evaluate.
    # Returned value accumulates, and this cumulative value is passed in with parameter "p".
+   # Associated bin value is parameter "b".
 
    # You can think of this as the function that generates the y-value.
 
@@ -155,7 +156,7 @@ class ServerActivityStatistics(ServerModule):
    @cmd.add(_sg_argument1, "chars")
    def _sg1_chars(self):
       ret = {
-         "fn": lambda p, d: p + len(d["c"]),
+         "fn": lambda p, d, b: p + len(d["c"]),
          "axis": "total characters typed into messages",
          "title": "Characters Entered",
       }
@@ -165,7 +166,7 @@ class ServerActivityStatistics(ServerModule):
    @cmd.add(_sg_argument1, "msgs")
    def _sg1_msgs(self):
       ret = {
-         "fn": lambda p, d: p + 1,
+         "fn": lambda p, d, b: p + 1,
          "axis": "total messages sent",
          "title": "Messages Sent",
       }
@@ -174,14 +175,19 @@ class ServerActivityStatistics(ServerModule):
    _sg_arghelp1.append("`uuser` - Number of unique users that sent a message.")
    @cmd.add(_sg_argument1, "uuser")
    def _sg1_uuser(self):
-      user_ids_seen = {}
-      def uuser(p, d):
+      bins_dict = {} # Maps bin value -> user id -> literally any possible value
+      def uuser(p, d, b):
          user_id = d["a"]
          try:
-            temp = user_ids_seen[user_id]
-            return p
+            users_dict = bins_dict[b]
+            try:
+               temp = users_dict[user_id]
+               return p
+            except KeyError:
+               users_dict[user_id] = None
+               return p + 1
          except KeyError:
-            user_ids_seen[user_id] = None
+            bins_dict[b] = {user_id:None}
             return p + 1
       ret = {
          "fn": uuser,
@@ -233,7 +239,7 @@ class ServerActivityStatistics(ServerModule):
                prev = data_temp[bin_value]
             except KeyError: # May also catch msg_dict keyerror...
                pass
-            data_temp[bin_value] = measured(prev, msg_dict)
+            data_temp[bin_value] = measured(prev, msg_dict, bin_value)
       days_ago = 0
       data = []
       while bool(data_temp): # While dictionary still has data
