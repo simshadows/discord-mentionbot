@@ -2,6 +2,7 @@ import asyncio
 import threading
 import copy
 import re
+import traceback
 
 import discord
 
@@ -173,7 +174,7 @@ class DynamicChannels(ServerModule):
       for ch in self._server.channels:
          if restrict and (self._name_is_default_channel(ch.name) or (ch.type != discord.ChannelType.text)):
             continue
-         if (len(ch_name) != 0) and (ch_name in ch.name):
+         if ch_name in ch.name:
             available_channels.append(ch)
       buf = None
       if len(available_channels) == 0:
