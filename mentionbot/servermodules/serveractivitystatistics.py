@@ -347,7 +347,7 @@ class ServerActivityStatistics(ServerModule):
          return (t.hour * 4) + int(t.minute/15)
       ret = {
          "fn": new_fn,
-         "axis": "Each 15 minute interval of the day (Left = 0:00-0:15 UTC) ",
+         "axis": "Each 15 minute interval of the day (Leftmost = 0:00-0:15 UTC) ",
          "title": "Each 15 Minute Interval Of The Day",
       }
       return ret

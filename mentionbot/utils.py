@@ -3,6 +3,8 @@ import re
 import os
 import json
 import datetime
+import asyncio
+import traceback
 
 import discord
 
@@ -92,6 +94,33 @@ def change_base_cmd(content, cmd_prefix, new_base_command):
 def change_cmd_prefix(content, old="/", new="$"):
    return new + content[len(old):]
 
+###############################################################################
+# COMMON SERVER MANAGEMENT OPERATIONS #########################################
+###############################################################################
+
+async def close_channel(client, channel):
+   print("A CHANNEL CLOSED.")
+   everyone = channel.server.default_role
+   allow = discord.Permissions.none()
+   deny = discord.Permissions.all()
+   try:
+      await client.edit_channel_permissions(channel, everyone, allow=allow, deny=deny)
+   except:
+      print(traceback.format_exc())
+      print("CHANNEL FAILED TO CLOSE.")
+      await client.send_msg(channel, "This channel failed to close.")
+   return
+
+async def open_channel(client, channel, server):
+   print("A CHANNEL OPENED.")
+   try:
+      await client.delete_channel_permissions(channel, server)
+   except:
+      print(traceback.format_exc())
+      print("CHANNEL FAILED TO OPEN.")
+      await client.send_msg(channel, "This channel failed to open.")
+   return
+
 #################################################################################
 # OTHERS ########################################################################
 #################################################################################
@@ -104,6 +133,11 @@ class SecretToken:
 _true_strings = ["true","1","t","y", "yes"]
 def str_says_true(text):
    return text.lower() in _true_strings
+
+_re_non_alnum_or_dash = re.compile("[^-0-9a-zA-Z]")
+def convert_to_legal_channel_name(text):
+   text.replace(" ", "-")
+   return _re_non_alnum_or_dash.sub("", text)
 
 def member_is_offline(member):
    return str(member.status) == str(discord.Status.offline)

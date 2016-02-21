@@ -3,6 +3,8 @@ import re
 
 import discord
 
+import errors
+
 # To provide additional functionality.
 class ClientExtended(discord.Client):
 
@@ -79,6 +81,14 @@ class ClientExtended(discord.Client):
          for channel in server.channels:
             if searchkey(channel):
                return channel
+      return None
+
+   def search_for_channel_by_name(self, text, server):
+      for channel in server.channels:
+         if channel.name == str(text):
+            print("CHANNEL TYPE: " + str(type(channel)))
+            return channel
+      print("CHANNEL NONE")
       return None
 
 

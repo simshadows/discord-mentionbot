@@ -59,6 +59,10 @@ class DynamicChannels(ServerModule):
       self._max_active_temp_channels = None # If <0, then there's no limit.
 
       self._load_settings()
+
+      self._scheduler = ChannelCloseScheduler(self._client, self._server)
+      loop = asyncio.get_event_loop()
+      loop.create_task(self._scheduler.run())
       return
 
    def _load_settings(self):
@@ -139,7 +143,28 @@ class DynamicChannels(ServerModule):
 
    @cmd.add(_cmd_dict, "open", "create")
    async def _cmdf_open(self, substr, msg, privilege_level):
-      await self._client.send_msg(msg, "Channel opening not yet implemented.")
+      ch_name = utils.convert_to_legal_channel_name(substr)
+      if len(ch_name) == 0:
+         await self._client.send_msg(msg, "Channel name can't be empty.")
+         raise errors.OperationAborted
+      elif len(ch_name) > 92:
+         await self._client.send_msg(msg, "Channel name can't be larger than 92 characters.")
+         raise errors.OperationAborted
+      elif ch_name in self._default_channels:
+         await self._client.send_msg(msg, "Can't open a default channel.")
+         raise errors.OperationAborted
+      ch = self._client.search_for_channel_by_name(ch_name, self._server)
+      if ch is None:
+         ch = await self._client.create_channel(self._server, ch_name)
+      print("CLIENT TYPE: " + str(type(self._client)))
+      print("CH TYPE: " + str(type(ch)))
+      print("SERVER TYPE: " + str(type(self._server)))
+      await utils.open_channel(self._client, ch, self._server)
+      self._scheduler.schedule_closure(ch, self._channel_timeout)
+      
+      buf = "Channel opened by <@{}>.".format(msg.author.name)
+      buf += " Closing after {} minutes of inactivity.".format(str(self._channel_timeout))
+      await self._client.send_msg(ch, buf)
       return
 
    @cmd.add(_cmd_dict, "settings")
@@ -229,5 +254,46 @@ class DynamicChannels(ServerModule):
             continue
          yield channel
 
-   
+class ChannelCloseScheduler:
+
+   def __init__(self, client, server):
+      self._client = client
+      self._server = server
+      self._scheduled = {} # Maps channel name -> time until closure
+      self._running = True
+      return
+
+   def schedule_closure(self, channel, timeout_min):
+      self._scheduled[channel] = timeout_min + 1
+      return
+
+   def unschedule_closure(self, channel):
+      del self._scheduled[channel]
+      return
+
+   def unschedule_all(self):
+      self._scheduled = {}
+      return
+
+   def get_scheduled(self):
+      return self._scheduled.items()
+
+   def terminate(self):
+      self._running = False
+      return
+
+   # Run this indefinitely.
+   async def run(self):
+      while self._running:
+         to_close = []
+         for (ch_name, timeout_min) in self._scheduled.items():
+            if timeout_min <= 1:
+               to_close.append(ch_name)
+            else:
+               self._scheduled[ch_name] = timeout_min - 1
+         for ch_name in to_close:
+            del self._scheduled[ch_name]
+            ch = self._client.search_for_channel_by_name(ch_name, self._server)
+            await utils.close_channel(self._client, ch)
+         await asyncio.sleep(5)
 
