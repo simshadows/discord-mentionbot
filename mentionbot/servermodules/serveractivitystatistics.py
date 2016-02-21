@@ -67,6 +67,12 @@ class ServerActivityStatistics(ServerModule):
          if privilege_level < PrivilegeLevel.ADMIN:
             raise errors.CommandPrivilegeError
 
+         if len(substr) == 0:
+            buf = "**How to use this command:**"
+            buf += "\n\n" + self._get_usage_info()
+            await self._client.send_msg(msg, buf)
+            raise errors.OperationAborted
+
          eval_obj = None
          try:
             eval_obj = self._sg_argument1[left]
@@ -143,13 +149,44 @@ class ServerActivityStatistics(ServerModule):
    #     title -> Customized text to use in the graph title.
 
    _sg_argument1 = {} # Command Dictionary
+   _sg_arghelp1 = []
 
+   _sg_arghelp1.append("`chars` - Total characters in messages.")
    @cmd.add(_sg_argument1, "chars")
    def _sg1_chars(self):
       ret = {
          "fn": lambda p, d: p + len(d["c"]),
-         "axis": "Total characters typed into messages",
+         "axis": "total characters typed into messages",
          "title": "Characters Entered",
+      }
+      return ret
+
+   _sg_arghelp1.append("`msgs` - Total messages sent.")
+   @cmd.add(_sg_argument1, "msgs")
+   def _sg1_msgs(self):
+      ret = {
+         "fn": lambda p, d: p + 1,
+         "axis": "total messages sent",
+         "title": "Messages Sent",
+      }
+      return ret
+
+   _sg_arghelp1.append("`uuser` - Number of unique users that sent a message.")
+   @cmd.add(_sg_argument1, "uuser")
+   def _sg1_uuser(self):
+      user_ids_seen = {}
+      def uuser(p, d):
+         user_id = d["a"]
+         try:
+            temp = user_ids_seen[user_id]
+            return p
+         except KeyError:
+            user_ids_seen[user_id] = None
+            return p + 1
+      ret = {
+         "fn": uuser,
+         "axis": "unique users that sent a message",
+         "title": "Unique Users",
       }
       return ret
 
@@ -165,7 +202,9 @@ class ServerActivityStatistics(ServerModule):
    #     title -> Customized text to use in the graph title.
 
    _sg_argument2 = {} # Command Dictionary
+   _sg_arghelp2 = []
 
+   _sg_arghelp2.append("`eachday` - Each day of the calendar.")
    @cmd.add(_sg_argument2, "eachday")
    def _sg2_eachday(self):
       now = utils.datetime_rounddown_to_day(datetime.datetime.utcnow())
@@ -222,7 +261,9 @@ class ServerActivityStatistics(ServerModule):
    # This determines what form the output takes.
 
    _sg_argument3 = {} # Command Dictionary
+   _sg_arghelp3 = []
 
+   _sg_arghelp3.append("`vbar` - Vertical bar graph.")
    @cmd.add(_sg_argument3, "vbar")
    def _sg4_vbar(self):
       async def function(channel, **kwargs):
@@ -292,16 +333,17 @@ class ServerActivityStatistics(ServerModule):
       return
 
    def _get_usage_info(self):
-      return """
-**Argument 1 (Message Evaluation) is one of:**
-`chars` - Total characters of all messages belonging to a bin.
-
-**Argument 2 (Binning) is one of:**
-`eachday` - A bin for each day of the calendar.
-
-**Argument 3 (Graph Type) is one of:**
-`vbar` - Vertical bar graph.
-
-**Example:** `{} chars eachday vbar` - Bar graph of all characters received by the server each day.
-      """.strip().format(self._res.cmd_prefix + self._cmd_names[0])
+      buf = "**Argument 1 (Message Evaluation) is one of:**"
+      for line in self._sg_arghelp1:
+         buf += "\n" + line
+      buf += "\n\n**Argument 2 (Binning) is one of:**"
+      for line in self._sg_arghelp2:
+         buf += "\n" + line
+      buf += "\n\n**Argument 3 (Graph Type) is one of:**"
+      for line in self._sg_arghelp3:
+         buf += "\n" + line
+      buf += "\n\n**Example:** `" + self._res.cmd_prefix + self._cmd_names[0]
+      buf += " chars eachday vbar` - Bar graph of all characters"
+      buf += " received by the server each day."
+      return buf
 
