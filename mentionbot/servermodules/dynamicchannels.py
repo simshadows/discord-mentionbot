@@ -171,12 +171,16 @@ class DynamicChannels(ServerModule):
 
    @cmd.add(_cmd_dict, "open", "create")
    async def _cmdf_open(self, substr, msg, privilege_level):
-      ch_name = substr.strip().replace(" ", "-")
+      ch_name = substr.strip().replace(" ", "-").lower()
       await self._chopen_name_check(msg, ch_name)
       ch = self._client.search_for_channel_by_name(ch_name, self._server)
       if ch is None:
          ch = await self._client.create_channel(self._server, ch_name)
-      await utils.open_channel(self._client, ch, self._server)
+      try:
+         await utils.open_channel(self._client, ch, self._server)
+      except discord.errors.Forbidden:
+         await self._client.send_msg(msg.channel, "Bot is not allowed to open that.")
+         raise errors.OperationAborted
       self._scheduler.schedule_closure(ch, self._channel_timeout)
       
       buf = "Channel opened by <@{}>.".format(msg.author.id)
@@ -367,6 +371,8 @@ class ChannelCloseScheduler:
                ch = self._client.search_for_channel_by_name(ch_name, self._server)
                try:
                   await utils.close_channel(self._client, ch)
+               except discord.errors.Forbidden:
+                  print("!!!!!!!! FAILED TO CLOSE #{}.".format(ch_name))
                except:
                   print(traceback.format_exc())
             await asyncio.sleep(5)

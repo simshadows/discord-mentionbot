@@ -138,7 +138,7 @@ class ServerBotInstance:
       substr = await self._modules.msg_preprocessor(substr, msg, self._cmd_prefix)
       if substr.startswith(self._cmd_prefix):
          substr = substr[len(self._cmd_prefix):].strip()
-         print("processing command: {pf}" + substr) # Intentional un-substituted "{pf}"
+         print("processing command: {pf}" + utils.str_asciionly(substr)) # Intentional un-substituted "{pf}"
          
          cmd_to_execute = None
          (left, right) = utils.separate_left_word(substr)

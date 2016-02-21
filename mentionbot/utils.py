@@ -106,6 +106,8 @@ async def close_channel(client, channel):
    try:
       await ensure_bot_permissions(client, channel)
       await client.edit_channel_permissions(channel, everyone, allow=allow, deny=deny)
+   except discord.errors.Forbidden as e:
+      raise e
    except:
       print(traceback.format_exc())
       print("CHANNEL FAILED TO CLOSE.")
@@ -117,6 +119,8 @@ async def open_channel(client, channel, server):
    try:
       await ensure_bot_permissions(client, channel)
       await client.delete_channel_permissions(channel, server)
+   except discord.errors.Forbidden as e:
+      raise e
    except:
       print(traceback.format_exc())
       print("CHANNEL FAILED TO OPEN.")
@@ -128,7 +132,6 @@ async def ensure_bot_permissions(client, channel):
    allow = discord.Permissions.all()
    deny = discord.Permissions.none()
    await client.edit_channel_permissions(channel, me, allow=allow, deny=deny)
-   print("OMG YAYYYYYYYYYYYY!")
    return
 
 #################################################################################
