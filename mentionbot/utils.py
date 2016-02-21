@@ -104,6 +104,7 @@ async def close_channel(client, channel):
    allow = discord.Permissions.none()
    deny = discord.Permissions.all()
    try:
+      await ensure_bot_permissions(client, channel)
       await client.edit_channel_permissions(channel, everyone, allow=allow, deny=deny)
    except:
       print(traceback.format_exc())
@@ -114,11 +115,20 @@ async def close_channel(client, channel):
 async def open_channel(client, channel, server):
    print("A CHANNEL OPENED.")
    try:
+      await ensure_bot_permissions(client, channel)
       await client.delete_channel_permissions(channel, server)
    except:
       print(traceback.format_exc())
       print("CHANNEL FAILED TO OPEN.")
       await client.send_msg(channel, "This channel failed to open.")
+   return
+
+async def ensure_bot_permissions(client, channel):
+   me = channel.server.me
+   allow = discord.Permissions.all()
+   deny = discord.Permissions.none()
+   await client.edit_channel_permissions(channel, me, allow=allow, deny=deny)
+   print("OMG YAYYYYYYYYYYYY!")
    return
 
 #################################################################################
@@ -137,6 +147,8 @@ def str_says_true(text):
 _re_non_alnum_or_dash = re.compile("[^-0-9a-zA-Z]")
 def convert_to_legal_channel_name(text):
    text.replace(" ", "-")
+   if len(text) != 0 and text[:1] == "-":
+      text = text[1:]
    return _re_non_alnum_or_dash.sub("", text)
 
 def member_is_offline(member):

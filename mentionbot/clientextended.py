@@ -79,12 +79,16 @@ class ClientExtended(discord.Client):
 
       for server in servers:
          for channel in server.channels:
+            if discord.ChannelType.text != "text":
+               continue
             if searchkey(channel):
                return channel
       return None
 
    def search_for_channel_by_name(self, text, server):
       for channel in server.channels:
+         if discord.ChannelType.text != channel.type:
+            continue
          if channel.name == str(text):
             print("CHANNEL TYPE: " + str(type(channel)))
             return channel

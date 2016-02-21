@@ -1,6 +1,7 @@
 import asyncio
 import threading
 import copy
+import re
 
 import discord
 
@@ -44,6 +45,8 @@ class DynamicChannels(ServerModule):
       "channel timeout": 10,
       "max active temp channels": 5
    }
+
+   _re_non_alnum_or_dash = re.compile("[^-0-9a-zA-Z]")
 
    _cmd_dict = {} # Command Dictionary
 
@@ -136,38 +139,62 @@ class DynamicChannels(ServerModule):
       await cmd_to_execute(self, right, msg, privilege_level)
       return
 
+   async def on_message(self, msg):
+      if self._name_is_default_channel(msg.channel.name):
+         try:
+            self._scheduler.unschedule_closure(msg.channel)
+         except KeyError:
+            pass
+      else:
+         self._scheduler.schedule_closure(msg.channel, self._channel_timeout)
+      return
+
    @cmd.add(_cmd_dict, "search")
    async def _cmdf_search(self, substr, msg, privilege_level):
-      await self._client.send_msg(msg, "Channel search not yet implemented.")
+      ch_name = utils.convert_to_legal_channel_name(substr)
+      available_channels = []
+      restrict = (len(ch_name) != 0)
+      for ch in self._server.channels:
+         if restrict and (self._name_is_default_channel(ch.name) or (ch.type != discord.ChannelType.text)):
+            continue
+         if (len(ch_name) != 0) and (ch_name in ch.name):
+            available_channels.append(ch)
+      buf = None
+      if len(available_channels) == 0:
+         buf = "No channels meet the search criteria."
+      else:
+         buf = "**The following channels are available for re-opening:**"
+         for ch in available_channels:
+            buf += "\n" + ch.name
+      await self._client.send_msg(msg, buf)
       return
 
    @cmd.add(_cmd_dict, "open", "create")
    async def _cmdf_open(self, substr, msg, privilege_level):
-      ch_name = utils.convert_to_legal_channel_name(substr)
-      if len(ch_name) == 0:
-         await self._client.send_msg(msg, "Channel name can't be empty.")
-         raise errors.OperationAborted
-      elif len(ch_name) > 92:
-         await self._client.send_msg(msg, "Channel name can't be larger than 92 characters.")
-         raise errors.OperationAborted
-      elif ch_name in self._default_channels:
-         await self._client.send_msg(msg, "Can't open a default channel.")
-         raise errors.OperationAborted
+      ch_name = substr.strip().replace(" ", "-")
+      await self._chopen_name_check(msg, ch_name)
       ch = self._client.search_for_channel_by_name(ch_name, self._server)
       if ch is None:
          ch = await self._client.create_channel(self._server, ch_name)
-      print("CLIENT TYPE: " + str(type(self._client)))
-      print("CH TYPE: " + str(type(ch)))
-      print("SERVER TYPE: " + str(type(self._server)))
       await utils.open_channel(self._client, ch, self._server)
       self._scheduler.schedule_closure(ch, self._channel_timeout)
       
-      buf = "Channel opened by <@{}>.".format(msg.author.name)
+      buf = "Channel opened by <@{}>.".format(msg.author.id)
       buf += " Closing after {} minutes of inactivity.".format(str(self._channel_timeout))
       await self._client.send_msg(ch, buf)
       return
 
-   @cmd.add(_cmd_dict, "settings")
+   # @cmd.add(_cmd_dict, "forceopen")
+   # @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   # async def _cmdf_forceopen(self, substr, msg, privilege_level):
+   #    ch_name = substr.strip().replace(" ", "-")
+   #    self._chopen_name_check(msg, ch_name)
+
+   #    await self._client.send_msg(msg, "Scheduled closure list is cleared.")
+   #    return
+
+   @cmd.add(_cmd_dict, "admin")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_settings(self, substr, msg, privilege_level):
       buf = "**Timeout**: " + str(self._channel_timeout) + " seconds"
       if self._max_active_temp_channels < 0:
@@ -192,10 +219,31 @@ class DynamicChannels(ServerModule):
       await self._client.send_msg(msg, buf)
       return
 
+   @cmd.add(_cmd_dict, "scheduled")
+   async def _cmdf_debug(self, substr, msg, privilege_level):
+      buf = "**The following channels are currently scheduled:**"
+      for (ch, timeout) in self._scheduler.get_scheduled():
+         buf += "\n<#" + ch.id + "> in " + str(timeout) + "ticks"
+      await self._client.send_msg(msg, buf)
+      return
+
+   @cmd.add(_cmd_dict, "clearscheduled")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   async def _cmdf_debug(self, substr, msg, privilege_level):
+      self._scheduler.unschedule_all()
+      await self._client.send_msg(msg, "Scheduled closure list is cleared.")
+      return
+
    @cmd.add(_cmd_dict, "adddefault")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_adddefault(self, substr, msg, privilege_level):
       new_default = self._client.search_for_channel(substr, serverrestriction=self._server)
+      
+      try:
+         self._scheduler.unschedule_closure(new_default)
+      except KeyError:
+         pass
+
       if new_default is None:
          await self._client.send_msg(msg, "Error: Channel not found.")
       else:
@@ -247,12 +295,33 @@ class DynamicChannels(ServerModule):
          await self._client.send_msg(msg, "Error: Must enter an integer.")
       return
 
-   # Generator, yields all temporary channels.
-   def _gen_temp_channels(self):
-      for channel in self._server.channels:
-         if channel in self._default_channels:
-            continue
-         yield channel
+   async def _chopen_name_check(self, msg, ch_name):
+      if len(ch_name) < 2:
+         await self._client.send_msg(msg, "Channel name must be at least 2 characters long.")
+         raise errors.OperationAborted
+      elif (ch_name[:1] == "-") or self._re_non_alnum_or_dash.search(ch_name):
+         await self._client.send_msg(msg, "`{}` is an illegal channel name.".format(ch_name))
+         raise errors.OperationAborted
+      elif len(ch_name) > 100:
+         await self._client.send_msg(msg, "Channel name can't be larger than 100 characters.")
+         raise errors.OperationAborted
+      elif self._name_is_default_channel(ch_name):
+         await self._client.send_msg(msg, "Can't open a default channel.")
+         raise errors.OperationAborted
+      return
+
+   def _name_is_default_channel(self, ch_name):
+      for ch in self._default_channels:
+         if ch.name == ch_name:
+            return True
+      return False
+
+   # # Generator, yields all temporary channels.
+   # def _gen_temp_channels(self):
+   #    for channel in self._server.channels:
+   #       if channel in self._default_channels:
+   #          continue
+   #       yield channel
 
 class ChannelCloseScheduler:
 
@@ -285,15 +354,22 @@ class ChannelCloseScheduler:
    # Run this indefinitely.
    async def run(self):
       while self._running:
-         to_close = []
-         for (ch_name, timeout_min) in self._scheduled.items():
-            if timeout_min <= 1:
-               to_close.append(ch_name)
-            else:
-               self._scheduled[ch_name] = timeout_min - 1
-         for ch_name in to_close:
-            del self._scheduled[ch_name]
-            ch = self._client.search_for_channel_by_name(ch_name, self._server)
-            await utils.close_channel(self._client, ch)
-         await asyncio.sleep(5)
+         try: 
+            print(">>>>>>>>>>>>>>>>>>> TICK!!!")
+            to_close = []
+            for (ch_name, timeout_min) in self._scheduled.items():
+               if timeout_min <= 1:
+                  to_close.append(ch_name)
+               else:
+                  self._scheduled[ch_name] = timeout_min - 1
+            for ch_name in to_close:
+               del self._scheduled[ch_name]
+               ch = self._client.search_for_channel_by_name(ch_name, self._server)
+               try:
+                  await utils.close_channel(self._client, ch)
+               except:
+                  print(traceback.format_exc())
+            await asyncio.sleep(5)
+         except Exception:
+            print(traceback.format_exc())
 
