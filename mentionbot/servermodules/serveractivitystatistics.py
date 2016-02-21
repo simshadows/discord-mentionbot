@@ -158,7 +158,17 @@ class ServerActivityStatistics(ServerModule):
       ret = {
          "fn": lambda p, d, b: p + len(d["c"]),
          "axis": "total characters typed into messages",
-         "title": "Characters Entered",
+         "title": "Characters Typed",
+      }
+      return ret
+
+   _sg_arghelp1.append("`words` - Total words in messages (delimited by whitespace).")
+   @cmd.add(_sg_argument1, "words")
+   def _sg1_words(self):
+      ret = {
+         "fn": lambda p, d, b: p + len(d["c"].split()),
+         "axis": "total words typed into messages",
+         "title": "Words Typed",
       }
       return ret
 
@@ -208,7 +218,30 @@ class ServerActivityStatistics(ServerModule):
          except KeyError:
             new_tuple = (1, msg_len)
          bins_dict[b] = new_tuple
-         print("b = {}, # = {}, len = {}, msg_len = {}".format(b, str(new_tuple[0]), str(new_tuple[1]), str(msg_len)))
+         return new_tuple[1] / new_tuple[0] # RETURNS FLOAT!!!
+      ret = {
+         "fn": new_fn,
+         "axis": "average message length",
+         "title": "Average Message Length",
+      }
+      return ret
+
+   _sg_arghelp1.append("`avgwordlen` - Average word length (delimited by whitespace).")
+   @cmd.add(_sg_argument1, "avgwordlen")
+   def _sg1_avgwordlen(self):
+      bins_dict = {} # Maps bin value -> (word count, char count)
+      def new_fn(p, d, b):
+         split_text = d["c"].split()
+         text_words = len(split_text) # Note that this doesn't count whitespace.
+         text_len = 0
+         for word in split_text:
+            text_len += len(word)
+         try:
+            prev_tuple = bins_dict[b] # Previous number of messages encountered
+            new_tuple = (prev_tuple[0] + text_words, prev_tuple[1] + text_len)
+         except KeyError:
+            new_tuple = (text_words, text_len)
+         bins_dict[b] = new_tuple
          return new_tuple[1] / new_tuple[0] # RETURNS FLOAT!!!
       ret = {
          "fn": new_fn,
