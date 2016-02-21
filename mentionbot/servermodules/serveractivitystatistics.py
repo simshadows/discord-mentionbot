@@ -107,7 +107,7 @@ class ServerActivityStatistics(ServerModule):
 
          # right3 can be used for other things if need be...
 
-         await self._client.send_msg(msg, "Generating graph. Please wait...")
+         await self._client.send_msg(msg, "Generating graph with `plotly`. Please wait...")
          (data, x_vals) = await self._sg3_generate_graph_data(msg.channel, eval_obj["fn"], bin_obj["fn"])
          
          # Compile graph function kwargs
@@ -190,9 +190,30 @@ class ServerActivityStatistics(ServerModule):
             bins_dict[b] = {user_id:None}
             return p + 1
       ret = {
-         "fn": new_fn,
+         "fn": uuser,
          "axis": "unique users that sent a message",
          "title": "Unique Users",
+      }
+      return ret
+
+   _sg_arghelp1.append("`avgmsglen` - Average message length.")
+   @cmd.add(_sg_argument1, "avgmsglen")
+   def _sg1_avgmsglen(self):
+      bins_dict = {} # Maps bin value -> (msg count, char count)
+      def new_fn(p, d, b):
+         msg_len = len(d["c"])
+         try:
+            prev_tuple = bins_dict[b] # Previous number of messages encountered
+            new_tuple = (prev_tuple[0] + 1, prev_tuple[1] + msg_len)
+         except KeyError:
+            new_tuple = (1, msg_len)
+         bins_dict[b] = new_tuple
+         print("b = {}, # = {}, len = {}, msg_len = {}".format(b, str(new_tuple[0]), str(new_tuple[1]), str(msg_len)))
+         return new_tuple[1] / new_tuple[0] # RETURNS FLOAT!!!
+      ret = {
+         "fn": new_fn,
+         "axis": "average message length",
+         "title": "Average Message Length",
       }
       return ret
 
@@ -284,6 +305,21 @@ class ServerActivityStatistics(ServerModule):
    _sg_argument3 = {} # Command Dictionary
    _sg_arghelp3 = []
 
+   _sg_arghelp3.append("`line` - Line graph.")
+   @cmd.add(_sg_argument3, "line")
+   def _sg4_vbar(self):
+      async def function(channel, **kwargs):
+         plotly_data = [
+            go.Scatter(
+               x = kwargs["x_vals"],
+               y = kwargs["y_vals"]
+            )
+         ]
+         plotly_layout = self._kwargs_to_plotly_layout(**kwargs)
+         await self._send_plotly_graph_object(channel, plotly_data, plotly_layout)
+         return
+      return function
+
    _sg_arghelp3.append("`vbar` - Vertical bar graph.")
    @cmd.add(_sg_argument3, "vbar")
    def _sg4_vbar(self):
@@ -294,18 +330,24 @@ class ServerActivityStatistics(ServerModule):
                y = kwargs["y_vals"]
             )
          ]
-         plotly_layout = go.Layout( 
-            title = kwargs["title"],
-            xaxis = dict(
-               title = kwargs["x_axis_title"],
-            ),
-            yaxis = dict(
-               title = kwargs["y_axis_title"],
-            ),
-         )
+         plotly_layout = self._kwargs_to_plotly_layout(**kwargs)
          await self._send_plotly_graph_object(channel, plotly_data, plotly_layout)
          return
       return function
+
+   # (Utility functions used for this step)
+
+   @classmethod
+   def _kwargs_to_plotly_layout(cls, **kwargs):
+      return go.Layout( 
+         title = kwargs["title"],
+         xaxis = dict(
+            title = kwargs["x_axis_title"],
+         ),
+         yaxis = dict(
+            title = kwargs["y_axis_title"],
+         ),
+      )
 
    ######################
    ### OTHER SERVICES ###
