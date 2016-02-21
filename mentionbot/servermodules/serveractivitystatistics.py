@@ -207,7 +207,7 @@ class ServerActivityStatistics(ServerModule):
       return ret
 
    buf = " (Sorry, what this one does is difficult to explain...)"
-   _sg_arghelp1.append("euser` - Number of newly encountered users that sent a message." + buf)
+   _sg_arghelp1.append("`euser` - Number of newly encountered users that sent a message." + buf)
    @cmd.add(_sg_argument1, "euser")
    def _sg1_euser(self):
       users_dict = {} # Maps user id -> literally any possible value
@@ -238,7 +238,10 @@ class ServerActivityStatistics(ServerModule):
          except KeyError:
             new_tuple = (1, msg_len)
          bins_dict[b] = new_tuple
-         return new_tuple[1] / new_tuple[0] # RETURNS FLOAT!!!
+         try:
+            return new_tuple[1] / new_tuple[0] # RETURNS FLOAT!!!
+         except ZeroDivisionError:
+            return 0
       ret = {
          "fn": new_fn,
          "axis": "average message length",
@@ -262,7 +265,10 @@ class ServerActivityStatistics(ServerModule):
          except KeyError:
             new_tuple = (text_words, text_len)
          bins_dict[b] = new_tuple
-         return new_tuple[1] / new_tuple[0] # RETURNS FLOAT!!!
+         try:
+            return new_tuple[1] / new_tuple[0] # RETURNS FLOAT!!!
+         except ZeroDivisionError:
+            return 0
       ret = {
          "fn": new_fn,
          "axis": "average word length",
@@ -306,8 +312,28 @@ class ServerActivityStatistics(ServerModule):
          return (delta.days * 24) + int(delta.seconds/3600) # Rounds down.
       ret = {
          "fn": new_fn,
-         "axis": "Each day of the server's life (left = earliest)",
-         "title": "Each Day",
+         "axis": "Each hour of the server's life (left = earliest)",
+         "title": "Each Hour",
+      }
+      return ret
+
+   _sg_arghelp2.append("`weekday` - Day of the week. (E.g. all Mondays bin together.) (NOTE: Incomplete implementation.)")
+   @cmd.add(_sg_argument2, "weekday")
+   def _sg2_weekday(self):
+      ret = {
+         "fn": lambda d: d["t"].weekday(),
+         "axis": "Each day of the week (0 = Mon, 1 = Tue, etc.)",
+         "title": "Each Day Of The Week",
+      }
+      return ret
+
+   _sg_arghelp2.append("`dayhour` - Hour of the day. (similar idea to *weekday*) (NOTE: Incomplete implementation.)")
+   @cmd.add(_sg_argument2, "dayhour")
+   def _sg2_dayhour(self):
+      ret = {
+         "fn": lambda d: d["t"].hour,
+         "axis": "Each hour of the day (0 to 23)",
+         "title": "Each Hour Of The Day",
       }
       return ret
    
