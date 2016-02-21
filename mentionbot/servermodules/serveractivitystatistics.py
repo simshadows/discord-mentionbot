@@ -200,9 +200,29 @@ class ServerActivityStatistics(ServerModule):
             bins_dict[b] = {user_id:None}
             return p + 1
       ret = {
-         "fn": uuser,
+         "fn": new_fn,
          "axis": "unique users that sent a message",
          "title": "Unique Users",
+      }
+      return ret
+
+   buf = " (Sorry, what this one does is difficult to explain...)"
+   _sg_arghelp1.append("euser` - Number of newly encountered users that sent a message." + buf)
+   @cmd.add(_sg_argument1, "euser")
+   def _sg1_euser(self):
+      users_dict = {} # Maps user id -> literally any possible value
+      def new_fn(p, d, b):
+         user_id = d["a"]
+         try:
+            temp = users_dict[user_id]
+            return p
+         except KeyError:
+            users_dict[user_id] = None
+            return p + 1
+      ret = {
+         "fn": new_fn,
+         "axis": "newly encountered users that sent a message",
+         "title": "Newly Encountered Users",
       }
       return ret
 
@@ -245,8 +265,8 @@ class ServerActivityStatistics(ServerModule):
          return new_tuple[1] / new_tuple[0] # RETURNS FLOAT!!!
       ret = {
          "fn": new_fn,
-         "axis": "average message length",
-         "title": "Average Message Length",
+         "axis": "average word length",
+         "title": "Average Word Length",
       }
       return ret
 

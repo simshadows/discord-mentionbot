@@ -91,7 +91,7 @@ class MessageCache:
          pass
 
    async def _fill_buffers(self):
-      await self._client.set_temp_game_status("Filling cache buffers.")
+      await self._client.set_temp_game_status("filling cache buffers.")
       for server in self._client.servers:
          ch_dict = None
          try:
