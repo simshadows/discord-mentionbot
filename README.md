@@ -59,6 +59,7 @@ Every time the bot starts running, it will take a bit of time to locally cache m
 
 # TODO:
 
+* (IMPORTANT) Fix start-up and shut-down issues with Dynamic Channels. It works perfectly once it's set up, but the initial setting up is such a pain.
 * (IMPORTANT) Fix weird issue in `MessageCache` where message where, while moving messages to disk, some timestamps would already be strings. They should all be `datetime` objects.
 * Implement module safe-shutdown. Modules such as `Dynamic Channels` will need a method to end threads.
 * Fix the issue in `bsistarkravingmadbot` where the command prefix is hard-coded.

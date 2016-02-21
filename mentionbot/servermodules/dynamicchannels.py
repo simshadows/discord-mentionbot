@@ -331,7 +331,7 @@ class DynamicChannels(ServerModule):
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_settimeout(self, substr, msg, privilege_level):
       try:
-         new_timeout = int(right)
+         new_timeout = int(substr)
          if new_timeout < 1:
             await self._client.send_msg(msg, "Error: Timeout must be >0 seconds.")
          else:
@@ -346,7 +346,7 @@ class DynamicChannels(ServerModule):
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_setmaxactive(self, substr, msg, privilege_level):
       try:
-         self._max_active_temp_channels = int(right)
+         self._max_active_temp_channels = int(substr)
          self._save_settings()
          if self._max_active_temp_channels < 0:
             await self._client.send_msg(msg, "Max active channels set to unlimited.")
