@@ -136,6 +136,16 @@ def datetime_rounddown_to_day(datetime_object):
    date_object = datetime_object.date()
    return datetime.datetime(year=date_object.year, month=date_object.month, day=date_object.day)
 
+def datetime_rounddown_to_hour(datetime_object):
+   hour = datetime_object.hour
+   date_object = datetime_object.date()
+   return datetime.datetime(
+      year=date_object.year,
+      month=date_object.month,
+      day=date_object.day,
+      hour=hour,
+   )
+
 _re_mention = re.compile("<@\d+>")
 def get_all_mentions(text):
    mentions = []

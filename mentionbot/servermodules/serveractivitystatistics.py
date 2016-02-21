@@ -176,7 +176,7 @@ class ServerActivityStatistics(ServerModule):
    @cmd.add(_sg_argument1, "uuser")
    def _sg1_uuser(self):
       bins_dict = {} # Maps bin value -> user id -> literally any possible value
-      def uuser(p, d, b):
+      def new_fn(p, d, b):
          user_id = d["a"]
          try:
             users_dict = bins_dict[b]
@@ -190,7 +190,7 @@ class ServerActivityStatistics(ServerModule):
             bins_dict[b] = {user_id:None}
             return p + 1
       ret = {
-         "fn": uuser,
+         "fn": new_fn,
          "axis": "unique users that sent a message",
          "title": "Unique Users",
       }
@@ -210,13 +210,28 @@ class ServerActivityStatistics(ServerModule):
    _sg_argument2 = {} # Command Dictionary
    _sg_arghelp2 = []
 
-   _sg_arghelp2.append("`eachday` - Each day of the calendar.")
+   _sg_arghelp2.append("`eachday` - Each day of the server's life.")
    @cmd.add(_sg_argument2, "eachday")
    def _sg2_eachday(self):
       now = utils.datetime_rounddown_to_day(datetime.datetime.utcnow())
       now += datetime.timedelta(days=1)
       ret = {
          "fn": lambda d: (now - d["t"]).days,
+         "axis": "Each day of the server's life (left = earliest)",
+         "title": "Each Day",
+      }
+      return ret
+
+   _sg_arghelp2.append("`eachhour` - Each hour of the server's life.")
+   @cmd.add(_sg_argument2, "eachhour")
+   def _sg2_eachhour(self):
+      now = utils.datetime_rounddown_to_hour(datetime.datetime.utcnow())
+      now += datetime.timedelta(hours=1)
+      def new_fn(d):
+         delta = now - d["t"]
+         return (delta.days * 24) + int(delta.seconds/3600) # Rounds down.
+      ret = {
+         "fn": new_fn,
          "axis": "Each day of the server's life (left = earliest)",
          "title": "Each Day",
       }
