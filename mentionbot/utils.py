@@ -98,13 +98,13 @@ def change_cmd_prefix(content, old="/", new="$"):
 # COMMON SERVER MANAGEMENT OPERATIONS #########################################
 ###############################################################################
 
-async def close_channel(client, channel):
+async def close_channel(client, channel, bot_flair_names):
    print("A CHANNEL CLOSED.")
    everyone = channel.server.default_role
    allow = discord.Permissions.none()
    deny = discord.Permissions.all()
    try:
-      await ensure_bot_permissions(client, channel)
+      await ensure_bot_permissions(client, channel, bot_flair_names)
       await client.edit_channel_permissions(channel, everyone, allow=allow, deny=deny)
    except discord.errors.Forbidden as e:
       raise e
@@ -114,10 +114,10 @@ async def close_channel(client, channel):
       await client.send_msg(channel, "This channel failed to close.")
    return
 
-async def open_channel(client, channel, server):
+async def open_channel(client, channel, server, bot_flair_names):
    print("A CHANNEL OPENED.")
    try:
-      await ensure_bot_permissions(client, channel)
+      await ensure_bot_permissions(client, channel, bot_flair_names)
       await client.delete_channel_permissions(channel, server)
    except discord.errors.Forbidden as e:
       raise e
@@ -127,11 +127,14 @@ async def open_channel(client, channel, server):
       await client.send_msg(channel, "This channel failed to open.")
    return
 
-async def ensure_bot_permissions(client, channel):
-   me = channel.server.me
+async def ensure_bot_permissions(client, channel, bot_flair_names):
+   targets = flair_names_to_object(channel.server, bot_flair_names)
+   if len(targets) == 0:
+      targets = [channel.server.me]
    allow = discord.Permissions.all()
    deny = discord.Permissions.none()
-   await client.edit_channel_permissions(channel, me, allow=allow, deny=deny)
+   for target in targets:
+      await client.edit_channel_permissions(channel, target, allow=allow, deny=deny)
    return
 
 #################################################################################
@@ -180,6 +183,14 @@ def prepare_help_content(raw_lines, cmd_prefix, privilegelevel=0):
 
 def remove_blank_strings(string_list):
    return list(filter(None, string_list))
+
+def flair_names_to_object(server, flair_names):
+   flair_objects = []
+   for flair_object in server.roles:
+      if flair_object.name in flair_names:
+         flair_objects.append(flair_object)
+         continue
+   return flair_objects
 
 def datetime_rounddown_to_day(datetime_object):
    date_object = datetime_object.date()

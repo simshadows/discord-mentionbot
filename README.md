@@ -20,6 +20,9 @@ View installed modules
 * **Basic Information**: Presents some basic information about the server and the users in it, including user avatars and server icons. *(Installed by default.)*
 * **Mentions Notify**: PMs users of their mentions when they're offline.
 * **Server Activity Statistics**: Generates server statistics and graphs.
+* **Dynamic Channels**: Gives users the ability to create temporary channels that disappear after a few minutes of inactivity.
+	* "Default channels" can be specified to be ignored by the module.
+	* Warning: Server owners beware! While normal members won't see all the hidden channels, you and the bot will. The solution is to have an "admin acount" separate from your normal account.
 * **Random**: Randomization tools. *(Installed by default.)*
 	* Generate random numbers of arbitrary ranges, flip coins, get random RGB colour codes, and use dice notation.
 * **Wolfram Alpha**: Allows users to query Wolfram Alpha. *(Installed by default.)*
@@ -32,9 +35,7 @@ Some community-specific modules:
 
 Currently under development/planned to be made:
 
-* **Dynamic Channels**: Gives users the ability to create temporary channels that disappear after a few minutes of inactivity.
-	* "Default channels" can be specified to be ignored by the module.
-	* Warning: Server owners beware! While normal members won't see all the hidden channels, you and the bot will. The solution is to have an "admin acount" separate from your normal account.
+* (none)
 
 # Running the bot
 

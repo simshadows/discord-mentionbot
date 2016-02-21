@@ -21,14 +21,12 @@ class DynamicChannels(ServerModule):
    MODULE_SHORT_DESCRIPTION = "Allows users to create temporary channels. (NOT YET FUNCTIONAL.)"
 
    _HELP_SUMMARY_LINES = """
-(DYNAMIC CHANNELS HAS NOT YET BEEN IMPLEMENTED!)
 `+` - See list of hidden channels. (Will cut off at 2000 chars.)
 `+[string]` - Search list of hidden channels.
 `++[string]` - Create/unhide channel.
    """.strip().splitlines()
 
    _HELP_DETAIL_LINES = """
-(DYNAMIC CHANNELS HAS NOT YET BEEN IMPLEMENTED!)
 `+` - See list of hidden channels. (Will cut off at 2000 chars.)
 `+[string]` - Search list of hidden channels.
 `++[string]` - Create/unhide channel.
@@ -60,13 +58,18 @@ class DynamicChannels(ServerModule):
       self._default_channels = None
       self._channel_timeout = None # Channel timeout in seconds.
       self._max_active_temp_channels = None # If <0, then there's no limit.
+      self._bot_flairs = None
 
       self._load_settings()
 
-      self._scheduler = ChannelCloseScheduler(self._client, self._server)
+      self._scheduler = ChannelCloseScheduler(self._client, self._server, self)
       loop = asyncio.get_event_loop()
       loop.create_task(self._scheduler.run())
       return
+
+   @property
+   def bot_flairs(self):
+      return self._bot_flairs
 
    def _load_settings(self):
       # Server Settings
@@ -107,12 +110,25 @@ class DynamicChannels(ServerModule):
             settings["max active temp channels"] = self._max_active_temp_channels
             self._res.save_settings(settings)
 
+         self._bot_flairs = []
+         try:
+            self._bot_flairs = settings["bot flairs"]
+            if not isinstance(self._bot_flairs, list):
+               raise ValueError
+            for e in self._bot_flairs:
+               if not isinstance(e, str):
+                  raise ValueError
+         except (KeyError, ValueError):
+            settings["bot flairs"] = self._bot_flairs = []
+            self._res.save_settings(settings)
+
       return
 
    def _save_settings(self):
       settings = self._res.get_settings()
       settings["channel timeout"] = self._channel_timeout
       settings["max active temp channels"] = self._max_active_temp_channels
+      settings["bot flairs"] = self._bot_flairs
 
       default_channels = []
       for ch in self._default_channels:
@@ -171,13 +187,19 @@ class DynamicChannels(ServerModule):
 
    @cmd.add(_cmd_dict, "open", "create")
    async def _cmdf_open(self, substr, msg, privilege_level):
+      if len(self._scheduler.get_scheduled()) >= self._max_active_temp_channels:
+         buf = "No more than {}".format(str(self._max_active_temp_channels))
+         buf += " active temporary channels are allowed."
+         await self._client.send_msg(msg.channel, buf)
+         raise errors.OperationAborted
+
       ch_name = substr.strip().replace(" ", "-").lower()
       await self._chopen_name_check(msg, ch_name)
       ch = self._client.search_for_channel_by_name(ch_name, self._server)
       if ch is None:
          ch = await self._client.create_channel(self._server, ch_name)
       try:
-         await utils.open_channel(self._client, ch, self._server)
+         await utils.open_channel(self._client, ch, self._server, self._bot_flairs)
       except discord.errors.Forbidden:
          await self._client.send_msg(msg.channel, "Bot is not allowed to open that.")
          raise errors.OperationAborted
@@ -200,12 +222,19 @@ class DynamicChannels(ServerModule):
    @cmd.add(_cmd_dict, "admin")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_settings(self, substr, msg, privilege_level):
-      buf = "**Timeout**: " + str(self._channel_timeout) + " seconds"
+      buf = "**Timeout**: " + str(self._channel_timeout) + " minutes"
       if self._max_active_temp_channels < 0:
          buf += "\n**Max Active**: unlimited channels"
       else:
          buf += "\n**Max Active**: " + str(self._max_active_temp_channels) + " channels"
-      buf += "\n**Default Channels**:"
+      if len(self._bot_flairs) == 0:
+         buf += "\n\n**No bot flairs have been assigned.**"
+      else:
+         buf += "\n\n**Bot flairs**: "
+         for flair_name in self._bot_flairs:
+            buf += flair_name + ", "
+         buf = buf[:-2]
+      buf += "\n\n**Default Channels**:"
       if len(self._default_channels) == 0:
          buf += "\nNONE."
       else:
@@ -236,6 +265,34 @@ class DynamicChannels(ServerModule):
    async def _cmdf_debug(self, substr, msg, privilege_level):
       self._scheduler.unschedule_all()
       await self._client.send_msg(msg, "Scheduled closure list is cleared.")
+      return
+
+   @cmd.add(_cmd_dict, "addbotflair")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   async def _cmdf_addbotflair(self, substr, msg, privilege_level):
+      if len(substr) == 0:
+         raise errors.InvalidCommandArgumentsError
+      elif len(utils.flair_names_to_object(self._server, [substr])) == 0:
+         await self._client.send_msg(msg, "`{}` is not an existing flair.".format(substr))
+         raise errors.OperationAborted
+
+      if not substr in self._bot_flairs:
+         self._bot_flairs.append(substr)
+         await self._client.send_msg(msg, "`{}` added as a bot flair.".format(substr))
+      else:
+         await self._client.send_msg(msg, "`{}` is already a bot flair.".format(substr))
+      self._save_settings()
+      return
+
+   @cmd.add(_cmd_dict, "removebotflair")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   async def _cmdf_addbotflair(self, substr, msg, privilege_level):
+      try:
+         self._bot_flairs.remove(substr)
+         await self._client.send_msg(msg, "`{}` removed as a bot flair.".format(substr))
+      except ValueError:
+         await self._client.send_msg(msg, "`{}` is not a bot flair.".format(substr))
+      self._save_settings()
       return
 
    @cmd.add(_cmd_dict, "adddefault")
@@ -329,9 +386,10 @@ class DynamicChannels(ServerModule):
 
 class ChannelCloseScheduler:
 
-   def __init__(self, client, server):
+   def __init__(self, client, server, module):
       self._client = client
       self._server = server
+      self._module = module
       self._scheduled = {} # Maps channel name -> time until closure
       self._running = True
       return
@@ -370,12 +428,12 @@ class ChannelCloseScheduler:
                del self._scheduled[ch_name]
                ch = self._client.search_for_channel_by_name(ch_name, self._server)
                try:
-                  await utils.close_channel(self._client, ch)
+                  await utils.close_channel(self._client, ch, self._module.bot_flairs)
                except discord.errors.Forbidden:
                   print("!!!!!!!! FAILED TO CLOSE #{}.".format(ch_name))
                except:
                   print(traceback.format_exc())
-            await asyncio.sleep(5)
+            await asyncio.sleep(60)
          except Exception:
             print(traceback.format_exc())
 
