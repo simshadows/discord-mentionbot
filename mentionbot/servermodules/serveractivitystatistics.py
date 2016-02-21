@@ -107,7 +107,7 @@ class ServerActivityStatistics(ServerModule):
 
          # right3 can be used for other things if need be...
 
-         await self._client.send_msg(msg, "Generating graph with `plotly`. Please wait...")
+         await self._client.send_msg(msg, "Generating `plotly` graph/raw values. Please wait...")
          (data, x_vals) = await self._sg3_generate_graph_data(msg.channel, eval_obj["fn"], bin_obj["fn"])
          
          # Compile graph function kwargs
@@ -317,7 +317,8 @@ class ServerActivityStatistics(ServerModule):
       }
       return ret
 
-   _sg_arghelp2.append("`weekday` - Day of the week. (E.g. all Mondays bin together.) (NOTE: Incomplete implementation.)")
+   buf = " **Important note**: This is a total, making the graph misleading. This will be addressed soon."
+   _sg_arghelp2.append("`weekday` - Day of the week (e.g. all Mondays bin together)." + buf)
    @cmd.add(_sg_argument2, "weekday")
    def _sg2_weekday(self):
       ret = {
@@ -327,13 +328,26 @@ class ServerActivityStatistics(ServerModule):
       }
       return ret
 
-   _sg_arghelp2.append("`dayhour` - Hour of the day. (similar idea to *weekday*) (NOTE: Incomplete implementation.)")
+   _sg_arghelp2.append("`dayhour` - Hour of the day (similar idea to *weekday*)." + buf)
    @cmd.add(_sg_argument2, "dayhour")
    def _sg2_dayhour(self):
       ret = {
          "fn": lambda d: d["t"].hour,
-         "axis": "Each hour of the day (0 to 23)",
+         "axis": "Each hour of the day (0 to 23, UTC) ",
          "title": "Each Hour Of The Day",
+      }
+      return ret
+
+   _sg_arghelp2.append("`day15min` - Each 15 minute interval of the day (similar idea to *weekday*)." + buf)
+   @cmd.add(_sg_argument2, "day15min")
+   def _sg2_day15min(self):
+      def new_fn(d):
+         t = d["t"]
+         return (t.hour * 4) + int(t.minute/15)
+      ret = {
+         "fn": new_fn,
+         "axis": "Each 15 minute interval of the day (Left = 0:00-0:15 UTC) ",
+         "title": "Each 15 Minute Interval Of The Day",
       }
       return ret
    
@@ -411,6 +425,18 @@ class ServerActivityStatistics(ServerModule):
          ]
          plotly_layout = self._kwargs_to_plotly_layout(**kwargs)
          await self._send_plotly_graph_object(channel, plotly_data, plotly_layout)
+         return
+      return function
+
+   _sg_arghelp3.append("`inchannel` - Outputs raw numbers as a message. (Might be really long...)")
+   @cmd.add(_sg_argument3, "inchannel")
+   def _sg4_inchannel(self):
+      async def function(channel, **kwargs):
+         data = kwargs["y_vals"]
+         buf = "{} bins in order from lowest to highest:\n```\n".format(str(len(data)))
+         for point in data:
+            buf += str(point) + ", "
+         await self._client.send_msg(channel, buf[:-2] + "\n```")
          return
       return function
 
