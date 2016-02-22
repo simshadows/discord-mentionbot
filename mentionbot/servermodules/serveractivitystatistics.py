@@ -106,14 +106,25 @@ class ServerActivityStatistics(ServerModule):
             raise errors.OperationAborted
          graph_fn = graph_fn(self) # Get the graphing function
 
+         filter_fn = None
+         (left4, right4) = utils.separate_left_word(right3)
+         try:
+            filter_fn = self._sg_argument4[left4]
+         except KeyError:
+            buf = "Error: Unknown filter function."
+            buf += "\n\n" + self._get_usage_info()
+            await self._client.send_msg(msg, buf)
+            raise errors.OperationAborted
+         filter_fn = filter_fn(self, substr, msg) # Get the graphing function
+
          # right3 can be used for other things if need be...
 
          await self._client.send_msg(msg, "Generating `plotly` graph/raw values. Please wait...")
-         (data, x_vals) = await self._sg3_generate_graph_data(msg.channel, eval_obj["fn"], bin_obj["fn"])
+         (data, x_vals) = await self._sg4_generate_graph_data(msg.channel, eval_obj["fn"], bin_obj["fn"], filter_fn["fn"])
          
          # Compile graph function kwargs
          graph_kwargs = {
-            "title": eval_obj["title"] + " " + bin_obj["title"],
+            "title": filter_fn["title"] + " " + eval_obj["title"] + " " + bin_obj["title"],
 
             "x_vals": x_vals,
             "y_vals": data,
@@ -351,18 +362,50 @@ class ServerActivityStatistics(ServerModule):
          "title": "Each 15 Minute Interval Of The Day",
       }
       return ret
+
+   #########################################
+   ### SIMPLE GRAPHING - STEP 3 (FILTER) ###
+   #########################################
+
+   _sg_argument4 = {} # Command Dictionary
+   _sg_arghelp4 = []
+
+   _sg_arghelp4.append("`wholeserver` - All messages in the server are analyzed.")
+   @cmd.add(_sg_argument4, "wholeserver")
+   def _sg3_wholeserver(self, substr, msg):
+      ret = {
+         "fn": lambda d, ch_id: True,
+         "title": "Server",
+      }
+      return ret
+
+   _sg_arghelp4.append("`thischannel` - Only this channel is analyzed.")
+   @cmd.add(_sg_argument4, "thischannel")
+   def _sg3_thischannel(self, substr, msg):
+      filt_ch_id = msg.channel.id
+      def new_fn(d, ch_id):
+         if ch_id == filt_ch_id:
+            return True
+         return False
+      ret = {
+         "fn": new_fn,
+         "title": "#" + msg.channel.name,
+      }
+      return ret
    
    ########################################################
-   ### SIMPLE GRAPHING - STEP 3 (GENERATING GRAPH DATA) ###
+   ### SIMPLE GRAPHING - STEP 4 (GENERATING GRAPH DATA) ###
    ########################################################
 
    # This function generates graph data based on the value evaluation
    # and binning functions.
 
-   async def _sg3_generate_graph_data(self, channel, measured, bins):
+   async def _sg4_generate_graph_data(self, channel, measured, bins, sfilter):
       data_temp = {} # Maps day delta -> chars sent
       for ch in self._res.server.channels:
          for msg_dict in self._res.message_cache_read(self._res.server.id, ch.id):
+            if not sfilter(msg_dict, ch.id):
+               continue
             bin_value = bins(msg_dict)
             prev = 0
             try:
@@ -391,7 +434,7 @@ class ServerActivityStatistics(ServerModule):
       return (data, x_vals)
 
    ##############################################
-   ### SIMPLE GRAPHING - STEP 4 (DATA OUTPUT) ###
+   ### SIMPLE GRAPHING - STEP 5 (DATA OUTPUT) ###
    ##############################################
 
    # This determines what form the output takes.
@@ -401,7 +444,7 @@ class ServerActivityStatistics(ServerModule):
 
    _sg_arghelp3.append("`line` - Line graph.")
    @cmd.add(_sg_argument3, "line")
-   def _sg4_vbar(self):
+   def _sg5_line(self):
       async def function(channel, **kwargs):
          plotly_data = [
             go.Scatter(
@@ -416,7 +459,7 @@ class ServerActivityStatistics(ServerModule):
 
    _sg_arghelp3.append("`vbar` - Vertical bar graph.")
    @cmd.add(_sg_argument3, "vbar")
-   def _sg4_vbar(self):
+   def _sg5_vbar(self):
       async def function(channel, **kwargs):
          plotly_data = [
             go.Bar(
@@ -431,7 +474,7 @@ class ServerActivityStatistics(ServerModule):
 
    _sg_arghelp3.append("`inchannel` - Outputs raw numbers as a message. (Might be really long...)")
    @cmd.add(_sg_argument3, "inchannel")
-   def _sg4_inchannel(self):
+   def _sg5_inchannel(self):
       async def function(channel, **kwargs):
          data = kwargs["y_vals"]
          buf = "{} bins in order from lowest to highest:\n```\n".format(str(len(data)))
@@ -443,7 +486,7 @@ class ServerActivityStatistics(ServerModule):
 
    _sg_arghelp3.append("`csv` - Outputs raw numbers in a csv file (excel dialect).")
    @cmd.add(_sg_argument3, "csv")
-   def _sg4_csv(self):
+   def _sg5_csv(self):
       CSV_DIALECT = "excel"
       async def function(channel, **kwargs):
          temp_filename = "temp" + str(random.getrandbits(128)) + ".csv"
@@ -526,8 +569,11 @@ class ServerActivityStatistics(ServerModule):
       buf += "\n\n**Argument 3 (Graph Type) is one of:**"
       for line in self._sg_arghelp3:
          buf += "\n" + line
+      buf += "\n\n**Argument 4 (Filter) is one of:**"
+      for line in self._sg_arghelp4:
+         buf += "\n" + line
       buf += "\n\n**Example:** `" + self._res.cmd_prefix + self._cmd_names[0]
-      buf += " chars eachday vbar` - Bar graph of all characters"
+      buf += " chars eachday vbar wholeserver` - Bar graph of all characters"
       buf += " received by the server each day."
       return buf
 

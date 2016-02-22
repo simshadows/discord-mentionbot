@@ -39,13 +39,16 @@ Currently under development/planned to be made:
 
 # Running the bot
 
-1. Run `mentionbot.py` once (inside the `mentionbot` directory). A file named `login_details` should appear.
-2. Open `login_details` and replace `USERNAME` and `PASSWORD` with your bot's username and password. (Make sure the file only contains those two lines of text and no other lines.)
-3. Run `mentionbot.py` again. Your bot should be running now.
+1. Go into `mentionbot.py` and change `BOTOWNER_ID` to your own ID.
+2. Run `mentionbot.py` once (inside the `mentionbot` directory). A file named `login_details` should appear.
+3. Open `login_details` and replace `USERNAME` and `PASSWORD` with your bot's username and password. (Make sure the file only contains those two lines of text and no other lines.)
+4. Run `mentionbot.py` again. Your bot should be running now.
 
-The behaviour of the bot when joining a server *while the bot is running* is currently undefined. Please make sure your bot account is already in the servers it must manage before launching. When joining servers, please shut down the bot first, then join the server and relaunch the bot.
+The behaviour of the bot when joining a server *while the bot is running* is currently undefined. Please make sure your bot account is already in the servers it must manage before launching, and restart the bot on server joins. Depending on the modules, getting kicked from a server may also cause issues.
 
 Every time the bot starts running, it will take a bit of time to locally cache messages. For bigger servers (or bots running on many servers), running this the first time will take a considerable amount of time, and until caching is complete, messages are not processed as commands.
+
+This bot is configured to kill itself when it encounters an unhandled exception.
 
 Some modules will need some additional setting up in order to work.
 
