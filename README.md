@@ -15,7 +15,7 @@ An extensible, module-based chatroom bot for [Discord](https://discordapp.com/).
 
 # Available Modules
 
-View installed modules
+View all installed and available modules in discord using the command `/mods`.
 
 * **Basic Information**: Presents some basic information about the server and the users in it, including user avatars and server icons. *(Installed by default.)*
 * **Mentions Notify**: PMs users of their mentions when they're offline.
@@ -43,11 +43,18 @@ Currently under development/planned to be made:
 2. Open `login_details` and replace `USERNAME` and `PASSWORD` with your bot's username and password. (Make sure the file only contains those two lines of text and no other lines.)
 3. Run `mentionbot.py` again. Your bot should be running now.
 
+The behaviour of the bot when joining a server *while the bot is running* is currently undefined. Please make sure your bot account is already in the servers it must manage before launching. When joining servers, please shut down the bot first, then join the server and relaunch the bot.
+
 Every time the bot starts running, it will take a bit of time to locally cache messages. For bigger servers (or bots running on many servers), running this the first time will take a considerable amount of time, and until caching is complete, messages are not processed as commands.
+
+Some modules will need some additional setting up in order to work.
+
+* **Wolfram Alpha**: Add your Wolfram Alpha app ID to `cache\shared\m-WolframAlpha\settings.json`. This file appears the first time you use the module.
+* **Server Activity Statistics**: Add your plotly username and API key to `cache\shared\m-ServerActivityStatistics\settings.json`. This file appears the first time you use the module.
+* **Dynamic Channels**: This module's setup is currently broken (though once it's started, it works). I suggest not attempting to use this module until it's fixed.
 
 # Notes
 
-* To run the *Wolfram Alpha* module, you must add your Wolfram Alpha app ID to `cache/shared/m-WolframAlpha/settings.json`. This file appears the first time you use the module.
 * `classdiagram.xml` is opened with [draw.io](https://www.draw.io/).
 * `design_notes.txt` is used by myself to reflect on my own design choices as this project is partly a learning exercise in object-oriented design.
 * To add a new module:

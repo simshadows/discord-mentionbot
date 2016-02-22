@@ -150,7 +150,7 @@ class DynamicChannels(ServerModule):
 
    async def process_cmd(self, substr, msg, privilege_level):
       if substr == "":
-         substr = "settings"
+         substr = "status"
       (left, right) = utils.separate_left_word(substr)
       cmd_to_execute = cmd.get(self._cmd_dict, left, privilege_level)
       await cmd_to_execute(self, right, msg, privilege_level)
@@ -220,9 +220,9 @@ class DynamicChannels(ServerModule):
    #    await self._client.send_msg(msg, "Scheduled closure list is cleared.")
    #    return
 
-   @cmd.add(_cmd_dict, "admin")
+   @cmd.add(_cmd_dict, "status", "admin", "s", "stat", "settings")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
-   async def _cmdf_settings(self, substr, msg, privilege_level):
+   async def _cmdf_status(self, substr, msg, privilege_level):
       buf = "**Timeout**: " + str(self._channel_timeout) + " minutes"
       if self._max_active_temp_channels < 0:
          buf += "\n**Max Active**: unlimited channels"
@@ -243,22 +243,30 @@ class DynamicChannels(ServerModule):
             buf += "\n<#{0}> (ID: {0})".format(ch.id)
       if privilege_level >= PrivilegeLevel.ADMIN:
          pf = self._res.cmd_prefix
-         base_cmd = self._cmd_names[0]
-         buf += "\n\nChange settings using the following commands:"
-         buf += "\n`{} adddefault [channel]`".format(pf + base_cmd)
-         buf += "\n`{} removedefault [channel]`".format(pf + base_cmd)
-         buf += "\n`{} settimeout [int]`".format(pf + base_cmd)
-         buf += "\n`{} setmaxactive [int]`".format(pf + base_cmd)
+         base = pf + self._cmd_names[0]
+         buf += "\n\n`{} scheduled` to view what's scheduled for closure.".format(base)
+         buf += "\n\nOther management commands:"
+         buf += "\n`{} adddefault [channel]`".format(base)
+         buf += "\n`{} removedefault [channel]`".format(base)
+         buf += "\n`{} addbotflair [flair name]`".format(base)
+         buf += "\n`{} removebotflair [flair name]`".format(base)
+         buf += "\n`{} settimeout [int]`".format(base)
+         buf += "\n`{} setmaxactive [int]`".format(base)
          buf += " (for unlimited max active, enter `-1`.)"
+         buf += "\n`{} clearscheduled`".format(base)
       await self._client.send_msg(msg, buf)
       return
 
    @cmd.add(_cmd_dict, "scheduled")
    async def _cmdf_debug(self, substr, msg, privilege_level):
-      buf = "**The following channels are currently scheduled:**"
-      for (ch, timeout) in self._scheduler.get_scheduled():
-         buf += "\n<#" + ch.id + "> in " + str(timeout) + "ticks"
-      await self._client.send_msg(msg, buf)
+      scheduled = self._scheduler.get_scheduled()
+      if len(scheduled) == 0:
+         await self._client.send_msg(msg, "No channels are scheduled.")
+      else:
+         buf = "**The following channels are currently scheduled:**"
+         for (ch, timeout) in self._scheduler.get_scheduled():
+            buf += "\n<#" + ch.id + "> in " + str(timeout) + " minutes"
+         await self._client.send_msg(msg, buf)
       return
 
    @cmd.add(_cmd_dict, "clearscheduled")
@@ -299,7 +307,11 @@ class DynamicChannels(ServerModule):
    @cmd.add(_cmd_dict, "adddefault")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_adddefault(self, substr, msg, privilege_level):
-      new_default = self._client.search_for_channel(substr, serverrestriction=self._server)
+      new_default = None
+      if len(substr) == 0:
+         new_default = msg.channel
+      else:
+         new_default = self._client.search_for_channel(substr, serverrestriction=self._server)
       
       try:
          self._scheduler.unschedule_closure(new_default)
