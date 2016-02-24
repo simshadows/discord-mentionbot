@@ -346,11 +346,11 @@ class DynamicChannels(ServerModule):
       try:
          new_timeout = int(substr)
          if new_timeout < 1:
-            await self._client.send_msg(msg, "Error: Timeout must be >0 seconds.")
+            await self._client.send_msg(msg, "Error: Timeout must be >0 minutes.")
          else:
             self._channel_timeout = new_timeout
             self._save_settings()
-            await self._client.send_msg(msg, "Timeout set to {} seconds.".format(str(self._channel_timeout)))
+            await self._client.send_msg(msg, "Timeout set to {} minutes.".format(str(self._channel_timeout)))
       except ValueError:
          await self._client.send_msg(msg, "Error: Must enter an integer.")
       return

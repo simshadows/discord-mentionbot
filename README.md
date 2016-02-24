@@ -1,7 +1,7 @@
 # Discord - mentionbot
 An extensible, module-based chatroom bot for [Discord](https://discordapp.com/).
 
-**This bot is still at a really early stage in development. I suggest you don't use it just yet...**
+**This bot is still at a really early stage in development. It isn't particularly user-friendly, help messages are broken, and the code's rather messy at the moment. I suggest you wait until the bot's a little better-baked.**
 
 # Key features:
 
@@ -39,8 +39,18 @@ Currently under development/planned to be made:
 
 # Running the bot
 
+The bot has the following dependencies:
+
+* `pip install git+https://github.com/Rapptz/discord.py@async`
+* `pip install git+https://github.com/dateutil/dateutil/`
+* `pip install wolframalpha`
+* `pip install plotly`
+* ~~`pip install git+https://github.com/Julian/jsonschema`~~ (Planned to be used.)
+
+To run the bot:
+
 1. Go into `mentionbot.py` and change `BOTOWNER_ID` to your own ID.
-2. Run `mentionbot.py` once (inside the `mentionbot` directory). A file named `login_details` should appear.
+2. Run `mentionbot.py` once (inside the `mentionbot` directory). The bot should exit and a file named `login_details` should appear.
 3. Open `login_details` and replace `USERNAME` and `PASSWORD` with your bot's username and password. (Make sure the file only contains those two lines of text and no other lines.)
 4. Run `mentionbot.py` again. Your bot should be running now.
 
@@ -56,7 +66,11 @@ Some modules will need some additional setting up in order to work.
 * **Server Activity Statistics**: Add your plotly username and API key to `cache\shared\m-ServerActivityStatistics\settings.json`. This file appears the first time you use the module.
 * **Dynamic Channels**: This module's setup is currently broken (though once it's started, it works). I suggest not attempting to use this module until it's fixed.
 
-# Notes
+# Other notes
+
+* The bot will *always* reference flairs/roles by their names.
+
+# For developers
 
 * `classdiagram.xml` is opened with [draw.io](https://www.draw.io/).
 * `design_notes.txt` is used by myself to reflect on my own design choices as this project is partly a learning exercise in object-oriented design.
@@ -65,9 +79,8 @@ Some modules will need some additional setting up in order to work.
 		* add an import for the module's "main class", and
 		* add the module's class to `ServerModuleFactory._MODULE_LIST`.
 	* Optionally, add them as defaultly installed modules in `serverpersistentstorage.py`. This is done by hard-coding the *module name* into `ServerPersistentStorage.DEFAULT_SETTINGS`. IMPORTANT: the module name here is `ServerModule.MODULE_NAME`, not the module's class name.
-* This does not poll to check who's the server owner. Must restart bot to change the bot's registered bot owner. *(This might change in the future, but it's a low priority.)*
 
-# TODO:
+TODO:
 
 * (IMPORTANT) Fix start-up and shut-down issues with Dynamic Channels. It works perfectly once it's set up, but the initial setting up is such a pain.
 * (IMPORTANT) Fix weird issue in `MessageCache` where message where, while moving messages to disk, some timestamps would already be strings. They should all be `datetime` objects.
@@ -88,15 +101,6 @@ Some modules will need some additional setting up in order to work.
 * (VERY LOW PRIORITY) The following module features:
 	* In module `Random`, implement more advanced dicerolling.
 * (ONGOING) Find and exterminate security flaws...
-
-# Dependencies:
-
-* `pip install git+https://github.com/Rapptz/discord.py@async`
-* `pip install git+https://github.com/dateutil/dateutil/`
-* `pip install wolframalpha`
-* `pip install plotly`
-* ~~`pip install git+https://github.com/Julian/jsonschema`~~ (Planned to be used.)
-* ~~`pip install git+https://github.com/matplotlib/matplotlib.git`~~ (This package will not be used to avoid system-level dependencies.)
 
 ---
 

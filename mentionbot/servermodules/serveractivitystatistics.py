@@ -22,16 +22,16 @@ class ServerActivityStatistics(ServerModule):
    RECOMMENDED_CMD_NAMES = ["stats", "serverstats"]
 
    MODULE_NAME = "Server Activity Statistics"
-   MODULE_SHORT_DESCRIPTION = "Bot debugging tools."
+   MODULE_SHORT_DESCRIPTION = "Generates server activity graphs."
 
    _HELP_SUMMARY_LINES = """
 >>> PRIVILEGE LEVEL 8000 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-`{pf}stats [eval] [bin] [graph]` - Generate server statistics graph. (`{pf}stats` for details.)
+`{pf}stats [eval] [bin] [graph] [filt]` - Generate server statistics graph. (`{pf}stats` for details.)
    """.strip().splitlines()
 
    _HELP_DETAIL_LINES = """
 >>> PRIVILEGE LEVEL 8000 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-`{pf}stats [eval] [bin] [graph]` - Generate server statistics graph. (`{pf}stats` for details.)
+`{pf}stats [eval] [bin] [graph] [filt]` - Generate server statistics graph. (`{pf}stats` for details.)
 >>> PRIVILEGE LEVEL 9001 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 `{pf}stats login` - Re-read settings file to log into plotly.
    """.strip().splitlines()
@@ -375,7 +375,7 @@ class ServerActivityStatistics(ServerModule):
    def _sg3_wholeserver(self, substr, msg):
       ret = {
          "fn": lambda d, ch_id: True,
-         "title": "Server",
+         "title": "Server -",
       }
       return ret
 
@@ -389,7 +389,7 @@ class ServerActivityStatistics(ServerModule):
          return False
       ret = {
          "fn": new_fn,
-         "title": "#" + msg.channel.name,
+         "title": "#" + msg.channel.name + " -",
       }
       return ret
    
