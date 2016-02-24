@@ -280,6 +280,28 @@ class ServerBotInstance:
       await self._get_user_priv_process(substr, msg)
       return
 
+   @cmd.add(_cmd_dict, "eachuserpriv")
+   @cmd.minimum_privilege(PrivilegeLevel.MODERATOR)
+   async def _cmdf_eachuserpriv(self, substr, msg, privilege_level):
+      priv_levels = {} # FORMAT: {priv_level: [member]}
+      for member in self._server.members:
+         member_priv_level = self._privileges.get_privilege_level(member)
+         try:
+            member_list = priv_levels[member_priv_level]
+         except KeyError:
+            member_list = priv_levels[member_priv_level] = []
+         member_list.append(member)
+
+      priv_levels_sorted_list = sorted(priv_levels.items(), key=lambda e: e[0], reverse=True)
+      buf = "**Below is a list of all users with corresponding privilege levels:**"
+      for (priv_level, member_list) in priv_levels_sorted_list:
+         buf += "\nPrivilege level `{}`:\n```".format(priv_level.get_commonname())
+         for member in sorted(member_list, key=lambda e: member.name.lower()):
+            buf += "\n{} (ID: {})".format(member.name, member.id)
+         buf += "\n```"
+      await self._client.send_msg(msg, buf)
+      return
+
    ### Related Services ###
 
    async def _get_user_priv_process(self, substr, msg):

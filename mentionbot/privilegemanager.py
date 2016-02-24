@@ -39,19 +39,23 @@ class PrivilegeManager:
       elif member.id == self._serverowner_ID:
          return PrivilegeLevel.SERVER_OWNER
 
-      # Figure out what privilege levels the member or their roles have been assigned.
-      # First check user privilege
-      lower_priv = self._default_privilege_level
-      higher_priv = self._default_privilege_level - 1 # This can now be an int.
+      # Assigned user privilege level has next priority.
       try:
          user_priv = self._user_privileges[member.id]
-         if user_priv < lower_priv:
-            lower_priv = user_priv
-         elif user_priv >= higher_priv:
-            higher_priv = user_priv
+         return user_priv
       except KeyError:
          pass
-      # Then check the user's flairs
+
+      # Role privilege level has next priority.
+      # If the member has been assigned (either directly as a member privilege level,
+      # or through role privilege levels) a privilege level lower than the default, the
+      # lowest of these levels is the overall level. Else, if the user has been assigned
+      # a privilege level higher or equal than the default, then the highest of those
+      # levels is the overall level. Else, if the user is not assigned a privilege level,
+      # then they get the default privilege level.
+
+      lower_priv = self._default_privilege_level
+      higher_priv = self._default_privilege_level - 1 # This can now be an int.
       for role in member.roles:
          try:
             role_priv = self._role_privileges[role]
@@ -62,18 +66,12 @@ class PrivilegeManager:
          except KeyError:
             pass
 
-      # If the member has been assigned (either directly as a member privilege level,
-      # or through role privilege levels) a privilege level lower than the default, the
-      # lowest of these levels is the overall level. Else, if the user has been assigned
-      # a privilege level higher or equal than the default, then the highest of those
-      # levels is the overall level. Else, if the user is not assigned a privilege level,
-      # then they get the default privilege level.
-
       if lower_priv < self._default_privilege_level:
          return lower_priv
       elif higher_priv >= self._default_privilege_level:
          return higher_priv
       else:
+         # And finally, assign default if no privilege levels have been found.
          return self._default_privilege_level
 
    # This gets a json-serializable data structure of the privilege settings.
