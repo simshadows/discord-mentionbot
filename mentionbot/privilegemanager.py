@@ -55,18 +55,16 @@ class PrivilegeManager:
       # then they get the default privilege level.
 
       lower_priv = self._default_privilege_level
-      higher_priv = self._default_privilege_level - 1 # This can now be an int.
+      higher_priv = self._default_privilege_level - 1
       for role in member.roles:
          try:
-            role_priv = self._role_privileges[role]
+            role_priv = self._role_privileges[role.name]
             if role_priv < lower_priv:
                lower_priv = role_priv
             elif role_priv >= higher_priv:
                higher_priv = role_priv
          except KeyError:
             pass
-      print("LOWER = " + str(lower_priv))
-      print("UPPER = " + str(higher_priv))
 
       if lower_priv < self._default_privilege_level:
          return lower_priv
