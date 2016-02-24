@@ -192,6 +192,13 @@ def flair_names_to_object(server, flair_names):
          continue
    return flair_objects
 
+# A non-list version of the function...
+def flair_name_to_object(server, flair_name):
+   for flair_object in server.roles:
+      if flair_object.name == flair_name:
+         return flair_object
+   return None
+
 def datetime_rounddown_to_day(datetime_object):
    date_object = datetime_object.date()
    return datetime.datetime(year=date_object.year, month=date_object.month, day=date_object.day)

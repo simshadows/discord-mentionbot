@@ -1,8 +1,16 @@
-class MentionbotError(Exception):
+class MentionbotException(Exception):
    def __init__(self):
       return
 
-class UnknownCommandError(MentionbotError):
+################################
+### COMMAND HANDLING SIGNALS ###
+################################
+
+class CommandHandlingSignal(MentionbotException):
+   def __init__(self):
+      return
+
+class UnknownCommandError(CommandHandlingSignal):
    def __init__(self):
       return
 
@@ -10,25 +18,35 @@ class SilentUnknownCommandError(UnknownCommandError):
    def __init__(self):
       return
 
-class InvalidCommandArgumentsError(MentionbotError):
+class InvalidCommandArgumentsError(CommandHandlingSignal):
    def __init__(self):
       return
 
-class CommandPrivilegeError(MentionbotError):
+class CommandPrivilegeError(CommandHandlingSignal):
    def __init__(self):
       return
 
-class NoHelpContentExists(MentionbotError):
+class NoHelpContentExists(CommandHandlingSignal):
    def __init__(self):
       return
 
-# General-purpose exceptions
+##################################
+### General-purpose exceptions ###
+##################################
 
-class DoesNotExist(MentionbotError):
+class GeneralMentionbotException(MentionbotException):
    def __init__(self):
       return
 
-class OperationAborted(MentionbotError):
+class DoesNotExist(GeneralMentionbotException):
+   def __init__(self):
+      return
+
+class NoRecordExists(GeneralMentionbotException):
+   def __init__(self):
+      return
+
+class OperationAborted(GeneralMentionbotException):
    def __init__(self):
       return
 

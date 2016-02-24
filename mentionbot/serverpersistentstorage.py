@@ -73,6 +73,20 @@ class ServerPersistentStorage:
       self.save_server_settings(data)
       return
 
+   def get_bot_command_privilege_settings(self):
+      data = self.get_server_settings()
+      try:
+         settings_dict = data["bot command privileges"]
+      except KeyError:
+         settings_dict = data["bot command privileges"] = {}
+      return settings_dict
+
+   def save_bot_command_privilege_settings(self, settings_dict):
+      data = self.get_server_settings()
+      data["bot command privileges"] = settings_dict
+      self.save_server_settings(data)
+      return
+
 
 
 

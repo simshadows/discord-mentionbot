@@ -80,6 +80,11 @@ class ServerBotInstance:
 
       # Load and apply server settings
 
+      privileges_settings_dict = inst._storage.get_bot_command_privilege_settings()
+      inst._privileges.apply_json_settings_struct(privileges_settings_dict)
+
+      # TODO: Make the below as neat as the above code.
+
       data = inst._storage.get_server_settings()
       
       modules = []
@@ -269,15 +274,34 @@ class ServerBotInstance:
    ### PRIVILEGES INFO/MANAGEMENT COMMANDS ###
    ###########################################
 
+   @cmd.add(_cmd_dict, "privinfo", "allprivs", "privsinfo", "whatprivs")
+   async def _cmdf_privinfo(self, substr, msg, privilege_level):
+      buf = "This bot has internal command privilege levels to determine what"
+      buf += " commands users have access to. This is managed separately from"
+      buf += " discord's own privileges."
+      buf += "\n\nThe bot command privilege levels from highest to lowest are:"
+      privilege_levels_list = sorted(PrivilegeLevel.get_all_values(), key=lambda e: e[1], reverse=True)
+      for (priv_obj, priv_value, commonname) in privilege_levels_list:
+         buf += "\n`" + commonname + "`"
+      # buf += "\n\nThe bot can continue to function without further configuring"
+      # buf += " the privilege levels as it defaults to giving the bot owner and"
+      # buf += " server owner their special privileges and giving everyone else"
+      # buf += " a default level."
+      await self._client.send_msg(msg, buf)
+      return
+
    @cmd.add(_cmd_dict, "priv", "privilege", "mypriv")
    async def _cmdf_priv(self, substr, msg, privilege_level):
-      await self._get_user_priv_process("", msg)
+      buf = await self._get_user_priv_process("", msg)
+      buf += "\nFor info on privilege levels, use the command `{}privinfo`.".format(self._cmd_prefix)
+      await self._client.send_msg(msg, buf)
       return
 
    @cmd.add(_cmd_dict, "privof", "privilegeof")
    @cmd.minimum_privilege(PrivilegeLevel.MODERATOR)
    async def _cmdf_privof(self, substr, msg, privilege_level):
-      await self._get_user_priv_process(substr, msg)
+      buf = await self._get_user_priv_process(substr, msg)
+      await self._client.send_msg(msg, buf)
       return
 
    @cmd.add(_cmd_dict, "eachuserpriv")
@@ -302,6 +326,73 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
+   @cmd.add(_cmd_dict, "adduserpriv", "adduserprivilege")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   async def _cmdf_adduserpriv(self, substr, msg, privilege_level):
+      # Required 2 arguments.
+      # Argument 1: User.
+      (left, right) = utils.separate_left_word(substr)
+      user_obj = self._client.search_for_user(left, enablenamesearch=True, serverrestriction=self._server)
+      if user_obj is None:
+         await self._client.send_msg(msg, "User {} not found. Aborting.".format(left))
+         raise errors.OperationAborted
+      # Argument 2: Privilege Level
+      try:
+         priv_obj = PrivilegeLevel.commonname_to_enum(right)
+      except errors.DoesNotExist:
+         buf = "Level `{}` is not recognized. Aborting.".format(right)
+         buf += "\n(For info on privilege levels, use the command `{}privinfo`.)".format(self._cmd_prefix)
+         await self._client.send_msg(msg, buf)
+         raise errors.OperationAborted
+
+      if priv_obj >= PrivilegeLevel.SERVER_OWNER:
+         await self._client.send_msg(msg, "Error: Not allowed to assign that level.")
+         raise errors.OperationAborted
+      
+      self._privileges.assign_user_privileges(user_obj.id, priv_obj)
+
+      # Save settings
+      settings_dict = self._privileges.get_json_settings_struct()
+      self._storage.save_bot_command_privilege_settings(settings_dict)
+
+      buf = "Successfully assigned level `{0}` to user {1}.".format(right, user_obj.name)
+      await self._client.send_msg(msg, buf)
+      return
+
+   @cmd.add(_cmd_dict, "addrolepriv", "addroleprivilege")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   async def _cmdf_addrolepriv(self, substr, msg, privilege_level):
+      # Required 2 arguments.
+      # Argument 1: Role.
+      # TODO: This is broken because roles can have spaces in them.
+      (left, right) = utils.separate_left_word(substr)
+      role_obj = utils.flair_name_to_object(self._server, left)
+      if role_obj is None:
+         await self._client.send_msg(msg, "Role {} not found. Aborting.".format(left))
+         raise errors.OperationAborted
+      # Argument 2: Privilege Level.
+      try:
+         priv_obj = PrivilegeLevel.commonname_to_enum(right)
+      except errors.DoesNotExist:
+         buf = "Level `{}` is not recognized. Aborting.".format(right)
+         buf += "\n(For info on privilege levels, use the command `{}privinfo`.)".format(self._cmd_prefix)
+         await self._client.send_msg(msg, buf)
+         raise errors.OperationAborted
+
+      if priv_obj >= PrivilegeLevel.SERVER_OWNER:
+         await self._client.send_msg(msg, "Error: Not allowed to assign that level.")
+         raise errors.OperationAborted
+      
+      self._privileges.assign_role_privileges(left, priv_obj)
+
+      # Save settings
+      settings_dict = self._privileges.get_json_settings_struct()
+      self._storage.save_bot_command_privilege_settings(settings_dict)
+
+      buf = "Successfully assigned level `{0}` to role {1}.".format(right, left)
+      await self._client.send_msg(msg, buf)
+      return
+
    ### Related Services ###
 
    async def _get_user_priv_process(self, substr, msg):
@@ -317,8 +408,7 @@ class ServerBotInstance:
       user_priv_level = self._privileges.get_privilege_level(user_obj)
       priv_str = user_priv_level.get_commonname()
       buf = "User {0} has a bot command privilege level of `{1}`.".format(user_obj.name, priv_str)
-      await self._client.send_msg(msg, buf)
-      return
+      return buf
 
    ###################################################
    ### OTHER GENERAL MANAGEMENT/DEBUGGING COMMANDS ###

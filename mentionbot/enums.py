@@ -29,7 +29,7 @@ class PrivilegeLevel(enum.IntEnum):
       all_values = []
       for (enum_type, enum_str) in _privilegelevel_enumtocommonname.items():
          all_values.append((enum_type, int(enum_type), enum_str))
-      return get_all_values
+      return all_values
 
    # Converts a PrivilegeLevel to a corresponding name.
    def get_commonname(self):

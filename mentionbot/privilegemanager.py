@@ -65,6 +65,8 @@ class PrivilegeManager:
                higher_priv = role_priv
          except KeyError:
             pass
+      print("LOWER = " + str(lower_priv))
+      print("UPPER = " + str(higher_priv))
 
       if lower_priv < self._default_privilege_level:
          return lower_priv
@@ -77,11 +79,11 @@ class PrivilegeManager:
    # This gets a json-serializable data structure of the privilege settings.
    def get_json_settings_struct(self):
       serialized_role_privileges = {}
-      for (role_name, priv_level) in self._role_privileges:
+      for (role_name, priv_level) in self._role_privileges.items():
          serialized_role_privileges[role_name] = int(priv_level)
 
       serialized_user_privileges = {}
-      for (user_ID, priv_level) in self._user_privileges:
+      for (user_ID, priv_level) in self._user_privileges.items():
          serialized_user_privileges[user_ID] = int(priv_level)
 
       settings = {
@@ -94,7 +96,7 @@ class PrivilegeManager:
    def apply_json_settings_struct(self, settings):
       self._role_privileges = {}
       try:
-         for (role_name, priv_int) in settings["role privileges"]:
+         for (role_name, priv_int) in settings["role privileges"].items():
             self._role_privileges[role_name] = PrivilegeLevel.int_to_enum_rounddown(priv_int)
       except KeyError:
          print("WARNING: No role privileges settings found. Setting up empty map.")
@@ -102,7 +104,7 @@ class PrivilegeManager:
 
       self._user_privileges = {}
       try:
-         for (user_ID, priv_int) in settings["user privileges"]:
+         for (user_ID, priv_int) in settings["user privileges"].items():
             self._user_privileges[user_ID] = PrivilegeLevel.int_to_enum_rounddown(priv_int)
       except KeyError:
          print("WARNING: No user privileges settings found. Setting up empty map.")
