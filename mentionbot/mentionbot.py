@@ -128,8 +128,9 @@ class MentionBot(clientextended.ClientExtended):
          await self.send_msg(msg, "No help content exists.")
       except errors.OperationAborted:
          print("Caught OperationAborted.")
-      except Exception as e:
+      except BaseException as e:
          # This is only for feedback. Exception will continue to propagate.
+         print(traceback.format_exc())
          buf = "**EXCEPTION**"
          buf += "\n**From:** <#" + msg.channel.id + "> **in** " + msg.server.name
          buf += "\n**Command issued by:** <@" + msg.author.id + ">"
@@ -137,12 +138,18 @@ class MentionBot(clientextended.ClientExtended):
          buf += "\n" + msg.content
          buf += "\n**Stack Trace:**"
          buf += "\n```" + traceback.format_exc() + "```"
-         await self.send_msg(self.botowner, buf)
+         try:
+            await self.send_msg(self.botowner, buf)
+         except:
+            print("FAILED TO SEND BOTOWNER STACKTRACE.")
          buf = "**EXCEPTION:** " + type(e).__name__
          buf += "\n" + str(e)
          buf += "\n" + self.botowner_mention + " m8, fix this. I PM'd you the traceback."
          buf += "\n\n**THIS BOT WILL NOW TERMINATE. Please fix the bug before relaunching.**"
-         await self.send_msg(msg, buf)
+         try:
+            await self.send_msg(msg, buf)
+         except:
+            print("FAILED TO MESSAGE BOT TERMINATION BACK TO THE CHANNEL.")
          sys.exit(0)
       
       return
