@@ -32,7 +32,7 @@ class PrivilegeLevel(enum.IntEnum):
       return get_all_values
 
    # Converts a PrivilegeLevel to a corresponding name.
-   def enum_to_commonname(self):
+   def get_commonname(self):
       try:
          return _privilegelevel_enumtocommonname[self]
       except KeyError:

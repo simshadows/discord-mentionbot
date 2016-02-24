@@ -164,6 +164,10 @@ class ServerBotInstance:
    # CORE COMMANDS ########################################################################
    ########################################################################################
 
+   ########################
+   ### GENERAL COMMANDS ###
+   ########################
+
    @cmd.add(_cmd_dict, "help")
    async def _cmdf_help(self, substr, msg, privilege_level):
       help_content = self._get_help_content(substr, msg, self.cmd_prefix, privilege_level)
@@ -180,6 +184,21 @@ class ServerBotInstance:
       buf = "**Bot current uptime:** {}. ".format(utils.seconds_to_string(self.get_presence_time()))
       await self._client.send_msg(msg, buf)
       return
+
+   @cmd.add(_cmd_dict, "time", "gettime", "utc")
+   async def _cmdf_time(self, substr, msg, privilege_level):
+      await self._client.send_msg(msg, datetime.datetime.utcnow().strftime("My current system time: %c UTC"))
+      return
+
+   @cmd.add(_cmd_dict, "say")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   async def _cmdf_say(self, substr, msg, privilege_level):
+      await self._client.send_msg(msg, substr)
+      return
+
+   #######################################
+   ### MODULE INFO/MANAGEMENT COMMANDS ###
+   #######################################
 
    @cmd.add(_cmd_dict, "mods", "modules")
    async def _cmdf_mods(self, substr, msg, privilege_level):
@@ -207,17 +226,6 @@ class ServerBotInstance:
          buf += buf2 + buf3
 
       await self._client.send_msg(msg, buf)
-      return
-
-   @cmd.add(_cmd_dict, "time", "gettime", "utc")
-   async def _cmdf_time(self, substr, msg, privilege_level):
-      await self._client.send_msg(msg, datetime.datetime.utcnow().strftime("My current system time: %c UTC"))
-      return
-
-   @cmd.add(_cmd_dict, "say")
-   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
-   async def _cmdf_say(self, substr, msg, privilege_level):
-      await self._client.send_msg(msg, substr)
       return
 
    @cmd.add(_cmd_dict, "add", "install", "addmodule")
@@ -256,6 +264,43 @@ class ServerBotInstance:
       buf += "\nThe help message is now invoked using `{}help`.".format(self._cmd_prefix)
       await self._client.send_msg(msg, buf)
       return
+
+   ###########################################
+   ### PRIVILEGES INFO/MANAGEMENT COMMANDS ###
+   ###########################################
+
+   @cmd.add(_cmd_dict, "priv", "privilege", "mypriv")
+   async def _cmdf_priv(self, substr, msg, privilege_level):
+      await self._get_user_priv_process("", msg)
+      return
+
+   @cmd.add(_cmd_dict, "privof", "privilegeof")
+   @cmd.minimum_privilege(PrivilegeLevel.MODERATOR)
+   async def _cmdf_privof(self, substr, msg, privilege_level):
+      await self._get_user_priv_process(substr, msg)
+      return
+
+   ### Related Services ###
+
+   async def _get_user_priv_process(self, substr, msg):
+      user_priv_level = None
+      if len(substr) == 0:
+         user_obj = msg.author
+      else:
+         user_obj = self._client.search_for_user(substr, enablenamesearch=True, serverrestriction=self._server)
+         if user_obj is None:
+            await self._client.send_msg(msg, "User {} not found. Aborting.".format(substr))
+            raise errors.OperationAborted
+      
+      user_priv_level = self._privileges.get_privilege_level(user_obj)
+      priv_str = user_priv_level.get_commonname()
+      buf = "User {0} has a bot command privilege level of `{1}`.".format(user_obj.name, priv_str)
+      await self._client.send_msg(msg, buf)
+      return
+
+   ###################################################
+   ### OTHER GENERAL MANAGEMENT/DEBUGGING COMMANDS ###
+   ###################################################
 
    @cmd.add(_cmd_dict, "iam")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
