@@ -1,3 +1,6 @@
+# TEMP
+import urllib.parse as urllibparse
+
 import asyncio
 import random
 import re
@@ -200,6 +203,18 @@ class ServerBotInstance:
    async def _cmdf_say(self, substr, msg, privilege_level):
       await self._client.send_msg(msg, substr)
       return
+
+   ##########################
+   ### TEMPORARY COMMANDS ###
+   ##########################
+
+   # Random commands go here until they find a home in a proper module.
+
+   @cmd.add(_cmd_dict, "lmgtfy", "google", "goog", "yahoo")
+   async def _cmdf_say(self, substr, msg, privilege_level):
+      await self._client.send_msg(msg, "http://lmgtfy.com/?q=" + urllibparse.quote(substr))
+      return
+
 
    #######################################
    ### MODULE INFO/MANAGEMENT COMMANDS ###
