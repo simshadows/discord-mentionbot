@@ -346,7 +346,7 @@ class ServerBotInstance:
    async def _cmdf_adduserpriv(self, substr, msg, privilege_level):
       # Required 2 arguments.
       # Argument 1: User.
-      (left, right) = utils.separate_left_word(substr)
+      (left, right) = utils.separate_right_word(substr)
       user_obj = self._client.search_for_user(left, enablenamesearch=True, serverrestriction=self._server)
       if user_obj is None:
          await self._client.send_msg(msg, "User {} not found. Aborting.".format(left))
@@ -380,7 +380,7 @@ class ServerBotInstance:
       # Required 2 arguments.
       # Argument 1: Role.
       # TODO: This is broken because roles can have spaces in them.
-      (left, right) = utils.separate_left_word(substr)
+      (left, right) = utils.separate_right_word(substr)
       role_obj = utils.flair_name_to_object(self._server, left)
       if role_obj is None:
          await self._client.send_msg(msg, "Role {} not found. Aborting.".format(left))

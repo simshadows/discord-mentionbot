@@ -24,6 +24,14 @@ def separate_left_word(text): # TYPE: Tuple<String>
       substrings.append("")
    return tuple(substrings)
 
+def separate_right_word(text): # TYPE: Tuple<String>
+   substrings = text.rsplit(maxsplit=1) # "how r u?" -> ["how r", "u?"]
+   if len(substrings) == 0:
+      return ("","")
+   elif len(substrings) == 1:
+      substrings.insert(0, "")
+   return tuple(substrings)
+
 def remove_whitespace(text):
    return "".join(text.split()) # TODO: Find a nicer implementation.
 

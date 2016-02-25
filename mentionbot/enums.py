@@ -74,19 +74,21 @@ class PrivilegeLevel(enum.IntEnum):
       return PrivilegeLevel.NO_PRIVILEGE
 
 # IMPORTANT: This dict must match up exactly to the PrivilegeLevel types.
+# IMPORTANT: The values in this dict must also be one word.
+#            The parsing used prevents whitespaced strings from being used here.
 _privilegelevel_enumtocommonname = {
    # PrivilegeLevel.UR_MOM: "ur mom",
-   PrivilegeLevel.NO_PRIVILEGE: "No Privileges",
-   PrivilegeLevel.RESTRICTED_1: "Restricted1",
-   PrivilegeLevel.RESTRICTED_2: "Restricted2",
+   PrivilegeLevel.NO_PRIVILEGE: "No_Privileges",
+   PrivilegeLevel.RESTRICTED_1: "Restricted_1",
+   PrivilegeLevel.RESTRICTED_2: "Restricted_2",
    PrivilegeLevel.NEWBIE: "Newbie",
    PrivilegeLevel.NORMAL: "Normal",
    PrivilegeLevel.REGULAR: "Regular",
    PrivilegeLevel.TRUSTED: "Trusted",
    PrivilegeLevel.MODERATOR: "Moderator",
    PrivilegeLevel.ADMIN: "Admin",
-   PrivilegeLevel.SERVER_OWNER: "Server Owner",
-   PrivilegeLevel.BOT_OWNER: "Literally God"
+   PrivilegeLevel.SERVER_OWNER: "Server_Owner",
+   PrivilegeLevel.BOT_OWNER: "Literally_God"
 }
 
 # It would be nice if we can have bi-directional maps instead of this...
