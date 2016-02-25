@@ -334,7 +334,7 @@ class ServerActivityStatistics(ServerModule):
    @cmd.add(_sg_argument2, "weekday")
    def _sg2_weekday(self):
       ret = {
-         "fn": lambda d: d["t"].weekday(),
+         "fn": lambda d: 6 - d["t"].weekday(),
          "axis": "Each day of the week (0 = Mon, 1 = Tue, etc.)",
          "title": "Each Day Of The Week",
       }
@@ -344,7 +344,7 @@ class ServerActivityStatistics(ServerModule):
    @cmd.add(_sg_argument2, "dayhour")
    def _sg2_dayhour(self):
       ret = {
-         "fn": lambda d: d["t"].hour,
+         "fn": lambda d: 23 - d["t"].hour,
          "axis": "Each hour of the day (0 to 23, UTC) ",
          "title": "Each Hour Of The Day",
       }
@@ -355,7 +355,7 @@ class ServerActivityStatistics(ServerModule):
    def _sg2_day15min(self):
       def new_fn(d):
          t = d["t"]
-         return (t.hour * 4) + int(t.minute/15)
+         return 95 - (t.hour * 4) + int(t.minute/15)
       ret = {
          "fn": new_fn,
          "axis": "Each 15 minute interval of the day (Leftmost = 0:00-0:15 UTC) ",

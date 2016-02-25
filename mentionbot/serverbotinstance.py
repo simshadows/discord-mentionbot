@@ -317,7 +317,7 @@ class ServerBotInstance:
          member_list.append(member)
 
       priv_levels_sorted_list = sorted(priv_levels.items(), key=lambda e: e[0], reverse=True)
-      buf = "**Below is a list of all users with corresponding privilege levels:**"
+      buf = "**Below is a list of all users with corresponding bot command privilege levels:**\n"
       for (priv_level, member_list) in priv_levels_sorted_list:
          buf += "\nPrivilege level `{}`:\n```".format(priv_level.get_commonname())
          for member in sorted(member_list, key=lambda e: member.name.lower()):
