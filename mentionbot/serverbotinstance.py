@@ -319,7 +319,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "userprivsresolved")
+   @cmd.add(_cmd_dict, "userprivsresolved", "userprivilegesresolved")
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_userprivsresolved(self, substr, msg, privilege_level):
       priv_levels = {} # FORMAT: {priv_level: [member]}
@@ -332,7 +332,7 @@ class ServerBotInstance:
          member_list.append(member)
 
       priv_levels_sorted_list = sorted(priv_levels.items(), key=lambda e: e[0], reverse=True)
-      buf = "**Below is a list of all users with corresponding bot command privilege levels:**\n"
+      buf = "**Here are the resolved privilege levels for all users:**\n"
       for (priv_level, member_list) in priv_levels_sorted_list:
          buf += "\nPrivilege level `{}`:\n```".format(priv_level.get_commonname())
          for member in sorted(member_list, key=lambda e: member.name.lower()):
@@ -371,7 +371,7 @@ class ServerBotInstance:
       role_privileges = self._privileges.get_role_privileges()
       buf = None
       if len(role_privileges) == 0:
-         buf = "No users have been assigned bot command privilege levels."
+         buf = "No roles have been assigned bot command privilege levels."
       else:
          buf = "The following users have been assigned bot command privilege levels:\n```"
          role_privileges = sorted(role_privileges, key=lambda e: e[0].lower())
@@ -390,13 +390,13 @@ class ServerBotInstance:
       (left, right) = utils.separate_right_word(substr)
       user_obj = self._client.search_for_user(left, enablenamesearch=True, serverrestriction=self._server)
       if user_obj is None:
-         await self._client.send_msg(msg, "User {} not found. Aborting.".format(left))
+         await self._client.send_msg(msg, "Error: User not found. Aborting.")
          raise errors.OperationAborted
       # Argument 2: Privilege Level
       try:
          priv_obj = PrivilegeLevel.commonname_to_enum(right)
       except errors.DoesNotExist:
-         buf = "Level `{}` is not recognized. Aborting.".format(right)
+         buf = "Error: Level `{}` is not recognized. Aborting.".format(right)
          buf += "\n(For info on privilege levels, use the command `{}privinfo`.)".format(self._cmd_prefix)
          await self._client.send_msg(msg, buf)
          raise errors.OperationAborted
@@ -424,13 +424,13 @@ class ServerBotInstance:
       (left, right) = utils.separate_right_word(substr)
       role_obj = utils.flair_name_to_object(self._server, left)
       if role_obj is None:
-         await self._client.send_msg(msg, "Role {} not found. Aborting.".format(left))
+         await self._client.send_msg(msg, "Error: Role not found. Aborting.")
          raise errors.OperationAborted
       # Argument 2: Privilege Level.
       try:
          priv_obj = PrivilegeLevel.commonname_to_enum(right)
       except errors.DoesNotExist:
-         buf = "Level `{}` is not recognized. Aborting.".format(right)
+         buf = "Error: Level `{}` is not recognized. Aborting.".format(right)
          buf += "\n(For info on privilege levels, use the command `{}privinfo`.)".format(self._cmd_prefix)
          await self._client.send_msg(msg, buf)
          raise errors.OperationAborted
@@ -446,6 +446,38 @@ class ServerBotInstance:
       self._storage.save_bot_command_privilege_settings(settings_dict)
 
       buf = "Successfully assigned level `{0}` to role {1}.".format(right, left)
+      await self._client.send_msg(msg, buf)
+      return
+
+   @cmd.add(_cmd_dict, "removeuserpriv", "removeuserprivilege")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   async def _cmdf_removeuserpriv(self, substr, msg, privilege_level):
+      if len(substr) == 0:
+         buf = "Error: No arguments have been entered."
+      else:
+         user_obj = self._client.search_for_user(substr, enablenamesearch=True, serverrestriction=self._server)
+         if user_obj is None:
+            buf = "Error: User {} not found.".format(substr)
+         else:
+            try:
+               self._privileges.assign_user_privileges(user_obj.id, None)
+               buf = "Successfully unassigned personal command privilege level for {}.".format(user_obj.name)
+            except errors.NoRecordExists:
+               buf = "Error: {} doesn't have a personally assigned command privilege level.".format(user_obj.name)
+      await self._client.send_msg(msg, buf)
+      return
+
+   @cmd.add(_cmd_dict, "removerolepriv", "removeroleprivilege", "removeflairpriv", "removeflairprivilege", "removetagpriv", "removetagprivilege")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   async def _cmdf_removerolepriv(self, substr, msg, privilege_level):
+      if len(substr) == 0:
+         buf = "Error: No arguments have been entered."
+      else:
+         try:
+            self._privileges.assign_role_privileges(substr, None)
+            buf = "Successfully unassigned role command privilege level for {}.".format(substr)
+         except errors.NoRecordExists:
+            buf = "Error: {} doesn't have an assigned command privilege level.".format(substr)
       await self._client.send_msg(msg, buf)
       return
 

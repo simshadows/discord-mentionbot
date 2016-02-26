@@ -78,7 +78,7 @@ class PrivilegeLevel(enum.IntEnum):
 #            The parsing used prevents whitespaced strings from being used here.
 _privilegelevel_enumtocommonname = {
    # PrivilegeLevel.UR_MOM: "ur mom",
-   PrivilegeLevel.NO_PRIVILEGE: "No_Privileges",
+   PrivilegeLevel.NO_PRIVILEGE: "No_Privilege",
    PrivilegeLevel.RESTRICTED_1: "Restricted_1",
    PrivilegeLevel.RESTRICTED_2: "Restricted_2",
    PrivilegeLevel.NEWBIE: "Newbie",

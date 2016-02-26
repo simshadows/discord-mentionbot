@@ -413,17 +413,17 @@ class ServerActivityStatistics(ServerModule):
             except KeyError: # May also catch msg_dict keyerror...
                pass
             data_temp[bin_value] = measured(prev, msg_dict, bin_value)
-      days_ago = 0
+      bin_val = 0
       data = []
       while bool(data_temp): # While dictionary still has data
          content_len = 0
          try:
-            content_len = data_temp[days_ago]
-            del data_temp[days_ago]
+            content_len = data_temp[bin_val]
+            del data_temp[bin_val]
          except KeyError:
             pass
          data.insert(0, content_len)
-         days_ago += 1
+         bin_val += 1
 
       x_vals = []
       i = 1
