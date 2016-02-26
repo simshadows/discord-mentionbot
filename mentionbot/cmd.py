@@ -51,8 +51,7 @@ def minimum_privilege(minimum_privilege_level):
       return function
    return function_decorator
 
-# (CURRENTLY NOT USED...)
-# # Decorator adds an attribute named "help_summary" to a function object.
+# # Decorator adds an attribute named "help_sum" to a function object.
 # # This attribute is read when compiling help messages.
 # # If a minimum privilege is also assigned, then it is possible to filter
 # # unnecessary help content before displaying them.
@@ -64,12 +63,15 @@ def minimum_privilege(minimum_privilege_level):
 # # used to act as a consistent form of documentation.
 # #
 # # PRECONDITION:
-# def help_summary(text, *, show=True):
+# def help_sum(text, *, show=True, show_in_main=False):
 #    def function_decorator(function):
 #       if show:
 #          function.help_summary = text
 #       return function
 #    return function_decorator
+
+
+
 
 
 

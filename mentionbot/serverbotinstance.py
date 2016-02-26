@@ -373,7 +373,7 @@ class ServerBotInstance:
       if len(role_privileges) == 0:
          buf = "No roles have been assigned bot command privilege levels."
       else:
-         buf = "The following users have been assigned bot command privilege levels:\n```"
+         buf = "The following roles have been assigned bot command privilege levels:\n```"
          role_privileges = sorted(role_privileges, key=lambda e: e[0].lower())
          role_privileges = sorted(role_privileges, key=lambda e: e[1], reverse=True)
          for (role_name, priv_obj) in role_privileges:

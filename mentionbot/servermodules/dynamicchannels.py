@@ -188,7 +188,7 @@ class DynamicChannels(ServerModule):
 
    @cmd.add(_cmd_dict, "open", "create")
    async def _cmdf_open(self, substr, msg, privilege_level):
-      if len(self._scheduler.get_scheduled()) >= self._max_active_temp_channels:
+      if len(self._scheduler.get_scheduled()) >= self._max_active_temp_channels >= 0:
          buf = "No more than {}".format(str(self._max_active_temp_channels))
          buf += " active temporary channels are allowed."
          await self._client.send_msg(msg.channel, buf)
@@ -209,6 +209,7 @@ class DynamicChannels(ServerModule):
       buf = "Channel opened by <@{}>.".format(msg.author.id)
       buf += " Closing after {} minutes of inactivity.".format(str(self._channel_timeout))
       await self._client.send_msg(ch, buf)
+      await self._client.send_msg(msg, "Channel <#{}> successfully opened.".format(ch.id))
       return
 
    # @cmd.add(_cmd_dict, "forceopen")
@@ -321,9 +322,11 @@ class DynamicChannels(ServerModule):
       if new_default is None:
          await self._client.send_msg(msg, "Error: Channel not found.")
       else:
+         await utils.open_channel(self._client, new_default, self._server, self._bot_flairs)
          self._default_channels.append(new_default)
          self._save_settings()
          await self._client.send_msg(msg, "<#{}> successfully added to default list.".format(new_default.id))
+         await self._client.send_msg(new_default, "This channel is now a default channel.")
       return
 
    @cmd.add(_cmd_dict, "removedefault")
