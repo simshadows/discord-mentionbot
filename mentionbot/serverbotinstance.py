@@ -313,15 +313,15 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmd_dict, "privof", "privilegeof")
-   @cmd.minimum_privilege(PrivilegeLevel.MODERATOR)
+   @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_privof(self, substr, msg, privilege_level):
       buf = await self._get_user_priv_process(substr, msg)
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "eachuserpriv")
-   @cmd.minimum_privilege(PrivilegeLevel.MODERATOR)
-   async def _cmdf_eachuserpriv(self, substr, msg, privilege_level):
+   @cmd.add(_cmd_dict, "userprivsresolved")
+   @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
+   async def _cmdf_userprivsresolved(self, substr, msg, privilege_level):
       priv_levels = {} # FORMAT: {priv_level: [member]}
       for member in self._server.members:
          member_priv_level = self._privileges.get_privilege_level(member)
@@ -337,6 +337,47 @@ class ServerBotInstance:
          buf += "\nPrivilege level `{}`:\n```".format(priv_level.get_commonname())
          for member in sorted(member_list, key=lambda e: member.name.lower()):
             buf += "\n{} (ID: {})".format(member.name, member.id)
+         buf += "\n```"
+      await self._client.send_msg(msg, buf)
+      return
+
+   @cmd.add(_cmd_dict, "userprivs", "userprivileges")
+   @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
+   async def _cmdf_userprivs(self, substr, msg, privilege_level):
+      user_privileges = self._privileges.get_user_privileges()
+      buf = None
+      if len(user_privileges) == 0:
+         buf = "No users have been assigned bot command privilege levels."
+      else:
+         buf = "The following users have been assigned bot command privilege levels:\n```"
+         def uname_alphabet_sort(e):
+            user_obj = self._client.search_for_user(e[0], enablenamesearch=False, serverrestriction=self._server)
+            if user_obj is None:
+               return ""
+            else:
+               return user_obj.name.lower()
+         user_privileges = sorted(user_privileges, key=uname_alphabet_sort)
+         user_privileges = sorted(user_privileges, key=lambda e: e[1], reverse=True)
+         for (user_ID, priv_obj) in user_privileges:
+            user_obj = self._client.search_for_user(user_ID, enablenamesearch=False, serverrestriction=self._server)
+            buf += "\n{0} (ID: {1}): {2}".format(user_obj.name, user_ID, priv_obj.get_commonname())
+         buf += "\n```"
+      await self._client.send_msg(msg, buf)
+      return
+
+   @cmd.add(_cmd_dict, "roleprivs", "roleprivileges", "flairprivs", "flairprivileges", "tagprivs", "tagprivileges")
+   @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
+   async def _cmdf_roleprivs(self, substr, msg, privilege_level):
+      role_privileges = self._privileges.get_role_privileges()
+      buf = None
+      if len(role_privileges) == 0:
+         buf = "No users have been assigned bot command privilege levels."
+      else:
+         buf = "The following users have been assigned bot command privilege levels:\n```"
+         role_privileges = sorted(role_privileges, key=lambda e: e[0].lower())
+         role_privileges = sorted(role_privileges, key=lambda e: e[1], reverse=True)
+         for (role_name, priv_obj) in role_privileges:
+            buf += "\n{0}: {1}".format(role_name, priv_obj.get_commonname())
          buf += "\n```"
       await self._client.send_msg(msg, buf)
       return
