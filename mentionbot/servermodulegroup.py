@@ -75,12 +75,12 @@ class ServerModuleGroup:
    # If ServerBotInstance has additional functionality, it should append it
    # to the returned string. Depends on what ServerBotInstance wants to do.
    # PRECONDITION: The ServerModuleGroup object is filled with modules.
-   def get_help_content(self, substr, cmd_prefix, privilege_level):
+   def get_help_content(self, substr, privilege_level):
       if substr == "":
          # This serves a summary of commands.
          buf = ""
          for module in self._modules_list:
-            content = module.get_help_summary(cmd_prefix, privilege_level)
+            content = module.get_help_summary(privilege_level)
             if content != "":
                buf += content + "\n"
          buf = buf[:-1] # Remove extra newline.
@@ -91,7 +91,7 @@ class ServerModuleGroup:
          # all up to the module.
          (left, right) = utils.separate_left_word(substr)
          try:
-            content = self._modules_cmd_dict[left].get_help_detail(right, cmd_prefix, privilege_level)
+            content = self._modules_cmd_dict[left].get_help_detail(right, privilege_level)
             if content == "":
                raise errors.NoHelpContentExists
             buf = content

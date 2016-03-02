@@ -618,12 +618,12 @@ class ServerBotInstance:
       buf = None
       if substr == "":
          buf = cmd.compose_help_summary(self._cmd_dict, privilege_level) + "\n\n"
-         buf = buf.format(bc=cmd_prefix)
-         buf2 = self._modules.get_help_content("", cmd_prefix, privilege_level)
+         buf = buf.format(p="{p}", b="")
+         buf2 = self._modules.get_help_content("", privilege_level)
          buf2 = "\n".join(sorted(buf2.splitlines(), key=lambda e: e.lower()))
          buf += buf2
       else:
-         buf = self._modules.get_help_content(substr, cmd_prefix, privilege_level)
+         buf = self._modules.get_help_content(substr, privilege_level)
       return buf.format(p=cmd_prefix)
 
    # RETURNS: Bot's current uptime in seconds

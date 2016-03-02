@@ -7,31 +7,22 @@ import errors
 from servermodule import ServerModule
 
 class MentionsNotify(ServerModule):
-   
-   _SECRET_TOKEN = utils.SecretToken()
-
-   RECOMMENDED_CMD_NAMES = ["mnotify", "mentionsnotify", "mn"]
 
    MODULE_NAME = "Mentions Notify"
    MODULE_SHORT_DESCRIPTION = "PMs offline users when mentioned."
+   RECOMMENDED_CMD_NAMES = ["mnotify", "mentionsnotify", "mn"]
+   
+   _SECRET_TOKEN = utils.SecretToken()
+   _cmd_dict = {}
 
-   _HELP_SUMMARY_LINES = """
-`{pf}mnotify` - View and change settings of PM notification system.
-   """.strip().splitlines()
-
-   _HELP_DETAIL_LINES = """
-**The mentions notification system:**
-
-This module notifies users of mentions via PM when they're offline.
-
-`{pf}mnotify` - View and change settings of PM notification system.
-   """.strip().splitlines()
+   _HELP_SUMMARY = """
+PLACEHOLDER FOR {mod}
+   """.strip()
 
    async def _initialize(self, resources):
       self._client = resources.client
       return
 
-   # Call this every time a message is received.
    async def on_message(self, msg):
       for member in msg.mentions:
          if str(member.status) != "offline":
@@ -43,7 +34,6 @@ This module notifies users of mentions via PM when they're offline.
          print("MentionNotifyModule: A notification was sent!")
       return
 
-   # Call this to process a command.
    async def process_cmd(self, substr, msg, privilege_level):
       await self._client.send_msg(msg, "The notify module currently has no commands. Sorry!")
       return

@@ -9,20 +9,16 @@ from servermodule import ServerModule
 
 class Debugging(ServerModule):
 
-   _SECRET_TOKEN = utils.SecretToken()
-
-   RECOMMENDED_CMD_NAMES = ["debugging", "debug", "db"]
-
    MODULE_NAME = "Debugging"
    MODULE_SHORT_DESCRIPTION = "Bot debugging tools."
+   RECOMMENDED_CMD_NAMES = ["debugging", "debug", "db"]
 
-   _HELP_SUMMARY_LINES = """
-(DEBUGGING) self._HELP_SUMMARY_LINES
-   """.strip().splitlines()
+   _SECRET_TOKEN = utils.SecretToken()
+   _cmd_dict = {} # Empty dict should work...
 
-   _HELP_DETAIL_LINES = """
-(DEBUGGING) self._HELP_DETAIL_LINES
-   """.strip().splitlines()
+   _HELP_SUMMARY = """
+PLACEHOLDER FOR {mod}
+   """.strip()
 
    async def _initialize(self, resources):
       self._res = resources
@@ -42,6 +38,3 @@ class Debugging(ServerModule):
       print("PRIVILEGE LEVEL = " + privilege_level.to_string())
       await self._client.send_msg(msg, "**Sub-command received:** " + substr)
       return
-
-   
-

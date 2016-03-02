@@ -17,31 +17,21 @@ import cmd
 
 class ServerActivityStatistics(ServerModule):
 
-   _SECRET_TOKEN = utils.SecretToken()
-
-   RECOMMENDED_CMD_NAMES = ["stats", "serverstats"]
-
    MODULE_NAME = "Server Activity Statistics"
    MODULE_SHORT_DESCRIPTION = "Generates server activity graphs."
+   RECOMMENDED_CMD_NAMES = ["stats", "serverstats"]
 
-   _HELP_SUMMARY_LINES = """
->>> PRIVILEGE LEVEL 8000 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-`{pf}stats [eval] [bin] [graph] [filt]` - Generate server statistics graph. (`{pf}stats` for details.)
-   """.strip().splitlines()
+   _SECRET_TOKEN = utils.SecretToken()
+   _cmd_dict = {}
 
-   _HELP_DETAIL_LINES = """
->>> PRIVILEGE LEVEL 8000 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-`{pf}stats [eval] [bin] [graph] [filt]` - Generate server statistics graph. (`{pf}stats` for details.)
->>> PRIVILEGE LEVEL 9001 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-`{pf}stats login` - Re-read settings file to log into plotly.
-   """.strip().splitlines()
+   _HELP_SUMMARY = """
+PLACEHOLDER FOR {mod}
+   """.strip()
 
    DEFAULT_SHARED_SETTINGS = {
       "login username": "PLACEHOLDER",
       "api key": "PLACEHOLDER",
    }
-
-   _cmd_dict = {} # Command Dictionary
 
    async def _initialize(self, resources):
       self._res = resources
@@ -49,6 +39,9 @@ class ServerActivityStatistics(ServerModule):
 
       self._log_in_from_file()
       return
+
+   def get_help_detail(self, substr, privilege_level):
+      return self._get_usage_info()
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
       return content

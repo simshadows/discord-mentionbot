@@ -8,31 +8,20 @@ from servermodule import ServerModule
 import cmd
 
 class BasicInfo(ServerModule):
-   
-   _SECRET_TOKEN = utils.SecretToken()
-
-   RECOMMENDED_CMD_NAMES = ["basicinfo"]
 
    MODULE_NAME = "Basic Information"
    MODULE_SHORT_DESCRIPTION = "Retrieves basic information about the server, users, etc."
+   RECOMMENDED_CMD_NAMES = ["basicinfo"]
+   
+   _SECRET_TOKEN = utils.SecretToken()
+   _cmd_dict = {}
 
-   _HELP_SUMMARY_LINES = """
-`{pf}whois [user]` - Get user info.
-`{pf}avatar [user]` - Get a user's avatar.
-`{pf}thisserver` - Get some simple server info and statistics.
-`{pf}servericon` - Get server icon.
-   """.strip().splitlines()
+   _HELP_SUMMARY = """
+PLACEHOLDER FOR {mod}
+   """.strip()
 
-   _HELP_DETAIL_LINES = """
-`{pf}whois [user]` - Get user info.
-`{pf}avatar [user]` - Get a user's avatar.
-`{pf}thisserver` - Get some simple server info and statistics.
-`{pf}servericon` - Get server icon.
-
-*Note: Dates are presented in ISO 8601 format.*
-   """.strip().splitlines()
-
-   _cmd_dict = {} # Command Dictionary
+   # TODO: Add this to help detail in the future...
+   # *Note: Dates are presented in ISO 8601 format.*
 
    async def _initialize(self, resources):
       self._client = resources.client
@@ -53,14 +42,9 @@ class BasicInfo(ServerModule):
          content = utils.add_base_cmd(content, default_cmd_prefix, self._cmd_names[0])
       return content
 
-   async def process_cmd(self, substr, msg, privilege_level):
-      (left, right) = utils.separate_left_word(substr)
-      cmd_to_execute = cmd.get(self._cmd_dict, left, privilege_level)
-      await cmd_to_execute(self, right, msg, privilege_level)
-      return
-
    @cmd.add(_cmd_dict, "avatar", "dp", "avatarurl")
    async def _cmdf_avatar(self, substr, msg, privilege_level):
+      """`{p}avatar [user]` - Get a user's avatar."""
       substr = substr.strip()
       user = None
       if len(substr) == 0:
@@ -79,6 +63,7 @@ class BasicInfo(ServerModule):
 
    @cmd.add(_cmd_dict, "user", "whois", "who")
    async def _cmdf_user(self, substr, msg, privilege_level):
+      """`{p}whois [user]` - Get user info."""
       # Get user. Copied from _cmd_avatar()...
       substr = substr.strip()
       user = None
@@ -109,6 +94,7 @@ class BasicInfo(ServerModule):
 
    @cmd.add(_cmd_dict, "server", "thisserver")
    async def _cmdf_server(self, substr, msg, privilege_level):
+      """`{p}thisserver` - Get some simple server info and statistics."""
       s = msg.server
       # Count voice and text channels
       text_ch_total = 0
@@ -138,6 +124,7 @@ class BasicInfo(ServerModule):
 
    @cmd.add(_cmd_dict, "servericon")
    async def _cmdf_servericon(self, substr, msg, privilege_level):
+      """`{p}servericon` - Get server icon."""
       if msg.server.icon_url == "":
          return await self._client.send_msg(msg, "This server has no icon.")
       else:

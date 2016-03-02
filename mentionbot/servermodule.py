@@ -1,24 +1,28 @@
 import utils
+import cmd
 
 # Abstract Class (would've been an interface...)
 # All server modules are subclasses of ServerModule.
 class ServerModule:
-   
-   # Must instantiate a token class. Recommended: utils.SecretToken()
-   _SECRET_TOKEN = NotImplemented
-   
-   RECOMMENDED_CMD_NAMES = NotImplemented
 
    MODULE_NAME = NotImplemented
    MODULE_SHORT_DESCRIPTION = NotImplemented
+   RECOMMENDED_CMD_NAMES = NotImplemented
+   
+   # Must instantiate a token class. Recommended: utils.SecretToken()
+   _SECRET_TOKEN = NotImplemented
 
-   # Help menu content.
-   # These must be split into a list of lines (done using String.splitlines()).
-   # This allows the use of the help message parser which substitutes
-   # instances of {pf} and hides contents based on permission.
-   # Check the modules for examples.
-   _HELP_SUMMARY_LINES = NotImplemented
-   _HELP_DETAIL_LINES = NotImplemented
+   # Must instantiate an empty dictionary unless overriding all the following
+   # methods (usually to implement a more complex bot command heirarchy):
+   #     get_help_summary()
+   #     get_help_detail()
+   #     process_cmd()
+   _cmd_dict = NotImplemented
+   
+   # A string, potentially multi-line, giving a brief summary of the module.
+   # Formatting arguments "modhelp", "mod", and "p" are used here, evaluated
+   # when processing this string.
+   _HELP_SUMMARY = NotImplemented
 
    # Do whatever initialization you wish here.
    async def _initialize(self, resources):
@@ -47,18 +51,14 @@ class ServerModule:
    # Get a help-message string summarising the module functionality,
    # or at least directing the user to more detailed help.
    # Returned string has no leading/trailing whitespace.
-   # NOTE: cmd_prefix is sensitive to leading/trailing whitespace.
-   #       For example, cmd_prefix="/" will make module commands show
-   #       up as "/examplecommand", while "$mb " will make the same
-   #       module command show up as "$mb examplecommand".
-   def get_help_summary(self, cmd_prefix, privilege_level):
-      return utils.prepare_help_content(self._HELP_SUMMARY_LINES, cmd_prefix, privilege_level)
+   def get_help_summary(self, privilege_level):
+      return cmd.format_mod_evaluate(self._HELP_SUMMARY, mod=self.cmd_names[0])
 
    # Get a detailed help-message string about the module.
    # String has no leading/trailing whitespace.
-   # NOTE: cmd_prefix works the same as in get_help_summary.
-   def get_help_detail(self, substr, cmd_prefix, privilege_level):
-      return utils.prepare_help_content(self._HELP_DETAIL_LINES, cmd_prefix, privilege_level)
+   def get_help_detail(self, substr, privilege_level):
+      buf = cmd.compose_help_summary(self._cmd_dict, privilege_level)
+      return buf.format(b=self.cmd_names[0] + " ", p="{p}")
 
    # Every module has the opportunity to pre-process the contents of a message.
    # This is carried out after all modules have carried out their on_message()
@@ -90,8 +90,17 @@ class ServerModule:
       pass
 
    # This method is called if a command is to be handled by the module.
+   # By default, it processes a command in _cmd_dict.
+   # Overriding to add further pre-processing and other things would
+   # usually involve calling this with super() rather than rewriting
+   # it completely.
+   # Complete rewrite should only happen if implementing a more complicated
+   # bot command heirarchy (which should be never).
    async def process_cmd(self, substr, msg, privilege_level):
-      pass
+      (left, right) = utils.separate_left_word(substr)
+      cmd_to_execute = cmd.get(self._cmd_dict, left, privilege_level)
+      await cmd_to_execute(self, right, msg, privilege_level)
+      return
 
 
 

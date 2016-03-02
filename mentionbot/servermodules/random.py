@@ -10,35 +10,32 @@ from servermodule import ServerModule
 import cmd
 
 class Random(ServerModule):
-   
-   _SECRET_TOKEN = utils.SecretToken()
-
-   RECOMMENDED_CMD_NAMES = ["random", "rng", "rnd", "rand"]
 
    MODULE_NAME = "Random"
    MODULE_SHORT_DESCRIPTION = "Random value generation tools."
+   RECOMMENDED_CMD_NAMES = ["random", "rng", "rnd", "rand"]
+   
+   _SECRET_TOKEN = utils.SecretToken()
+   _cmd_dict = {}
 
-   _HELP_SUMMARY_LINES = """
-`{pf}random [integer]` - Get random int. (See `{pf}help random` for more!)
-   """.strip().splitlines()
+   _HELP_SUMMARY = """
+`{p}random [integer]` - Get random int. (See `{modhelp}` for more!)
+   """.strip()
 
-   _HELP_DETAIL_LINES = """
-**Examples**
-*All ranges are inclusive unless otherwise noted.*
-`{pf}random` - Generates random number from 1 to 10.
-`{pf}random number -1 to -5, 6to10` - Generates two random numbers.
-`{pf}random choose A;B;C` - Randomly picks an option (delimited by `;`).
-`{pf}random coin` - Flips a coin.
-`{pf}random colour` - Generates a random RGB colour code.
-`{pf}random dice 3d9` - Rolls 9-sided dice (faces 1 to 9) 3 times.
-   """.strip().splitlines()
+   # TODO: Add this to help detail in the future...
+   # **Examples**
+   # *All ranges are inclusive unless otherwise noted.*
+   # `{pf}random` - Generates random number from 1 to 10.
+   # `{pf}random number -1 to -5, 6to10` - Generates two random numbers.
+   # `{pf}random choose A;B;C` - Randomly picks an option (delimited by `;`).
+   # `{pf}random coin` - Flips a coin.
+   # `{pf}random colour` - Generates a random RGB colour code.
+   # `{pf}random dice 3d9` - Rolls 9-sided dice (faces 1 to 9) 3 times.
 
    _RE_DIGITS = re.compile("\d+")
    _RE_INT = re.compile("[-\+]?\d+")
    _RE_KW_CHOOSE = re.compile("choose|ch|choice|choices")
    _RE_DICE_NOTATION = re.compile("(\d*d)?\d+")
-
-   _cmd_dict = {} # Command Dictionary
 
    async def _initialize(self, resources):
       self._client = resources.client
@@ -57,13 +54,11 @@ class Random(ServerModule):
          substr = "number " + substr
       elif (not self._RE_KW_CHOOSE.match(substr)) and (";" in substr):
          substr = "choose " + substr
-      (left, right) = utils.separate_left_word(substr)
-      cmd_to_execute = cmd.get(self._cmd_dict, left, privilege_level)
-      await cmd_to_execute(self, right, msg, privilege_level)
-      return
+      return super(Random, self).process_cmd(substr, msg, privilege_level)
 
    @cmd.add(_cmd_dict, "number", "num", "int", "integer")
    async def _cmdf_number(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       # Compile a set of ranges to randomize.
       args = utils.remove_whitespace(substr)
       rng_ranges = []
@@ -116,6 +111,7 @@ class Random(ServerModule):
 
    @cmd.add(_cmd_dict, "choose", "ch", "choice", "choices")
    async def _cmdf_choose(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       choices = substr.split(";")
       choices = list(filter(None, choices)) # Remove empty strings
       if len(choices) == 0:
@@ -130,6 +126,7 @@ class Random(ServerModule):
 
    @cmd.add(_cmd_dict, "coin", "flip")
    async def _cmdf_coin(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       if random.randint(0,1) == 1:
          buf = "Heads"
       else:
@@ -147,6 +144,7 @@ class Random(ServerModule):
 
    @cmd.add(_cmd_dict, "colour", "color", "rgb")
    async def _cmdf_colour(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       rand_int = random.randint(0,(16**6)-1)
       rand = hex(rand_int)[2:] # Convert to hex
       rand = rand.zfill(6)
@@ -157,6 +155,7 @@ class Random(ServerModule):
 
    @cmd.add(_cmd_dict, "dice", "roll")
    async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       if substr == "":
          throws = 1
          sides = 6

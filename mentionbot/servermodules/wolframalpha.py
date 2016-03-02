@@ -10,32 +10,17 @@ from servermodule import ServerModule
 import cmd
 
 class WolframAlpha(ServerModule):
-   
-   _SECRET_TOKEN = utils.SecretToken()
-
-   RECOMMENDED_CMD_NAMES = ["wamanage"]
 
    MODULE_NAME = "Wolfram Alpha"
    MODULE_SHORT_DESCRIPTION = "Conveniently allows you to send and receive WA queries."
+   RECOMMENDED_CMD_NAMES = ["wamanage"]
+   
+   _SECRET_TOKEN = utils.SecretToken()
+   _cmd_dict = {}
 
-   _HELP_SUMMARY_LINES = """
-`{pf}wa [query]` - Make a Wolfram Alpha query. (See `{pf}help wamanage` for more!)
-`{pf}define [word]` - Get word definition from WA. (See `{pf}help wamanage` for more!)
-   """.strip().splitlines()
-
-   _HELP_DETAIL_LINES = """
-`{pf}wa [query]` - Make a Wolfram Alpha query.
-`{pf}define [word]` - Get word definition from WA. (See `{pf}help wamanage` for more!)
-`{pf}wamanage maxpods` - Get the max number of pods shown.
->>> PRIVILEGE LEVEL 8000 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-`{pf}wamanage setmaxpods [integer]` - Get the max number of pods shown.
-`{pf}wamanage showtext [true|false]` - Set whether or not queries show text results.
-`{pf}wamanage showimg [true|false]` - Set whether or not queries show image results.
-(NOTE: Settings are not persistently stored. This will change in the future.)
->>> PRIVILEGE LEVEL 0 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-(Pods are answers from Wolfram Alpha.)
-   """.strip().splitlines()
+   _HELP_SUMMARY = """
+PLACEHOLDER FOR {mod}
+   """.strip()
 
    DEFAULT_SHARED_SETTINGS = {
       "wa app id": "PLACEHOLDER",
@@ -46,8 +31,6 @@ class WolframAlpha(ServerModule):
       "show text": "true",
       "show img": "false",
    }
-
-   _cmd_dict = {} # Command Dictionary
 
    async def _initialize(self, resources):
       self._res = resources
@@ -110,6 +93,7 @@ class WolframAlpha(ServerModule):
 
    @cmd.add(_cmd_dict, "query", "q")
    async def _cmdf_query(self, substr, msg, privilege_level):
+      """`{p}wa [query]` - Make a Wolfram Alpha query."""
       if substr == "":
          await self._client.send_msg(msg, "Error: No text input made for query. Aborting.")
       else:
@@ -144,6 +128,7 @@ class WolframAlpha(ServerModule):
 
    @cmd.add(_cmd_dict, "define", "def")
    async def _cmdf_define(self, substr, msg, privilege_level):
+      """`{p}define [word]` - Get word definition from WA."""
       if substr == "":
          await self._client.send_msg(msg, "Error: No text input made for query. Aborting.")
       else:
@@ -159,12 +144,14 @@ class WolframAlpha(ServerModule):
 
    @cmd.add(_cmd_dict, "maxpods")
    async def _cmdf_maxpods(self, substr, msg, privilege_level):
+      """`{cmd}` - Get the max number of pods shown."""
       await self._client.send_msg(msg, "Max pods: " + str(self._max_pods))
       return
 
    @cmd.add(_cmd_dict, "setmaxpods")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_setmaxpods(self, substr, msg, privilege_level):
+      """`{cmd} [integer]` - Get the max number of pods shown."""
       new_max_pods = None
       try:
          new_max_pods = int(substr)
@@ -180,6 +167,7 @@ class WolframAlpha(ServerModule):
    @cmd.add(_cmd_dict, "showtext")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_showtext(self, substr, msg, privilege_level):
+      """`{cmd} [true|false]` - Set whether or not queries show text results."""
       if utils.str_says_true(substr):
          self._show_text = True
          await self._client.send_msg(msg, "Queries now show text.")
@@ -194,6 +182,7 @@ class WolframAlpha(ServerModule):
    @cmd.add(_cmd_dict, "showimg")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_showimg(self, substr, msg, privilege_level):
+      """`{cmd} [true|false]` - Set whether or not queries show image results"""
       if utils.str_says_true(substr):
          self._show_img = True
          await self._client.send_msg(msg, "Queries now show images.")
@@ -207,6 +196,7 @@ class WolframAlpha(ServerModule):
 
    @cmd.add(_cmd_dict, "reloadsettings")
    async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       self._load_settings()
       await self._client.send_msg(msg, "Wolfram Alpha settings reloaded successfully.")
       return

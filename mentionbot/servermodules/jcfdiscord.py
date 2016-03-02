@@ -10,23 +10,17 @@ from servermodule import ServerModule
 import cmd
 
 class JCFDiscord(ServerModule):
-   
-   _SECRET_TOKEN = utils.SecretToken()
-
-   RECOMMENDED_CMD_NAMES = ["jcfdiscord"]
 
    MODULE_NAME = "JCFDiscord"
    MODULE_SHORT_DESCRIPTION = "Functions built specifically for the JCFDiscord community."
+   RECOMMENDED_CMD_NAMES = ["jcfdiscord"]
+   
+   _SECRET_TOKEN = utils.SecretToken()
+   _cmd_dict = {}
 
-   _HELP_SUMMARY_LINES = """
-`{pf}functions [types]` - Get a list of MBTI function stacks.
-`{pf}choosetruth` - Randomly choose a truth player in the channel.
-   """.strip().splitlines()
-
-   _HELP_DETAIL_LINES = """
-`{pf}functions [types]` - Get a list of MBTI function stacks.
-`{pf}choosetruth` - Randomly choose a truth player in the channel.
-   """.strip().splitlines()
+   _HELP_SUMMARY = """
+PLACEHOLDER FOR {mod}
+   """.strip()
 
    _FUNCTION_STACKS = {
       "INTJ": "Ni - Te - Fi - Se",
@@ -52,8 +46,6 @@ class JCFDiscord(ServerModule):
       "ISTJ","ISFJ","ESTJ","ESFJ","ISTP","ISFP","ESTP","ESFP",
    ]
 
-   _cmd_dict = {} # Command Dictionary
-
    async def _initialize(self, resources):
       self._res = resources
       self._client = self._res.client
@@ -68,14 +60,9 @@ class JCFDiscord(ServerModule):
          content = utils.add_base_cmd(content, default_cmd_prefix, self._cmd_names[0])
       return content
 
-   async def process_cmd(self, substr, msg, privilege_level):
-      (left, right) = utils.separate_left_word(substr)
-      cmd_to_execute = cmd.get(self._cmd_dict, left, privilege_level)
-      await cmd_to_execute(self, right, msg, privilege_level)
-      return
-
    @cmd.add(_cmd_dict, "functions", "fn", "stack")
    async def _cmdf_functions(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       args = substr.split()
       types = []
       for arg in args:
@@ -93,6 +80,7 @@ class JCFDiscord(ServerModule):
 
    @cmd.add(_cmd_dict, "choosetruth")
    async def _cmdf_choosetruth(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       topic = msg.channel.topic
       if topic is None:
          await self._client.send_msg(msg, "There doesn't appear to be a truth game in here.")

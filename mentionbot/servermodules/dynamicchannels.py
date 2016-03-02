@@ -13,31 +13,20 @@ from servermodule import ServerModule
 import cmd
 
 class DynamicChannels(ServerModule):
-   
-   _SECRET_TOKEN = utils.SecretToken()
-
-   RECOMMENDED_CMD_NAMES = ["dchannel"]
 
    MODULE_NAME = "Dynamic Channels"
    MODULE_SHORT_DESCRIPTION = "Allows users to create temporary channels. (NOT YET FUNCTIONAL.)"
+   RECOMMENDED_CMD_NAMES = ["dchannel"]
+   
+   _SECRET_TOKEN = utils.SecretToken()
+   _cmd_dict = {}
 
-   _HELP_SUMMARY_LINES = """
+   _HELP_SUMMARY = """
+PLACEHOLDER FOR {mod}
 `+` - See list of hidden channels. (Will cut off at 2000 chars.)
 `+[string]` - Search list of hidden channels.
 `++[string]` - Create/unhide channel.
-   """.strip().splitlines()
-
-   _HELP_DETAIL_LINES = """
-`+` - See list of hidden channels. (Will cut off at 2000 chars.)
-`+[string]` - Search list of hidden channels.
-`++[string]` - Create/unhide channel.
-   """.strip().splitlines()
-
-# >>> PRIVILEGE LEVEL 8000 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# `{pf}dchannel enacreation [true|false]` - Enables/disables channel creation.
-# `{pf}dchannel enaautohide [true|false]` - Enables/disables channel auto-hide.
-# `{pf}dchannel enatopicedit [true|false]` - Enables/disables topic editing.
-# `{pf}dchannel autohidetimer [integer]` - Set auto-hide time-out (in minutes).
+   """.strip()
 
    DEFAULT_SETTINGS = {
       "default channels": [],
@@ -46,8 +35,6 @@ class DynamicChannels(ServerModule):
    }
 
    _re_non_alnum_or_dash = re.compile("[^-0-9a-zA-Z]")
-
-   _cmd_dict = {} # Command Dictionary
 
    async def _initialize(self, resources):
       self._res = resources
@@ -151,10 +138,7 @@ class DynamicChannels(ServerModule):
    async def process_cmd(self, substr, msg, privilege_level):
       if substr == "":
          substr = "status"
-      (left, right) = utils.separate_left_word(substr)
-      cmd_to_execute = cmd.get(self._cmd_dict, left, privilege_level)
-      await cmd_to_execute(self, right, msg, privilege_level)
-      return
+      return super(DynamicChannels, self).process_cmd(substr, msg, privilege_level)
 
    async def on_message(self, msg):
       if self._name_is_default_channel(msg.channel.name):
@@ -168,6 +152,7 @@ class DynamicChannels(ServerModule):
 
    @cmd.add(_cmd_dict, "search")
    async def _cmdf_search(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       ch_name = utils.convert_to_legal_channel_name(substr)
       available_channels = []
       restrict = (len(ch_name) != 0)
@@ -188,6 +173,7 @@ class DynamicChannels(ServerModule):
 
    @cmd.add(_cmd_dict, "open", "create")
    async def _cmdf_open(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       if len(self._scheduler.get_scheduled()) >= self._max_active_temp_channels >= 0:
          buf = "No more than {}".format(str(self._max_active_temp_channels))
          buf += " active temporary channels are allowed."
@@ -224,6 +210,7 @@ class DynamicChannels(ServerModule):
    @cmd.add(_cmd_dict, "status", "admin", "s", "stat", "settings")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_status(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       buf = "**Timeout**: " + str(self._channel_timeout) + " minutes"
       if self._max_active_temp_channels < 0:
          buf += "\n**Max Active**: unlimited channels"
@@ -260,6 +247,7 @@ class DynamicChannels(ServerModule):
 
    @cmd.add(_cmd_dict, "scheduled")
    async def _cmdf_debug(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       scheduled = self._scheduler.get_scheduled()
       if len(scheduled) == 0:
          await self._client.send_msg(msg, "No channels are scheduled.")
@@ -273,6 +261,7 @@ class DynamicChannels(ServerModule):
    @cmd.add(_cmd_dict, "clearscheduled")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_debug(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       self._scheduler.unschedule_all()
       await self._client.send_msg(msg, "Scheduled closure list is cleared.")
       return
@@ -280,6 +269,7 @@ class DynamicChannels(ServerModule):
    @cmd.add(_cmd_dict, "addbotflair")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_addbotflair(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       if len(substr) == 0:
          raise errors.InvalidCommandArgumentsError
       elif len(utils.flair_names_to_object(self._server, [substr])) == 0:
@@ -297,6 +287,7 @@ class DynamicChannels(ServerModule):
    @cmd.add(_cmd_dict, "removebotflair")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_addbotflair(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       try:
          self._bot_flairs.remove(substr)
          await self._client.send_msg(msg, "`{}` removed as a bot flair.".format(substr))
@@ -308,6 +299,7 @@ class DynamicChannels(ServerModule):
    @cmd.add(_cmd_dict, "adddefault")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_adddefault(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       new_default = None
       if len(substr) == 0:
          new_default = msg.channel
@@ -330,6 +322,7 @@ class DynamicChannels(ServerModule):
    @cmd.add(_cmd_dict, "removedefault")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_removedefault(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       to_remove = self._client.search_for_channel(substr, serverrestriction=self._server)
       if to_remove is None:
          await self._client.send_msg(msg, "Error: Channel not found.")
@@ -344,6 +337,7 @@ class DynamicChannels(ServerModule):
    @cmd.add(_cmd_dict, "settimeout")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_settimeout(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       try:
          new_timeout = int(substr)
          if new_timeout < 1:
@@ -359,6 +353,7 @@ class DynamicChannels(ServerModule):
    @cmd.add(_cmd_dict, "setmaxactive")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_setmaxactive(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       try:
          self._max_active_temp_channels = int(substr)
          self._save_settings()

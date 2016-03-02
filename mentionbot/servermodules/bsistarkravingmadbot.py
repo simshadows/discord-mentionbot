@@ -9,19 +9,17 @@ from servermodule import ServerModule
 import cmd
 
 class BsiStarkRavingMadBot(ServerModule):
-   
-   _SECRET_TOKEN = utils.SecretToken()
-
-   RECOMMENDED_CMD_NAMES = ["bsistarkravingmadbot", "stark"]
 
    MODULE_NAME = "BSI StarkRavingMadBot"
    MODULE_SHORT_DESCRIPTION = "Allows this bot to stand-in for the bot *StarkRavingMadBot*."
+   RECOMMENDED_CMD_NAMES = ["bsistarkravingmadbot", "stark"]
+   
+   _SECRET_TOKEN = utils.SecretToken()
+   _cmd_dict = {}
 
-   _HELP_SUMMARY_LINES = """
-   """.strip().splitlines()
-
-   _HELP_DETAIL_LINES = """
-   """.strip().splitlines()
+   _HELP_SUMMARY = """
+PLACEHOLDER FOR {mod}
+   """.strip()
 
    # STARK_PF = "$" # TODO: Consider implementing this.
 
@@ -60,8 +58,6 @@ For reference, I require the following modules to be installed:
    """.strip()
 
    STARKRAVINGMADBOT_DEFAULTID = "121281613660160000"
-
-   _cmd_dict = {} # Command Dictionary
 
    async def _initialize(self, resources):
       self._client = resources.client
@@ -126,25 +122,22 @@ For reference, I require the following modules to be installed:
       else:
          return left + " " + right
 
-   async def process_cmd(self, substr, msg, privilege_level):
-      (left, right) = utils.separate_left_word(substr)
-      cmd_to_execute = cmd.get(self._cmd_dict, left, privilege_level)
-      await cmd_to_execute(self, right, msg, privilege_level)
-      return
-
    @cmd.add(_cmd_dict, "cmdnotimplemented")
    async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):
+      """`{cmd}` - (Please don't use this command.)"""
       buf = "Sorry, I haven't implemented my own version of that command yet."
       await self._client.send_msg(msg, buf)
       return
 
    @cmd.add(_cmd_dict, "help")
    async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):
+      """`{cmd}` - Get a stand-in version of Stark's help message."""
       await self._client.send_msg(msg, self.STARK_HELP)
       return
 
    @cmd.add(_cmd_dict, "git")
    async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):
+      """`{cmd}` - Get a stand-in version of Stark's source command."""
       buf = "*Now, I'm not StarkRavingMadBot, but here's a copy-paste of what it would've said:*"
       buf += "\n\"You can find my source at https://github.com/josh951623/StarkRavingMadBot/tree/master. If you'd like to suggest a feature, go ahead and join me in my dev server: https://discord.gg/0ktzcmJwmeWuQtiM.\""
       await self._client.send_msg(msg, buf)
@@ -152,16 +145,19 @@ For reference, I require the following modules to be installed:
 
    @cmd.add(_cmd_dict, "say")
    async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       await self._client.send_msg(msg, "m8")
       return
 
    @cmd.add(_cmd_dict, "sleep")
    async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       await self._client.send_msg(msg, random.choice(self._sleep_choices))
       return
 
    @cmd.add(_cmd_dict, "rip")
    async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       await self._client.send_msg(msg, "doesnt even deserve a funeral")
       return
 

@@ -4,7 +4,18 @@ import utils
 from enums import PrivilegeLevel
 import errors
 
-# "{cmd}" -> "{bc}{c}" -> "{p}{b}{c}"
+# Help message string formatting arguments:
+#     Everywhere:
+#        "{cmd}" -> "{bc}{c}" -> "{p}{b}{c}"
+#           "{cmd}", "{c}", and "{bc}"->"{p}{b}" are evaluated in get_help_summary().
+#           "{b}" is evaluated where the help summary is composed from the command
+#              objects themselves.
+#           "{p}" is evaluated last, before sending off the final string.
+#     In modules:
+#        "{modhelp}" -> "{p}help {mod}"
+#           "{modhelp}" and "{mod}" are evaluated where the help summary is composed
+#              from the command objects themselves, in a module method.
+#           "{p}" is evaluated last, before sending off the final string.
 
 ###########################################################################################
 # UTILITY FUNCTIONS #######################################################################
@@ -87,8 +98,14 @@ def get_help_summary(cmd_obj):
    docstr = inspect.getdoc(cmd_obj)
    if docstr is None or len(docstr) == 0:
       return ""
-   docstr = docstr.split("\n", 1)[0].format(cmd="{bc}{c}")
-   return docstr.format(c=cmd_obj.cmd_names[0], bc="{bc}")
+   kwargs = {
+      "cmd": "{p}{b}" + cmd_obj.cmd_names[0],
+      "bc": "{p}{b}",
+      "p": "{p}",
+      "b": "{b}",
+      "c": cmd_obj.cmd_names[0],
+   }
+   return docstr.split("\n", 1)[0].format(**kwargs)
 
 def get_help_detail(cmd_obj):
    docstr = inspect.getdoc(cmd_obj)
@@ -96,6 +113,11 @@ def get_help_detail(cmd_obj):
       return ""
    else:
       return docstr
+
+# Carries out "{modhelp}" -> "{p}help {mod}" evaluation, while also
+# substituting "{mod}".
+def format_mod_evaluate(content_str, *, mod=None):
+   return content_str.format(modhelp="{p}help " + mod, mod=mod, p="{p}")
 
 ###########################################################################################
 # FUNCTION DECORATORS #####################################################################
