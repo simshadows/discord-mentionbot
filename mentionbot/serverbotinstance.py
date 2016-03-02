@@ -32,33 +32,6 @@ class ServerBotInstance:
 
    _cmd_dict = {} # Command Dictionary
 
-   # IMPORTANT: This needs to be parsed with ServerModule._prepare_help_content()
-   # TODO: Figure out a neater way of doing this.
-   _HELP_SUMMARY_TO_BEGIN = """
-**The following commands are available:**
-`{pf}source` - Where to get source code.
-`{pf}mods` - Get all installed/available modules.
-`{pf}uptime` - Get bot uptime.
-`{pf}gettime`
->>> PRIVILEGE LEVEL 8000 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-`{pf}say [text]`
-`{pf}add [module name]`
-`{pf}remove [module name]`
-`{pf}prefix [new prefix name]`
->>> PRIVILEGE LEVEL 9001 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-`{pf}iam [@user] [text]`
-`{pf}setgame [text]`
-`{pf}tempgame [text]`
-`{pf}revertgame`
-`{pf}setusername [text]`
-`{pf}getemail`
-`{pf}joinserver [invitelink]`
-`{pf}msgcachedebug`
-`{pf}msgcachefirst`
-`{pf}leaveserver`
-`{pf}throwexception`
-   """.strip().splitlines()
-
    @classmethod
    async def get_instance(cls, client, server):
       inst = cls(cls._SECRET_TOKEN)
@@ -178,29 +151,38 @@ class ServerBotInstance:
 
    @cmd.add(_cmd_dict, "help")
    async def _cmdf_help(self, substr, msg, privilege_level):
+      """
+      `{cmd} [command name]` - More help.
+
+      This text should only show when obtaining additional help.
+      """
       help_content = self._get_help_content(substr, msg, self.cmd_prefix, privilege_level)
       await self._client.send_msg(msg, help_content)
       return
 
    @cmd.add(_cmd_dict, "source", "src")
    async def _cmdf_source(self, substr, msg, privilege_level):
+      """`{cmd}` - Where to get my source code."""
       await self._client.send_msg(msg, "https://github.com/simshadows/discord-mentionbot")
       return
 
    @cmd.add(_cmd_dict, "uptime")
    async def _cmdf_uptime(self, substr, msg, privilege_level):
+      """`{cmd}` - Get time since initialization."""
       buf = "**Bot current uptime:** {}. ".format(utils.seconds_to_string(self.get_presence_time()))
       await self._client.send_msg(msg, buf)
       return
 
    @cmd.add(_cmd_dict, "time", "gettime", "utc")
    async def _cmdf_time(self, substr, msg, privilege_level):
+      """`{cmd}` - Get bot's system time in UTC."""
       await self._client.send_msg(msg, datetime.datetime.utcnow().strftime("My current system time: %c UTC"))
       return
 
    @cmd.add(_cmd_dict, "say")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_say(self, substr, msg, privilege_level):
+      """`{cmd} [text]` - Echo's the following text."""
       await self._client.send_msg(msg, substr)
       return
 
@@ -212,6 +194,7 @@ class ServerBotInstance:
 
    @cmd.add(_cmd_dict, "lmgtfy", "google", "goog", "yahoo")
    async def _cmdf_say(self, substr, msg, privilege_level):
+      """`{cmd} [text]` - Let me google that for you..."""
       await self._client.send_msg(msg, "http://lmgtfy.com/?q=" + urllibparse.quote(substr))
       return
 
@@ -222,6 +205,7 @@ class ServerBotInstance:
 
    @cmd.add(_cmd_dict, "mods", "modules")
    async def _cmdf_mods(self, substr, msg, privilege_level):
+      """`{cmd}` - View installed and available modules."""
       installed_mods = list(self._modules.gen_module_info())
       if len(installed_mods) == 0:
          buf = "**No modules are installed.**"
@@ -251,6 +235,7 @@ class ServerBotInstance:
    @cmd.add(_cmd_dict, "add", "install", "addmodule")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_add(self, substr, msg, privilege_level):
+      """`{cmd} [module name]` - Add a module."""
       if self._module_factory.module_exists(substr):
          if self._modules.module_is_installed(substr):
             await self._client.send_msg(msg, "`{}` is already installed.".format(substr))
@@ -266,6 +251,7 @@ class ServerBotInstance:
    @cmd.add(_cmd_dict, "remove", "uninstall", "removemodule")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_remove(self, substr, msg, privilege_level):
+      """`{cmd} [module name]` - Remove a module."""
       if self._modules.module_is_installed(substr):
          await self._modules.remove_server_module(substr)
          self._storage.remove_module(substr)
@@ -277,6 +263,7 @@ class ServerBotInstance:
    @cmd.add(_cmd_dict, "prefix", "prefix")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_prefix(self, substr, msg, privilege_level):
+      """`{cmd} [new prefix]` - Set new command prefix."""
       if len(substr) == 0:
          raise errors.InvalidCommandArgumentsError
       self._cmd_prefix = substr
@@ -291,6 +278,7 @@ class ServerBotInstance:
 
    @cmd.add(_cmd_dict, "privinfo", "allprivs", "privsinfo", "whatprivs")
    async def _cmdf_privinfo(self, substr, msg, privilege_level):
+      """`{cmd}` - Get information on the bot's command privilege system."""
       buf = "This bot has internal command privilege levels to determine what"
       buf += " commands users have access to. This is managed separately from"
       buf += " discord's own privileges."
@@ -307,6 +295,7 @@ class ServerBotInstance:
 
    @cmd.add(_cmd_dict, "priv", "privilege", "mypriv")
    async def _cmdf_priv(self, substr, msg, privilege_level):
+      """`{cmd}` - Check your command privilege level."""
       buf = await self._get_user_priv_process("", msg)
       buf += "\nFor info on privilege levels, use the command `{}privinfo`.".format(self._cmd_prefix)
       await self._client.send_msg(msg, buf)
@@ -315,6 +304,7 @@ class ServerBotInstance:
    @cmd.add(_cmd_dict, "privof", "privilegeof")
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_privof(self, substr, msg, privilege_level):
+      """`{cmd} [user]` - Check someone's command privilege level."""
       buf = await self._get_user_priv_process(substr, msg)
       await self._client.send_msg(msg, buf)
       return
@@ -322,6 +312,7 @@ class ServerBotInstance:
    @cmd.add(_cmd_dict, "userprivsresolved", "userprivilegesresolved")
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_userprivsresolved(self, substr, msg, privilege_level):
+      """`{cmd}` - Get list of everyone with command privilege levels resolved."""
       priv_levels = {} # FORMAT: {priv_level: [member]}
       for member in self._server.members:
          member_priv_level = self._privileges.get_privilege_level(member)
@@ -344,6 +335,7 @@ class ServerBotInstance:
    @cmd.add(_cmd_dict, "userprivs", "userprivileges")
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_userprivs(self, substr, msg, privilege_level):
+      """`{cmd}` - View user-assigned command privileges."""
       user_privileges = self._privileges.get_user_privileges()
       buf = None
       if len(user_privileges) == 0:
@@ -368,6 +360,7 @@ class ServerBotInstance:
    @cmd.add(_cmd_dict, "roleprivs", "roleprivileges", "flairprivs", "flairprivileges", "tagprivs", "tagprivileges")
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_roleprivs(self, substr, msg, privilege_level):
+      """`{cmd}` - View role-assigned command privileges."""
       role_privileges = self._privileges.get_role_privileges()
       buf = None
       if len(role_privileges) == 0:
@@ -385,6 +378,7 @@ class ServerBotInstance:
    @cmd.add(_cmd_dict, "adduserpriv", "adduserprivilege")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_adduserpriv(self, substr, msg, privilege_level):
+      """`{cmd} [user] [privilege level]` - Add a user command privilege."""
       # Required 2 arguments.
       # Argument 1: User.
       (left, right) = utils.separate_right_word(substr)
@@ -418,6 +412,7 @@ class ServerBotInstance:
    @cmd.add(_cmd_dict, "addrolepriv", "addroleprivilege")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_addrolepriv(self, substr, msg, privilege_level):
+      """`{cmd} [role name] [privilege level]` - Add a role command privilege."""
       # Required 2 arguments.
       # Argument 1: Role.
       # TODO: This is broken because roles can have spaces in them.
@@ -452,6 +447,7 @@ class ServerBotInstance:
    @cmd.add(_cmd_dict, "removeuserpriv", "removeuserprivilege")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_removeuserpriv(self, substr, msg, privilege_level):
+      """`{cmd} [user]` - Remove a user command privilege."""
       if len(substr) == 0:
          buf = "Error: No arguments have been entered."
       else:
@@ -470,6 +466,7 @@ class ServerBotInstance:
    @cmd.add(_cmd_dict, "removerolepriv", "removeroleprivilege", "removeflairpriv", "removeflairprivilege", "removetagpriv", "removetagprivilege")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_removerolepriv(self, substr, msg, privilege_level):
+      """`{cmd} [role name]` - Remove a role command privilege."""
       if len(substr) == 0:
          buf = "Error: No arguments have been entered."
       else:
@@ -505,6 +502,7 @@ class ServerBotInstance:
    @cmd.add(_cmd_dict, "iam")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_iam(self, substr, msg, privilege_level):
+      """`{cmd} [text]`"""
       (left, right) = utils.separate_left_word(substr)
       if self._RE_MENTIONSTR.fullmatch(left):
          user_to_pose_as = left[2:-1]
@@ -521,6 +519,7 @@ class ServerBotInstance:
    @cmd.add(_cmd_dict, "setgame")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setgame(self, substr, msg, privilege_level):
+      """`{cmd} [text]`"""
       await self._client.set_game_status(substr)
       await self._client.send_msg(msg, "**Game set to:** " + substr)
       return
@@ -528,6 +527,7 @@ class ServerBotInstance:
    @cmd.add(_cmd_dict, "tempgame")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setgame(self, substr, msg, privilege_level):
+      """`{cmd} [text]`"""
       await self._client.set_temp_game_status(substr)
       await self._client.send_msg(msg, "**Game temporarily set to:** " + substr)
       return
@@ -535,6 +535,7 @@ class ServerBotInstance:
    @cmd.add(_cmd_dict, "revertgame")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setgame(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       await self._client.remove_temp_game_status()
       await self._client.send_msg(msg, "**Reverted game.**")
       return
@@ -542,20 +543,16 @@ class ServerBotInstance:
    @cmd.add(_cmd_dict, "setusername")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setusername(self, substr, msg, privilege_level):
+      """`{cmd} [text]`"""
       await self._client.edit_profile(password, username=substr)
       self._bot_name = substr # TODO: Consider making this a function. Or stop using bot_name...
       await self._client.send_msg(msg, "**Username set to:** " + substr)
       return
 
-   @cmd.add(_cmd_dict, "getemail")
-   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
-   async def _cmdf_getemail(self, substr, msg, privilege_level):
-      await self._client.send_msg(msg, "My email is: " + email)
-      return
-
    @cmd.add(_cmd_dict, "joinserver")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_joinserver(self, substr, msg, privilege_level):
+      """`{cmd} [invite link]`"""
       try:
          await self._client.accept_invite(substr)
          await self._client.send_msg(msg, "Successfully joined a new server.")
@@ -566,6 +563,7 @@ class ServerBotInstance:
    @cmd.add(_cmd_dict, "leaveserver")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_leaveserver(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       await self._client.send_msg(msg, "Bye!")
       await self._client.leave_server(msg.channel.server)
       return
@@ -573,44 +571,36 @@ class ServerBotInstance:
    @cmd.add(_cmd_dict, "msgcachedebug")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_msgcachedebug(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       buf = self._client.message_cache_debug_str()
       await self._client.send_msg(msg, buf)
-      return
-
-   @cmd.add(_cmd_dict, "msgcachefirst")
-   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
-   async def _cmdf_msgcachedebug(self, substr, msg, privilege_level):
-      buf = "**Here are the first 20 messages in this channel:**\n"
-      count = 1
-      for msg_dict in self._client.message_cache_read(msg.server.id, msg.channel.id):
-         buf += msg_dict["c"] + "\n"
-         if count > 20:
-            break
-         else:
-            count += 1
-      await self._client.send_msg(msg, buf[:-1])
       return
 
    @cmd.add(_cmd_dict, "throwexception")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_throwexception(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       raise Exception
 
    @cmd.add(_cmd_dict, "throwexception2")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_throwexception2(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       await self._client.send_message(msg, "A" * 2001)
       await self._client.send_message(msg, "If you're reading this, it failed to throw...")
       return
 
    def _get_help_content(self, substr, msg, cmd_prefix, privilege_level):
+      buf = None
       if substr == "":
-         buf = utils.prepare_help_content(self._HELP_SUMMARY_TO_BEGIN, cmd_prefix, privilegelevel=privilege_level)
-         buf += "\n"
+         buf = cmd.compose_help_summary(self._cmd_dict, privilege_level) + "\n\n"
+         buf = buf.format(bc=cmd_prefix)
+         buf2 = self._modules.get_help_content("", cmd_prefix, privilege_level)
+         buf2 = "\n".join(sorted(buf2.splitlines(), key=lambda e: e.lower()))
+         buf += buf2
       else:
-         buf = ""
-      buf += self._modules.get_help_content(substr, cmd_prefix, privilege_level)
-      return buf
+         buf = self._modules.get_help_content(substr, cmd_prefix, privilege_level)
+      return buf.format(p=cmd_prefix)
 
    # RETURNS: Bot's current uptime in seconds
    def get_presence_time(self):

@@ -56,3 +56,282 @@ Traceback (most recent call last):
   File "E:\Program Files\Python35-32\lib\site-packages\websockets\protocol.py", line 421, in write_frame
     "in the {} state".format(self.state_name))
 websockets.exceptions.InvalidState: Cannot write to a WebSocket in the CLOSING state
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>>>>>>>>>>>>>> TICK!!!
+msg rcv #council-chamber: I see. People come here to escape school and work.
+msg rcv #council-chamber: #escapism
+processing command: {pf}stats
+SENDING MESSAGE...
+Caught OperationAborted.
+>>>>>>>>>>>>>>>>>>> TICK!!!
+processing command: {pf}stats msgs weekday vbar wholeserver
+SENDING MESSAGE...
+>>>>>>>>>>>>>>>>>>> TICK!!!
+GRAPH SENT!
+msg rcv #nsfw: /stats msgs weekday vbar wholeserver
+msg rcv #lobby: O_O
+processing command: {pf}stats msgs eachday vbar wholeserver
+SENDING MESSAGE...
+>>>>>>>>>>>>>>>>>>> TICK!!!
+Task was destroyed but it is pending!
+task: <Task pending coro=<_run_event() running at E:\Program Files\Python35-32\lib\site-packages\discord\client.py:281> wait_for=<Future pending cb=[BaseSelectorEventLoop._sock_connect_done(1000)(), Task._wakeup()]>>
+Traceback (most recent call last):
+  File "E:\Application Documents\Git\mentionbot_stable\mentionbot\clientextended.py", line 145, in perm_send_file
+    await self.send_file(destination, fp, filename=filename)
+GeneratorExit
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "mentionbot.py", line 99, in _on_message_process
+    await self._bot_instances[msg.server].process_text(text, msg)
+  File "E:\Application Documents\Git\mentionbot_stable\mentionbot\serverbotinstance.py", line 160, in process_text
+    await self._modules.process_cmd(substr, msg, privilege_level, silentfail=True)
+  File "E:\Application Documents\Git\mentionbot_stable\mentionbot\servermodulegroup.py", line 34, in process_cmd
+    await self._modules_cmd_dict[left].process_cmd(right, msg, privilege_level)
+  File "E:\Application Documents\Git\mentionbot_stable\mentionbot\servermodules\serveractivitystatistics.py", line 137, in process_cmd
+    await graph_fn(msg.channel, **graph_kwargs)
+  File "E:\Application Documents\Git\mentionbot_stable\mentionbot\servermodules\serveractivitystatistics.py", line 471, in function
+    await self._send_plotly_graph_object(channel, plotly_data, plotly_layout)
+  File "E:\Application Documents\Git\mentionbot_stable\mentionbot\servermodules\serveractivitystatistics.py", line 557, in _send_plotly_graph_object
+    await self._client.perm_send_file(channel, temp_filename + temp_file_ext)
+  File "E:\Application Documents\Git\mentionbot_stable\mentionbot\clientextended.py", line 147, in perm_send_file
+    await send_msg(destination, "Error: Unable to post file. Are permissions set up?")
+NameError: name 'send_msg' is not defined
+
+SENDING MESSAGE...
+MESSAGE FAILED TO SEND!!!
+SENDING MESSAGE...
+MESSAGE FAILED TO SEND!!!
+Exception ignored in: <coroutine object on_message at 0x056DDE40>
+Traceback (most recent call last):
+  File "mentionbot.py", line 89, in on_message
+    await self._on_message_process(msg)
+  File "mentionbot.py", line 153, in _on_message_process
+    sys.exit(0)
+SystemExit: 0
+Task was destroyed but it is pending!
+task: <Task pending coro=<ChannelCloseScheduler.run() running at E:\Application Documents\Git\mentionbot_stable\mentionbot\servermodules\dynamicchannels.py:450> wait_for=<Future pending cb=[Task._wakeup()]>>
+Task exception was never retrieved
+future: <Task finished coro=<Client.keep_alive_handler() done, defined at E:\Program Files\Python35-32\lib\site-packages\discord\client.py:301> exception=InvalidState('Cannot write to a WebSocket in the CLOSING state',)>
+Traceback (most recent call last):
+  File "E:\Program Files\Python35-32\lib\asyncio\tasks.py", line 239, in _step
+    result = coro.send(None)
+  File "E:\Program Files\Python35-32\lib\site-packages\discord\client.py", line 312, in keep_alive_handler
+    yield from self._send_ws(utils.to_json(payload))
+  File "E:\Program Files\Python35-32\lib\site-packages\discord\client.py", line 175, in _send_ws
+    yield from self.ws.send(data)
+  File "E:\Program Files\Python35-32\lib\site-packages\websockets\protocol.py", line 261, in send
+    yield from self.write_frame(opcode, data)
+  File "E:\Program Files\Python35-32\lib\site-packages\websockets\protocol.py", line 421, in write_frame
+    "in the {} state".format(self.state_name))
+websockets.exceptions.InvalidState: Cannot write to a WebSocket in the CLOSING state
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>>>>>>>>>>>>>> TICK!!!
+processing command: {pf}stats msgs day15min vbar wholeserver
+SENDING MESSAGE...
+msg rcv #lobby: hopefully, the time zones though
+Task was destroyed but it is pending!
+task: <Task pending coro=<_run_event() running at E:\Program Files\Python35-32\lib\site-packages\discord\client.py:281> wait_for=<Future pending cb=[BaseSelectorEventLoop._sock_connect_done(452)(), Task._wakeup()]>>
+SENDING MESSAGE...
+MESSAGE FAILED TO SEND!!!
+Traceback (most recent call last):
+  File "mentionbot.py", line 99, in _on_message_process
+    await self._bot_instances[msg.server].process_text(text, msg)
+GeneratorExit
+
+SENDING MESSAGE...
+MESSAGE FAILED TO SEND!!!
+SENDING MESSAGE...
+MESSAGE FAILED TO SEND!!!
+Exception ignored in: <coroutine object on_message at 0x00AB7F60>
+Traceback (most recent call last):
+  File "mentionbot.py", line 89, in on_message
+    await self._on_message_process(msg)
+  File "mentionbot.py", line 153, in _on_message_process
+    sys.exit(0)
+SystemExit: 0
+Task was destroyed but it is pending!
+task: <Task pending coro=<ChannelCloseScheduler.run() running at E:\Application Documents\Git\mentionbot_stable\mentionbot\servermodules\dynamicchannels.py:450> wait_for=<Future pending cb=[Task._wakeup()]>>
+Task exception was never retrieved
+future: <Task finished coro=<Client.keep_alive_handler() done, defined at E:\Program Files\Python35-32\lib\site-packages\discord\client.py:301> exception=InvalidState('Cannot write to a WebSocket in the CLOSING state',)>
+Traceback (most recent call last):
+  File "E:\Program Files\Python35-32\lib\asyncio\tasks.py", line 239, in _step
+    result = coro.send(None)
+  File "E:\Program Files\Python35-32\lib\site-packages\discord\client.py", line 312, in keep_alive_handler
+    yield from self._send_ws(utils.to_json(payload))
+  File "E:\Program Files\Python35-32\lib\site-packages\discord\client.py", line 175, in _send_ws
+    yield from self.ws.send(data)
+  File "E:\Program Files\Python35-32\lib\site-packages\websockets\protocol.py", line 261, in send
+    yield from self.write_frame(opcode, data)
+  File "E:\Program Files\Python35-32\lib\site-packages\websockets\protocol.py", line 421, in write_frame
+    "in the {} state".format(self.state_name))
+websockets.exceptions.InvalidState: Cannot write to a WebSocket in the CLOSING state
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+processing command: {pf}stats chars eachday vbar wholeserver
+SENDING MESSAGE...
+msg rcv #lobby: we only speak in #FreedomUnits
+msg rcv #lobby: XD
+Task was destroyed but it is pending!
+task: <Task pending coro=<_run_event() running at E:\Program Files\Python35-32\lib\site-packages\discord\client.py:281> wait_for=<Future pending cb=[BaseSelectorEventLoop._sock_connect_done(976)(), Task._wakeup()]>>
+SENDING MESSAGE...
+MESSAGE FAILED TO SEND!!!
+Traceback (most recent call last):
+  File "mentionbot.py", line 99, in _on_message_process
+    await self._bot_instances[msg.server].process_text(text, msg)
+GeneratorExit
+
+SENDING MESSAGE...
+MESSAGE FAILED TO SEND!!!
+SENDING MESSAGE...
+MESSAGE FAILED TO SEND!!!
+Exception ignored in: <coroutine object on_message at 0x00CE21B0>
+Traceback (most recent call last):
+  File "mentionbot.py", line 89, in on_message
+    await self._on_message_process(msg)
+  File "mentionbot.py", line 153, in _on_message_process
+    sys.exit(0)
+SystemExit: 0
+Task was destroyed but it is pending!
+task: <Task pending coro=<ChannelCloseScheduler.run() running at E:\Application Documents\Git\mentionbot_stable\mentionbot\servermodules\dynamicchannels.py:450> wait_for=<Future pending cb=[Task._wakeup()]>>
+Task exception was never retrieved
+future: <Task finished coro=<Client.keep_alive_handler() done, defined at E:\Program Files\Python35-32\lib\site-packages\discord\client.py:301> exception=InvalidState('Cannot write to a WebSocket in the CLOSING state',)>
+Traceback (most recent call last):
+  File "E:\Program Files\Python35-32\lib\asyncio\tasks.py", line 239, in _step
+    result = coro.send(None)
+  File "E:\Program Files\Python35-32\lib\site-packages\discord\client.py", line 312, in keep_alive_handler
+    yield from self._send_ws(utils.to_json(payload))
+  File "E:\Program Files\Python35-32\lib\site-packages\discord\client.py", line 175, in _send_ws
+    yield from self.ws.send(data)
+  File "E:\Program Files\Python35-32\lib\site-packages\websockets\protocol.py", line 261, in send
+    yield from self.write_frame(opcode, data)
+  File "E:\Program Files\Python35-32\lib\site-packages\websockets\protocol.py", line 421, in write_frame
+    "in the {} state".format(self.state_name))
+websockets.exceptions.InvalidState: Cannot write to a WebSocket in the CLOSING state

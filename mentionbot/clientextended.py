@@ -144,7 +144,7 @@ class ClientExtended(discord.Client):
       try:
          await self.send_file(destination, fp, filename=filename)
       except:
-         await send_msg(destination, "Error: Unable to post file. Are permissions set up?")
+         await self.send_msg(destination, "Error: Unable to post file. Are permissions set up?")
       return
 
 
