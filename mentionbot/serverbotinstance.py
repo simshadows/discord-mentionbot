@@ -204,6 +204,7 @@ class ServerBotInstance:
    #######################################
 
    @cmd.add(_cmd_dict, "mods", "modules")
+   @cmd.category("Module Info/Management")
    async def _cmdf_mods(self, substr, msg, privilege_level):
       """`{cmd}` - View installed and available modules."""
       installed_mods = list(self._modules.gen_module_info())
@@ -233,6 +234,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmd_dict, "add", "install", "addmodule")
+   @cmd.category("Module Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_add(self, substr, msg, privilege_level):
       """`{cmd} [module name]` - Add a module."""
@@ -249,6 +251,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmd_dict, "remove", "uninstall", "removemodule")
+   @cmd.category("Module Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_remove(self, substr, msg, privilege_level):
       """`{cmd} [module name]` - Remove a module."""
@@ -260,7 +263,12 @@ class ServerBotInstance:
          await self._client.send_msg(msg, "`{}` is not installed.".format(substr))
       return
 
+   ###########################################
+   ### PRIVILEGES INFO/MANAGEMENT COMMANDS ###
+   ###########################################
+
    @cmd.add(_cmd_dict, "prefix", "prefix")
+   @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_prefix(self, substr, msg, privilege_level):
       """`{cmd} [new prefix]` - Set new command prefix."""
@@ -272,11 +280,8 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   ###########################################
-   ### PRIVILEGES INFO/MANAGEMENT COMMANDS ###
-   ###########################################
-
    @cmd.add(_cmd_dict, "privinfo", "allprivs", "privsinfo", "whatprivs")
+   @cmd.category("Command Privilege Info/Management")
    async def _cmdf_privinfo(self, substr, msg, privilege_level):
       """`{cmd}` - Get information on the bot's command privilege system."""
       buf = "This bot has internal command privilege levels to determine what"
@@ -294,6 +299,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmd_dict, "priv", "privilege", "mypriv")
+   @cmd.category("Command Privilege Info/Management")
    async def _cmdf_priv(self, substr, msg, privilege_level):
       """`{cmd}` - Check your command privilege level."""
       buf = await self._get_user_priv_process("", msg)
@@ -302,6 +308,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmd_dict, "privof", "privilegeof")
+   @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_privof(self, substr, msg, privilege_level):
       """`{cmd} [user]` - Check someone's command privilege level."""
@@ -310,6 +317,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmd_dict, "userprivsresolved", "userprivilegesresolved")
+   @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_userprivsresolved(self, substr, msg, privilege_level):
       """`{cmd}` - Get list of everyone with command privilege levels resolved."""
@@ -333,6 +341,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmd_dict, "userprivs", "userprivileges")
+   @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_userprivs(self, substr, msg, privilege_level):
       """`{cmd}` - View user-assigned command privileges."""
@@ -358,6 +367,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmd_dict, "roleprivs", "roleprivileges", "flairprivs", "flairprivileges", "tagprivs", "tagprivileges")
+   @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_roleprivs(self, substr, msg, privilege_level):
       """`{cmd}` - View role-assigned command privileges."""
@@ -376,6 +386,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmd_dict, "adduserpriv", "adduserprivilege")
+   @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_adduserpriv(self, substr, msg, privilege_level):
       """`{cmd} [user] [privilege level]` - Add a user command privilege."""
@@ -410,6 +421,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmd_dict, "addrolepriv", "addroleprivilege")
+   @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_addrolepriv(self, substr, msg, privilege_level):
       """`{cmd} [role name] [privilege level]` - Add a role command privilege."""
@@ -445,6 +457,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmd_dict, "removeuserpriv", "removeuserprivilege")
+   @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_removeuserpriv(self, substr, msg, privilege_level):
       """`{cmd} [user]` - Remove a user command privilege."""
@@ -464,6 +477,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmd_dict, "removerolepriv", "removeroleprivilege", "removeflairpriv", "removeflairprivilege", "removetagpriv", "removetagprivilege")
+   @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_removerolepriv(self, substr, msg, privilege_level):
       """`{cmd} [role name]` - Remove a role command privilege."""
@@ -500,9 +514,10 @@ class ServerBotInstance:
    ###################################################
 
    @cmd.add(_cmd_dict, "iam")
+   @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_iam(self, substr, msg, privilege_level):
-      """`{cmd} [text]`"""
+      """`{cmd} [user] [text]`"""
       (left, right) = utils.separate_left_word(substr)
       if self._RE_MENTIONSTR.fullmatch(left):
          user_to_pose_as = left[2:-1]
@@ -517,6 +532,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmd_dict, "setgame")
+   @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setgame(self, substr, msg, privilege_level):
       """`{cmd} [text]`"""
@@ -525,6 +541,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmd_dict, "tempgame")
+   @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setgame(self, substr, msg, privilege_level):
       """`{cmd} [text]`"""
@@ -533,6 +550,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmd_dict, "revertgame")
+   @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setgame(self, substr, msg, privilege_level):
       """`{cmd}`"""
@@ -541,6 +559,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmd_dict, "setusername")
+   @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setusername(self, substr, msg, privilege_level):
       """`{cmd} [text]`"""
@@ -550,6 +569,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmd_dict, "joinserver")
+   @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_joinserver(self, substr, msg, privilege_level):
       """`{cmd} [invite link]`"""
@@ -561,6 +581,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmd_dict, "leaveserver")
+   @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_leaveserver(self, substr, msg, privilege_level):
       """`{cmd}`"""
@@ -569,6 +590,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmd_dict, "msgcachedebug")
+   @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_msgcachedebug(self, substr, msg, privilege_level):
       """`{cmd}`"""
@@ -577,12 +599,14 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmd_dict, "throwexception")
+   @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_throwexception(self, substr, msg, privilege_level):
       """`{cmd}`"""
       raise Exception
 
    @cmd.add(_cmd_dict, "throwexception2")
+   @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_throwexception2(self, substr, msg, privilege_level):
       """`{cmd}`"""
