@@ -169,7 +169,7 @@ class ServerBotInstance:
    @cmd.add(_cmd_dict, "uptime")
    async def _cmdf_uptime(self, substr, msg, privilege_level):
       """`{cmd}` - Get time since initialization."""
-      buf = "**Bot current uptime:** {}. ".format(utils.seconds_to_string(self.get_presence_time()))
+      buf = "**Bot current uptime:** {}. ".format(utils.timedelta_to_string(self.get_presence_timedelta()))
       await self._client.send_msg(msg, buf)
       return
 
@@ -625,10 +625,8 @@ class ServerBotInstance:
       else:
          buf = self._modules.get_help_content(substr, privilege_level)
       return buf.format(p=cmd_prefix)
-
-   # RETURNS: Bot's current uptime in seconds
-   def get_presence_time(self):
-      timediff = datetime.datetime.utcnow() - self.initialization_timestamp
-      return timediff.seconds
+   
+   def get_presence_timedelta(self):
+      return datetime.datetime.utcnow() - self.initialization_timestamp
 
 

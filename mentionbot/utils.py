@@ -174,21 +174,6 @@ def member_is_idle(member):
 def member_is_online(member):
    return str(member.status) == str(discord.Status.online)
 
-# A helper method for preparing help strings.
-# Parses a list of lines, producing a single string with the lines
-# combined, appropriate for the privilege level.
-# TODO: Add examples on this method's usage.
-def prepare_help_content(raw_lines, cmd_prefix, privilegelevel=0):
-   help_content = ""
-   line_privlvl = 0
-   for line in raw_lines:
-      match = _RE_PRIVLVL_LINE.match(line)
-      if match:
-         line_privlvl = int(match.group(0)[len(">>> PRIVILEGE LEVEL "):])
-      elif (privilegelevel >= line_privlvl):
-         help_content += line + "\n"
-   return help_content[:-1].format(pf=cmd_prefix)
-
 def remove_blank_strings(string_list):
    return list(filter(None, string_list))
 
@@ -253,21 +238,26 @@ def parse_flags(text):
          flags.append("invalid")
    return flags
 
-
-# Returns a string that:
-#     is the time in seconds if time is <1 minute (e.g. "36 seconds ago"),
-#     is the time in minutes if time is <1 hour (e.g. "8 minutes ago"), or
-#     is the time in hours (e.g. "12 hours ago").
-def seconds_to_string(seconds):
-   if seconds >= 0:
-      if seconds < 60:
-         return str(seconds) + " seconds"
-      elif seconds < (60*60):
-         return str(round(seconds/60, 2)) + " minutes"
-      else:
-         return str(round(seconds/(60*60), 2)) + " hours"
-   else:
-      return str(seconds) + " seconds (uhh... I don't think this should be negative.)"
+def timedelta_to_string(td, include_us=False):
+   (hours, remainder) = divmod(td.seconds, 3600)
+   (minutes, seconds) = divmod(remainder, 60)
+   buf = ""
+   keep_showing = False
+   if td.days != 0:
+      buf += str(td.days) + "d "
+      keep_showing = True
+   if keep_showing or (hours != 0):
+      buf += str(hours) + "h "
+      keep_showing = True
+   if keep_showing or (minutes != 0):
+      buf += str(minutes) + "m "
+      keep_showing = True
+   if keep_showing or (seconds != 0):
+      buf += str(seconds) + "s "
+      keep_showing = True
+   if (include_us and keep_showing) or (len(buf) == 0):
+      buf += str(td.microseconds) + "μs "
+   return buf[:-1]
 
 
 # Opens, puts file contents in a string, and closes it.
