@@ -54,7 +54,7 @@ class Random(ServerModule):
          substr = "number " + substr
       elif (not self._RE_KW_CHOOSE.match(substr)) and (";" in substr):
          substr = "choose " + substr
-      return super(Random, self).process_cmd(substr, msg, privilege_level)
+      return await super(Random, self).process_cmd(substr, msg, privilege_level)
 
    @cmd.add(_cmd_dict, "number", "num", "int", "integer")
    async def _cmdf_number(self, substr, msg, privilege_level):

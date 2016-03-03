@@ -138,7 +138,7 @@ PLACEHOLDER FOR {mod}
    async def process_cmd(self, substr, msg, privilege_level):
       if substr == "":
          substr = "status"
-      return super(DynamicChannels, self).process_cmd(substr, msg, privilege_level)
+      return await super(DynamicChannels, self).process_cmd(substr, msg, privilege_level)
 
    async def on_message(self, msg):
       if self._name_is_default_channel(msg.channel.name):

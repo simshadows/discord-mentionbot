@@ -4,6 +4,15 @@ import cmd
 # Abstract Class (would've been an interface...)
 # All server modules are subclasses of ServerModule.
 class ServerModule:
+   """
+   The base class of all server modules.
+
+   This abstract class contains overrideable services for building server modules.
+   These services are as follows:
+
+
+
+   """
 
    MODULE_NAME = NotImplemented
    MODULE_SHORT_DESCRIPTION = NotImplemented
@@ -24,9 +33,9 @@ class ServerModule:
    # when processing this string.
    _HELP_SUMMARY = NotImplemented
 
-   # Do whatever initialization you wish here.
-   async def _initialize(self, resources):
-      raise NotImplementedError
+   ##############################################################################
+   # THE BELOW MUST NOT BE OVERRIDDEN ###########################################
+   ##############################################################################
 
    @classmethod
    async def get_instance(cls, cmd_names, resources):
@@ -47,6 +56,10 @@ class ServerModule:
    @property
    def cmd_names(self):
       return self._cmd_names
+
+   ##############################################################################
+   # THE BELOW USE EXISTING SERVICES THAT MAY BE OVERRIDDEN #####################
+   ##############################################################################
 
    # Get a help-message string summarising the module functionality,
    # or at least directing the user to more detailed help.
@@ -84,11 +97,6 @@ class ServerModule:
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
       return content
 
-   # This method is always called every time a message from the module's associated
-   # server is received.
-   async def on_message(self, msg):
-      pass
-
    # This method is called if a command is to be handled by the module.
    # By default, it processes a command in _cmd_dict.
    # Overriding to add further pre-processing and other things would
@@ -101,6 +109,19 @@ class ServerModule:
       cmd_to_execute = cmd.get(self._cmd_dict, left, privilege_level)
       await cmd_to_execute(self, right, msg, privilege_level)
       return
+
+   ##############################################################################
+   # THE METHODS BELOW ARE UNUSED UNLESS OVERRIDDEN. ############################
+   ##############################################################################
+
+   # Do whatever initialization you wish here.
+   async def _initialize(self, resources):
+      raise NotImplementedError
+
+   # This method is always called every time a message from the module's associated
+   # server is received.
+   async def on_message(self, msg):
+      pass
 
 
 

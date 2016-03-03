@@ -29,12 +29,12 @@ PLACEHOLDER FOR {mod}
       print("DEBUGGING: self.msg_preprocessor(): with content = " + content)
       return content
 
-   async def on_message(self, msg):
-      print("DEBUGGING: self.on_message(): with msg.content = " + msg.content)
-      return
-
    async def process_cmd(self, substr, msg, privilege_level):
       print("DEBUGGING: self.process_cmd(): with substr = " + substr)
       print("PRIVILEGE LEVEL = " + privilege_level.to_string())
       await self._client.send_msg(msg, "**Sub-command received:** " + substr)
+      return
+
+   async def on_message(self, msg):
+      print("DEBUGGING: self.on_message(): with msg.content = " + msg.content)
       return

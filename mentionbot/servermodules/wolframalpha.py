@@ -85,12 +85,6 @@ PLACEHOLDER FOR {mod}
          content = utils.change_base_cmd(content, default_cmd_prefix, self._cmd_names[0] + " def")
       return content
 
-   async def process_cmd(self, substr, msg, privilege_level):
-      (left, right) = utils.separate_left_word(substr)
-      cmd_to_execute = cmd.get(self._cmd_dict, left, privilege_level)
-      await cmd_to_execute(self, right, msg, privilege_level)
-      return
-
    @cmd.add(_cmd_dict, "query", "q")
    async def _cmdf_query(self, substr, msg, privilege_level):
       """`{p}wa [query]` - Make a Wolfram Alpha query."""

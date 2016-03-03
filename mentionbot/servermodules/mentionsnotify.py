@@ -23,6 +23,10 @@ PLACEHOLDER FOR {mod}
       self._client = resources.client
       return
 
+   async def process_cmd(self, substr, msg, privilege_level):
+      await self._client.send_msg(msg, "The notify module currently has no commands. Sorry!")
+      return
+
    async def on_message(self, msg):
       for member in msg.mentions:
          if str(member.status) != "offline":
@@ -32,10 +36,6 @@ PLACEHOLDER FOR {mod}
          buf += "\n" + msg.content
          await self._client.send_msg(member, buf)
          print("MentionNotifyModule: A notification was sent!")
-      return
-
-   async def process_cmd(self, substr, msg, privilege_level):
-      await self._client.send_msg(msg, "The notify module currently has no commands. Sorry!")
       return
 
 
