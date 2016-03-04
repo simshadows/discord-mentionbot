@@ -7,11 +7,8 @@ class ServerModule:
    """
    The base class of all server modules.
 
-   This abstract class contains overrideable services for building server modules.
-   These services are as follows:
-
-
-
+   This abstract class contains some overrideable services for building server
+   modules.
    """
 
    MODULE_NAME = NotImplemented
@@ -27,6 +24,11 @@ class ServerModule:
    #     get_help_detail()
    #     process_cmd()
    _cmd_dict = NotImplemented
+
+   # Must instantiate a new cmd.CMDPreprocessorFactory instance unless overriding
+   # the service.
+   # It is this class that the cmd preprocessor decorators operate on.
+   _cmd_prep_factory = NotImplemented
    
    # A string, potentially multi-line, giving a brief summary of the module.
    # Formatting arguments "modhelp", "mod", and "p" are used here, evaluated
@@ -40,6 +42,7 @@ class ServerModule:
    @classmethod
    async def get_instance(cls, cmd_names, resources):
       inst = cls(cls._SECRET_TOKEN, cmd_names)
+      inst._cmd_prep = inst._cmd_prep_factory.get_preprocessor(inst.cmd_names[0])
       await inst._initialize(resources)
       return inst
 
@@ -95,7 +98,7 @@ class ServerModule:
    #     and if so, the module will process messages to redirect
    #     commands to itself to serve them.
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
-      return content
+      return self._cmd_prep.perform_transformation(content, default_cmd_prefix)
 
    # This method is called if a command is to be handled by the module.
    # By default, it processes a command in _cmd_dict.

@@ -17,6 +17,7 @@ class Random(ServerModule):
    
    _SECRET_TOKEN = utils.SecretToken()
    _cmd_dict = {}
+   _cmd_prep_factory = cmd.CMDPreprocessorFactory()
 
    _HELP_SUMMARY = """
 `{p}random [integer]` - Get random int. (See `{modhelp}` for more!)

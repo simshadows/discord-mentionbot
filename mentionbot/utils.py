@@ -213,31 +213,6 @@ def get_all_mentions(text):
       mentions.append(mention_string[2:-1])
    return mentions
 
-
-# Parses a block of text, returns a list of flags.
-# For every non-flag, "invalid" is instead appended.
-# E.g. "-l hello --flag" -> ["l","invalid","flag"]
-# E.g. "--flag" -> ["flag"]
-# E.g. "-flag" -> ["f","l","a","g"]
-# E.g. "flag" -> ["invalid"]
-# E.g. "" -> []
-# PARAMETER: text = String
-# RETURNS: List of flags as strings (without the leading hyphens)
-def parse_flags(text):
-   flags = []
-   args = text.split(" ")
-   for arg in args:
-      if (len(arg) > 1) and (arg[0] == "-"):
-         if (len(arg) > 2) and (arg[1] == "-"):
-            flags.append(arg[2:])
-         else:
-            # Append all characters as separate flags.
-            for i in arg[1:]:
-               flags.append(i)
-      elif arg != "":
-         flags.append("invalid")
-   return flags
-
 def timedelta_to_string(td, include_us=False):
    (hours, remainder) = divmod(td.seconds, 3600)
    (minutes, seconds) = divmod(remainder, 60)

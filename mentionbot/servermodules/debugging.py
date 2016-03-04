@@ -6,6 +6,7 @@ import utils
 import errors
 from enums import PrivilegeLevel
 from servermodule import ServerModule
+import cmd
 
 class Debugging(ServerModule):
 
@@ -15,6 +16,7 @@ class Debugging(ServerModule):
 
    _SECRET_TOKEN = utils.SecretToken()
    _cmd_dict = {} # Empty dict should work...
+   _cmd_prep_factory = cmd.CMDPreprocessorFactory()
 
    _HELP_SUMMARY = """
 PLACEHOLDER FOR {mod}
