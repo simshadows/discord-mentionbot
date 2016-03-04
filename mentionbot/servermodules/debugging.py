@@ -19,7 +19,7 @@ class Debugging(ServerModule):
    _cmd_prep_factory = cmd.CMDPreprocessorFactory()
 
    _HELP_SUMMARY = """
-PLACEHOLDER FOR {mod}
+DEBUGGING: _HELP_SUMMARY CONTENTS.
    """.strip()
 
    async def _initialize(self, resources):

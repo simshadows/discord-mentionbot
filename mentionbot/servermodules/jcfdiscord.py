@@ -20,7 +20,7 @@ class JCFDiscord(ServerModule):
    _cmd_prep_factory = cmd.CMDPreprocessorFactory()
 
    _HELP_SUMMARY = """
-PLACEHOLDER FOR {mod}
+See `{modhelp}` for JCF Discord commands.
    """.strip()
 
    _FUNCTION_STACKS = {

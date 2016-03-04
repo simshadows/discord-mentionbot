@@ -18,7 +18,7 @@ class MentionsNotify(ServerModule):
    _cmd_prep_factory = cmd.CMDPreprocessorFactory()
 
    _HELP_SUMMARY = """
-PLACEHOLDER FOR {mod}
+See `{modhelp}` to manage the mentions notification system.
    """.strip()
 
    async def _initialize(self, resources):

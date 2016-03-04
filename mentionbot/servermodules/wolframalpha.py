@@ -21,7 +21,9 @@ class WolframAlpha(ServerModule):
    _cmd_prep_factory = cmd.CMDPreprocessorFactory()
 
    _HELP_SUMMARY = """
-PLACEHOLDER FOR {mod}
+See `{modhelp}` to manage the Wolfram Alpha module.
+`{p}wa [query]` - Make a Wolfram Alpha query.
+`{p}define [word]` - Get word definition from WA.
    """.strip()
 
    DEFAULT_SHARED_SETTINGS = {

@@ -23,7 +23,7 @@ class DynamicChannels(ServerModule):
    _cmd_prep_factory = cmd.CMDPreprocessorFactory()
 
    _HELP_SUMMARY = """
-PLACEHOLDER FOR {mod}
+See `{modhelp}` for managing the Dynamic Channels module.
 `+` - See list of hidden channels. (Will cut off at 2000 chars.)
 `+[string]` - Search list of hidden channels.
 `++[string]` - Create/unhide channel.

@@ -26,7 +26,7 @@ class ServerActivityStatistics(ServerModule):
    _cmd_prep_factory = cmd.CMDPreprocessorFactory()
 
    _HELP_SUMMARY = """
-PLACEHOLDER FOR {mod}
+See `{modhelp}` for commands to generate user activity statistics.
    """.strip()
 
    DEFAULT_SHARED_SETTINGS = {

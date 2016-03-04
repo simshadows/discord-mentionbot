@@ -19,7 +19,7 @@ class BsiStarkRavingMadBot(ServerModule):
    _cmd_prep_factory = cmd.CMDPreprocessorFactory()
 
    _HELP_SUMMARY = """
-PLACEHOLDER FOR {mod}
+See `{modhelp}` for StarkRavingMadBot standin commands.
    """.strip()
 
    # STARK_PF = "$" # TODO: Consider implementing this.

@@ -18,7 +18,7 @@ class BasicInfo(ServerModule):
    _cmd_prep_factory = cmd.CMDPreprocessorFactory()
 
    _HELP_SUMMARY = """
-PLACEHOLDER FOR {mod}
+`{modhelp}` for basic server/user information commands.
    """.strip()
 
    # TODO: Add this to help detail in the future...
