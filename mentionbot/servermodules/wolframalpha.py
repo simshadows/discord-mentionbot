@@ -77,16 +77,8 @@ PLACEHOLDER FOR {mod}
             self._res.save_settings(settings)
       return
 
-   async def msg_preprocessor(self, content, msg, default_cmd_prefix):
-      str_wa = default_cmd_prefix + "wa "
-      str_define = default_cmd_prefix + "define "
-      if content.startswith(str_wa): # TODO: IMPORTANT! FIX THE INCONSISTENCY.
-         content = utils.change_base_cmd(content, default_cmd_prefix, self._cmd_names[0] + " q")
-      elif content.startswith(str_define):
-         content = utils.change_base_cmd(content, default_cmd_prefix, self._cmd_names[0] + " def")
-      return content
-
    @cmd.add(_cmd_dict, "query", "q")
+   @cmd.preprocess_as(_cmd_prep_factory, cmd_name="wa")
    async def _cmdf_query(self, substr, msg, privilege_level):
       """`{p}wa [query]` - Make a Wolfram Alpha query."""
       if substr == "":
@@ -122,6 +114,7 @@ PLACEHOLDER FOR {mod}
       return
 
    @cmd.add(_cmd_dict, "define", "def")
+   @cmd.preprocess_as(_cmd_prep_factory, cmd_name="define")
    async def _cmdf_define(self, substr, msg, privilege_level):
       """`{p}define [word]` - Get word definition from WA."""
       if substr == "":

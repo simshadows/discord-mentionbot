@@ -42,12 +42,6 @@ class Random(ServerModule):
       self._client = resources.client
       return
 
-   async def msg_preprocessor(self, content, msg, default_cmd_prefix):
-      str_choose = default_cmd_prefix + "choose "
-      if content.startswith(str_choose):
-         content = utils.add_base_cmd(content, default_cmd_prefix, self._cmd_names[0])
-      return content
-
    async def process_cmd(self, substr, msg, privilege_level):
       if substr == "": # Default Case
          substr = "number"
@@ -111,6 +105,7 @@ class Random(ServerModule):
       return
 
    @cmd.add(_cmd_dict, "choose", "ch", "choice", "choices")
+   @cmd.preprocess_as(_cmd_prep_factory, cmd_name="choose")
    async def _cmdf_choose(self, substr, msg, privilege_level):
       """`{cmd}`"""
       choices = substr.split(";")

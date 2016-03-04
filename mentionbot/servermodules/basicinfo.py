@@ -51,7 +51,7 @@ PLACEHOLDER FOR {mod}
    @cmd.add(_cmd_dict, "user", "whois", "who")
    @cmd.preprocess_as(_cmd_prep_factory)
    async def _cmdf_user(self, substr, msg, privilege_level):
-      """`{p}whois [user]` - Get user info."""
+      """`{p}user [user]` - Get user info."""
       # Get user. Copied from _cmd_avatar()...
       substr = substr.strip()
       user = None
@@ -80,7 +80,7 @@ PLACEHOLDER FOR {mod}
       buf += "\n```"
       return await self._client.send_msg(msg, buf)
 
-   @cmd.add(_cmd_dict, "server", "thisserver")
+   @cmd.add(_cmd_dict, "thisserver", "server")
    @cmd.preprocess_as(_cmd_prep_factory)
    async def _cmdf_server(self, substr, msg, privilege_level):
       """`{p}thisserver` - Get some simple server info and statistics."""

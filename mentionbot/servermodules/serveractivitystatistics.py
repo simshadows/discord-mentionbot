@@ -44,9 +44,6 @@ PLACEHOLDER FOR {mod}
    def get_help_detail(self, substr, privilege_level):
       return self._get_usage_info()
 
-   async def msg_preprocessor(self, content, msg, default_cmd_prefix):
-      return content
-
    async def process_cmd(self, substr, msg, privilege_level):
       (left, right) = utils.separate_left_word(substr)
       execute_regular_cmd = False

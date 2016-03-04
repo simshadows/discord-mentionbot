@@ -52,16 +52,8 @@ PLACEHOLDER FOR {mod}
       self._client = self._res.client
       return
 
-   async def msg_preprocessor(self, content, msg, default_cmd_prefix):
-      str_functions = default_cmd_prefix + "functions"
-      str_choosetruth = default_cmd_prefix + "choosetruth"
-      if content.startswith(str_functions + " ") or (content == str_functions): # TODO: IMPORTANT! FIX THE INCONSISTENCY.
-         content = utils.add_base_cmd(content, default_cmd_prefix, self._cmd_names[0])
-      elif content == str_choosetruth:
-         content = utils.add_base_cmd(content, default_cmd_prefix, self._cmd_names[0])
-      return content
-
    @cmd.add(_cmd_dict, "functions", "fn", "stack")
+   @cmd.preprocess_as(_cmd_prep_factory, cmd_name="functions")
    async def _cmdf_functions(self, substr, msg, privilege_level):
       """`{cmd}`"""
       args = substr.split()
@@ -80,6 +72,7 @@ PLACEHOLDER FOR {mod}
       return
 
    @cmd.add(_cmd_dict, "choosetruth")
+   @cmd.preprocess_as(_cmd_prep_factory)
    async def _cmdf_choosetruth(self, substr, msg, privilege_level):
       """`{cmd}`"""
       topic = msg.channel.topic
