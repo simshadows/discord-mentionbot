@@ -2,6 +2,7 @@ import asyncio
 
 import discord
 import wolframalpha
+import traceback
 
 import utils
 import errors
@@ -78,7 +79,7 @@ PLACEHOLDER FOR {mod}
       return
 
    @cmd.add(_cmd_dict, "query", "q")
-   @cmd.preprocess_as(_cmd_prep_factory, cmd_name="wa")
+   @cmd.preprocess(_cmd_prep_factory, cmd_name="wa")
    async def _cmdf_query(self, substr, msg, privilege_level):
       """`{p}wa [query]` - Make a Wolfram Alpha query."""
       if substr == "":
@@ -110,23 +111,28 @@ PLACEHOLDER FOR {mod}
                buf = buf[:-2] + "*"
          except:
             buf = "Error: Unknown error. Aborting."
+         if len(buf) == 0:
+            buf = "No result."
          await self._client.send_msg(msg, buf)
       return
 
    @cmd.add(_cmd_dict, "define", "def")
-   @cmd.preprocess_as(_cmd_prep_factory, cmd_name="define")
+   @cmd.preprocess(_cmd_prep_factory, cmd_name="define")
    async def _cmdf_define(self, substr, msg, privilege_level):
       """`{p}define [word]` - Get word definition from WA."""
       if substr == "":
          await self._client.send_msg(msg, "Error: No text input made for query. Aborting.")
       else:
-         result = await self.wa_query(substr, msg.channel)
+         result = await self.wa_query("define " + substr, msg.channel)
          buf = ""
          try:
             pods = list(result.pods)
-            buf = pods[0].text + "\n" + pods[1].text
+            buf = "**" + pods[0].text + "**\n" + pods[1].text
          except:
+            print(traceback.format_exc())
             buf = "Error: Unknown error. Aborting."
+         if len(buf) == 0:
+            buf = "No result."
          await self._client.send_msg(msg, buf)
       return
 

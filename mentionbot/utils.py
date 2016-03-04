@@ -71,37 +71,6 @@ def _mkdir_recursive(relfilepath):
       pass
    return
 
-#################################################################################
-# COMMAND PREPROCESSOR HELPER FUNCTIONS #########################################
-#################################################################################
-
-# E.g. add_base_command("/choose A;B;C", "/", "rnd")
-#      returns: "/rnd choose A;B;C"
-# The function automatically cuts off the original base command at the first
-# space.
-# E.g. add_base_command("/chooseA;B;C", "/", "rnd")
-#      returns: "/rnd" 
-# PRECONDITION: The function's inputs are guaranteed to produce a change such as
-#               above. Incorrect inputs (such as wrong prefix) are not handled.
-#               For example, behaviour when passing in an empty content parameter
-#               is not defined.
-def add_base_cmd(content, cmd_prefix, new_base_command):
-   return cmd_prefix + new_base_command + " " + content[len(cmd_prefix):]
-
-# E.g. change_base_command("/choose A;B;C", "/", "rnd")
-#      returns: "/rnd A;B;C"
-# Similarly to add_base_cmd(), this function also cuts off the original base
-# command at the first space.
-# PRECONDITION: same precondition as add_base_command().
-def change_base_cmd(content, cmd_prefix, new_base_command):
-   (left, right) = separate_left_word(content[len(cmd_prefix):])
-   return cmd_prefix + new_base_command + " " + right
-
-# E.g. change_cmd_prefix("/choose A;B;C", old="/", new="$")
-#      returns: "$choose A;B;C"
-def change_cmd_prefix(content, old="/", new="$"):
-   return new + content[len(old):]
-
 ###############################################################################
 # COMMON SERVER MANAGEMENT OPERATIONS #########################################
 ###############################################################################

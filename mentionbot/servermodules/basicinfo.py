@@ -29,7 +29,7 @@ PLACEHOLDER FOR {mod}
       return
 
    @cmd.add(_cmd_dict, "avatar", "dp", "avatarurl")
-   @cmd.preprocess_as(_cmd_prep_factory)
+   @cmd.preprocess(_cmd_prep_factory)
    async def _cmdf_avatar(self, substr, msg, privilege_level):
       """`{p}avatar [user]` - Get a user's avatar."""
       substr = substr.strip()
@@ -49,7 +49,7 @@ PLACEHOLDER FOR {mod}
          return await self._client.send_msg(msg, avatar)
 
    @cmd.add(_cmd_dict, "user", "whois", "who")
-   @cmd.preprocess_as(_cmd_prep_factory)
+   @cmd.preprocess(_cmd_prep_factory)
    async def _cmdf_user(self, substr, msg, privilege_level):
       """`{p}user [user]` - Get user info."""
       # Get user. Copied from _cmd_avatar()...
@@ -81,7 +81,7 @@ PLACEHOLDER FOR {mod}
       return await self._client.send_msg(msg, buf)
 
    @cmd.add(_cmd_dict, "thisserver", "server")
-   @cmd.preprocess_as(_cmd_prep_factory)
+   @cmd.preprocess(_cmd_prep_factory)
    async def _cmdf_server(self, substr, msg, privilege_level):
       """`{p}thisserver` - Get some simple server info and statistics."""
       s = msg.server
@@ -112,7 +112,7 @@ PLACEHOLDER FOR {mod}
       return await self._client.send_msg(msg, buf)
 
    @cmd.add(_cmd_dict, "servericon")
-   @cmd.preprocess_as(_cmd_prep_factory)
+   @cmd.preprocess(_cmd_prep_factory)
    async def _cmdf_servericon(self, substr, msg, privilege_level):
       """`{p}servericon` - Get server icon."""
       if msg.server.icon_url == "":

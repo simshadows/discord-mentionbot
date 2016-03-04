@@ -209,25 +209,26 @@ PLACEHOLDER FOR {mod}
       }
       return ret
 
-   buf = " (Sorry, what this one does is difficult to explain...)"
-   _sg_arghelp1.append("`euser` - Number of newly encountered users that sent a message." + buf)
-   @cmd.add(_sg_argument1, "euser")
-   def _sg1_euser(self):
-      users_dict = {} # Maps user id -> literally any possible value
-      def new_fn(p, d, b):
-         user_id = d["a"]
-         try:
-            temp = users_dict[user_id]
-            return p
-         except KeyError:
-            users_dict[user_id] = None
-            return p + 1
-      ret = {
-         "fn": new_fn,
-         "axis": "newly encountered users that sent a message",
-         "title": "Newly Encountered Users",
-      }
-      return ret
+   # THIS FUNCTION IS BUGGED.
+   # buf = " (Sorry, what this one does is difficult to explain...)"
+   # _sg_arghelp1.append("`euser` - Number of newly encountered users that sent a message." + buf)
+   # @cmd.add(_sg_argument1, "euser")
+   # def _sg1_euser(self):
+   #    users_dict = {} # Maps user id -> literally any possible value
+   #    def new_fn(p, d, b):
+   #       user_id = d["a"]
+   #       try:
+   #          temp = users_dict[user_id]
+   #          return p
+   #       except KeyError:
+   #          users_dict[user_id] = None
+   #          return p + 1
+   #    ret = {
+   #       "fn": new_fn,
+   #       "axis": "newly encountered users that sent a message",
+   #       "title": "Newly Encountered Users",
+   #    }
+   #    return ret
 
    _sg_arghelp1.append("`avgmsglen` - Average message length.")
    @cmd.add(_sg_argument1, "avgmsglen")

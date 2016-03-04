@@ -156,7 +156,7 @@ def category(text):
       return function
    return function_decorator
 
-def preprocess_as(cmd_preprocessor_factory, cmd_name=None):
+def preprocess(cmd_preprocessor_factory, cmd_name=None):
    def function_decorator(function):
       def preprocessor_setup(cmd_preprocessor, module_cmd_name):
          input_cmds = None
@@ -204,6 +204,9 @@ class CMDPreprocessorFactory:
 class CMDPreprocessor:
    """
    This class allows simple processing of "core command name" into a module command.
+
+   One instance is attached to each server module instance (not the class).
+   (The reasons for this are detailed in CMDPreprocessorFactory.)
    """
 
    def __init__(self):

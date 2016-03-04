@@ -98,6 +98,8 @@ class ServerModule:
    #     and if so, the module will process messages to redirect
    #     commands to itself to serve them.
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
+      # TODO: Consider optimizing this by bypassing it if the service is not being
+      #       used (i.e. the preprocessor won't do anything).
       return self._cmd_prep.perform_transformation(content, default_cmd_prefix)
 
    # This method is called if a command is to be handled by the module.

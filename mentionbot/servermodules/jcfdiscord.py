@@ -53,7 +53,7 @@ PLACEHOLDER FOR {mod}
       return
 
    @cmd.add(_cmd_dict, "functions", "fn", "stack")
-   @cmd.preprocess_as(_cmd_prep_factory, cmd_name="functions")
+   @cmd.preprocess(_cmd_prep_factory, cmd_name="functions")
    async def _cmdf_functions(self, substr, msg, privilege_level):
       """`{cmd}`"""
       args = substr.split()
@@ -72,7 +72,7 @@ PLACEHOLDER FOR {mod}
       return
 
    @cmd.add(_cmd_dict, "choosetruth")
-   @cmd.preprocess_as(_cmd_prep_factory)
+   @cmd.preprocess(_cmd_prep_factory)
    async def _cmdf_choosetruth(self, substr, msg, privilege_level):
       """`{cmd}`"""
       topic = msg.channel.topic

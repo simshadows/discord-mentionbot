@@ -105,7 +105,7 @@ class Random(ServerModule):
       return
 
    @cmd.add(_cmd_dict, "choose", "ch", "choice", "choices")
-   @cmd.preprocess_as(_cmd_prep_factory, cmd_name="choose")
+   @cmd.preprocess(_cmd_prep_factory, cmd_name="choose")
    async def _cmdf_choose(self, substr, msg, privilege_level):
       """`{cmd}`"""
       choices = substr.split(";")
