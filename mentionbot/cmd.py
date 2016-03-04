@@ -156,7 +156,7 @@ def category(text):
       return function
    return function_decorator
 
-def shorter_cmd(cmd_preprocessor_factory, cmd_name=None):
+def preprocess_as(cmd_preprocessor_factory, cmd_name=None):
    def function_decorator(function):
       def preprocessor_setup(cmd_preprocessor, module_cmd_name):
          input_cmds = None
@@ -211,13 +211,14 @@ class CMDPreprocessor:
       return
 
    def perform_transformation(self, content, cmd_prefix):
-      new_content = content[len(cmd_prefix):]
-      (left, right) = utils.separate_left_word(content)
-      # Expected that they key will seldom-match, so we check for the key.
-      if left in self._simple_transformations:
-         content = cmd_prefix + self._simple_transformations[left]
-         if len(right) != 0:
-            content += " " + right
+      if content.startswith(cmd_prefix):
+         new_content = content[len(cmd_prefix):]
+         (left, right) = utils.separate_left_word(new_content)
+         # Expected that they key will seldom-match, so we check for the key.
+         if left in self._simple_transformations:
+            content = cmd_prefix + self._simple_transformations[left]
+            if len(right) != 0:
+               content += " " + right
       return content
 
    def add_transformation(self, input_cmd, output_cmd):
