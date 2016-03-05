@@ -153,6 +153,13 @@ async def remove_flairs_by_name(client, member, *flair_names, case_sensitive=Tru
    await client.remove_roles(member, *to_remove)
    return
 
+def role_is_unused(server, role_obj):
+   for member in server.members:
+      for member_role in member.roles:
+         if member_role == role_obj:
+            return False
+   return True
+
 #################################################################################
 # OTHERS ########################################################################
 #################################################################################

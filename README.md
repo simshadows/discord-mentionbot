@@ -24,6 +24,8 @@ View all installed and available modules in discord using the command `/mods`.
 	* Warning: Server owners beware! While normal members won't see all the hidden channels, you and the bot will. The solution is to have an "admin acount" separate from your normal account.
 * **Random**: Randomization tools. *(Installed by default.)*
 	* Generate random numbers of arbitrary ranges, flip coins, get random RGB colour codes, and use dice notation.
+* **Self-Serve Colours**: Allows users to pick their own RGB colour.
+	* `/colour 00FF00` assigns the user a flair named `00ff00` with the appropriate colour.
 * **Wolfram Alpha**: Allows users to query Wolfram Alpha. *(Installed by default.)*
 
 Some community-specific modules:

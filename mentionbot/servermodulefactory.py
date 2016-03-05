@@ -11,6 +11,7 @@ from servermodules.wolframalpha import WolframAlpha
 from servermodules.jcfdiscord import JCFDiscord
 from servermodules.bsistarkravingmadbot import BsiStarkRavingMadBot
 from servermodules.debugging import Debugging
+from servermodules.selfservecolours import SelfServeColours
 
 class ServerModuleFactory:
    
@@ -27,6 +28,7 @@ class ServerModuleFactory:
       JCFDiscord,
       BsiStarkRavingMadBot,
       Debugging,
+      SelfServeColours,
    ]
 
    @classmethod

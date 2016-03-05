@@ -144,4 +144,13 @@ See `{modhelp}` for JCF Discord commands.
          await self._client.send_msg(msg, "Too bad you're not as swole as swolebro <@{}>.".format(msg.author.id))
       return
 
+   @cmd.add(_cmd_dict, "noot")
+   @cmd.preprocess(_cmd_prep_factory)
+   async def _cmdf_noot(self, substr, msg, privilege_level):
+      """`{cmd}`"""
+      # var m = await Client.SendMessage(e.Channel, "Penguins will rule the earth!");
+      # await Task.Delay(1000);
+      # TODO: Figure out how to do this with asyncio without hanging up the bot for the whole 1 second...
+      await self._client.send_msg(msg, "noot noot")
+      return
 
