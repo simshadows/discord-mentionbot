@@ -28,7 +28,7 @@ See `{modhelp}` for StarkRavingMadBot standin commands.
 **I'm acting as a stand-in for StarkRavingMadBot.**
 **I have the following commands implemented:**
 - $avatar
-~~- $blame~~
+- $blame
 - $choose
 ~~- $color~~
 ~~- $doot~~
@@ -46,7 +46,7 @@ See `{modhelp}` for StarkRavingMadBot standin commands.
 - $sleep
 ~~- $spooderman~~
 ~~- $subreddit~~
-~~- $swole~~
+- $swole
 ~~- $truth~~
 ~~- $ud~~
 - $whois
@@ -69,6 +69,7 @@ For reference, I require the following modules to be installed:
    async def _initialize(self, resources):
       self._client = resources.client
       self._server = resources.server
+      self._res = resources
 
       # pf = self._client.get_server_bot_instance(self._server).cmd_prefix
       pf = "/"
@@ -78,11 +79,12 @@ For reference, I require the following modules to be installed:
       self._stark = self._client.search_for_user(self.STARKRAVINGMADBOT_DEFAULTID, enablenamesearch=False, serverrestriction=self._server)
       self._preprocessor_replace = { # Maps commands to their exact substitute.
          "avatar": pf + "basicinfo avatar",
-         "blame": cmdnotimplemented,
+         "blame": this + " blame",
          "choose": pf + "random choose",
          "color": cmdnotimplemented,
          "doot": cmdnotimplemented,
          "flip": pf + "random coin",
+         "functions": pf + "jcfdiscord functions",
          "git": this + " git",
          "help": this + " help",
          "intensify": cmdnotimplemented,
@@ -96,7 +98,7 @@ For reference, I require the following modules to be installed:
          "sleep": this + " sleep",
          "spooderman": cmdnotimplemented,
          "subreddit": cmdnotimplemented,
-         "swole": cmdnotimplemented,
+         "swole": pf + "jcfdiscord swole",
          "truth": cmdnotimplemented,
          "ud": cmdnotimplemented,
          "whois": pf + "basicinfo user",
@@ -112,6 +114,8 @@ For reference, I require the following modules to be installed:
       return
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
+      content = await super(BsiStarkRavingMadBot, self).msg_preprocessor(content, msg, default_cmd_prefix)
+      
       if self.dont_run_module():
          return content # Short-circuit if stark is not offline.
 
@@ -125,7 +129,7 @@ For reference, I require the following modules to be installed:
 
          # Any other command
          try:
-            left = "$" + self._preprocessor_replace[left.lower()]
+            left = self._preprocessor_replace[left.lower()]
          except KeyError:
             return content
          if right == "":
@@ -142,13 +146,30 @@ For reference, I require the following modules to be installed:
       return
 
    @cmd.add(_cmd_dict, "help")
-   async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):
+   async def _cmdf_help(self, substr, msg, privilege_level):
       """`{cmd}` - Get a stand-in version of Stark's help message."""
       await self._client.send_msg(msg, self.STARK_HELP)
       return
 
+   @cmd.add(_cmd_dict, "blame")
+   @cmd.preprocess(_cmd_prep_factory)
+   async def _cmdf_blame(self, substr, msg, privilege_level):
+      """`{cmd}`"""
+      if (substr == "<@{}>".format(self._res.botowner_ID)) or (substr == "<@{}>".format(self._res.me_ID)):
+         # TODO: Consider also checking name matches... idk
+         buf = "{} did nothing wrong."
+      elif random.getrandbits(1):
+         buf = "Fuck you {}."
+      else:
+         buf = "Thanks, {}!"
+      if len(substr) == 0:
+         await self._client.send_msg(msg, buf.format("<@" + msg.author.id+ ">"))
+      else:
+         await self._client.send_msg(msg, buf.format(substr))
+      return
+
    @cmd.add(_cmd_dict, "git")
-   async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):
+   async def _cmdf_git(self, substr, msg, privilege_level):
       """`{cmd}` - Get a stand-in version of Stark's source command."""
       buf = "*Now, I'm not StarkRavingMadBot, but here's a copy-paste of what it would've said:*"
       buf += "\n\"You can find my source at https://github.com/josh951623/StarkRavingMadBot/tree/master. If you'd like to suggest a feature, go ahead and join me in my dev server: https://discord.gg/0ktzcmJwmeWuQtiM.\""
@@ -156,19 +177,21 @@ For reference, I require the following modules to be installed:
       return
 
    @cmd.add(_cmd_dict, "say")
-   async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):
+   async def _cmdf_say(self, substr, msg, privilege_level):
       """`{cmd}`"""
       await self._client.send_msg(msg, "m8")
       return
 
    @cmd.add(_cmd_dict, "sleep")
-   async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):
+   @cmd.preprocess(_cmd_prep_factory)
+   async def _cmdf_sleep(self, substr, msg, privilege_level):
       """`{cmd}`"""
       await self._client.send_msg(msg, random.choice(self._sleep_choices))
       return
 
    @cmd.add(_cmd_dict, "rip")
-   async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):
+   @cmd.preprocess(_cmd_prep_factory)
+   async def _cmdf_rip(self, substr, msg, privilege_level):
       """`{cmd}`"""
       await self._client.send_msg(msg, "doesnt even deserve a funeral")
       return

@@ -48,6 +48,8 @@ See `{modhelp}` for JCF Discord commands.
    ]
    _MBTI_TYPES_SET = set(_MBTI_TYPES) # Faster access to get set membership
 
+   _SWOLEBRO_ID = "100335016025788416"
+
    async def _initialize(self, resources):
       self._res = resources
       self._client = self._res.client
@@ -130,5 +132,16 @@ See `{modhelp}` for JCF Discord commands.
       await self._client.send_msg(msg, "Assigned <@{0}> the type flair '{1}'.".format(msg.author.id, new_role_name))
       return
 
+   @cmd.add(_cmd_dict, "swole")
+   @cmd.preprocess(_cmd_prep_factory)
+   async def _cmdf_swole(self, substr, msg, privilege_level):
+      """`{cmd}`"""
+      if msg.author.id == self._SWOLEBRO_ID:
+         await self._client.send_msg(msg, "Dude, you so swole <@{}>".format(self._SWOLEBRO_ID))
+      elif ("fitness" in msg.channel.name.lower()) or ("swole" in msg.channel.name.lower()):
+         await self._client.send_msg(msg, "<#{}> is the best place to get swole with swolebro.".format(msg.channel.id))
+      else:
+         await self._client.send_msg(msg, "Too bad you're not as swole as swolebro <@{}>.".format(msg.author.id))
+      return
 
 

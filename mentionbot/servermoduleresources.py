@@ -68,3 +68,13 @@ class ServerModuleResources:
    def message_cache_read(self, server_id, ch_id):
       return self.client.message_cache_read(server_id, ch_id)
 
+   # Shortcut-methods
+
+   @property
+   def botowner_ID(self):
+      return self._sbi.client.BOTOWNER_ID
+
+   @property
+   def me_ID(self):
+      return self._sbi.client.user.id
+   
