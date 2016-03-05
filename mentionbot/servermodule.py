@@ -121,7 +121,7 @@ class ServerModule:
 
    # Do whatever initialization you wish here.
    async def _initialize(self, resources):
-      raise NotImplementedError
+      pass
 
    # This method is always called every time a message from the module's associated
    # server is received.

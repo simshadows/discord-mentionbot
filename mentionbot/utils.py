@@ -115,6 +115,45 @@ async def ensure_bot_permissions(client, channel, bot_flair_names):
    return
 
 #################################################################################
+# FLAIRS ########################################################################
+#################################################################################
+
+def flair_names_to_object(server, flair_names):
+   flair_objects = []
+   for flair_object in server.roles:
+      if flair_object.name in flair_names:
+         flair_objects.append(flair_object)
+         continue
+   return flair_objects
+
+# A non-list version of the function...
+def flair_name_to_object(server, flair_name, case_sensitive=True):
+   if case_sensitive:
+      for flair_object in server.roles:
+         if flair_object.name == flair_name:
+            return flair_object
+   else:
+      flair_name = flair_name.lower()
+      for flair_object in server.roles:
+         if flair_object.name.lower() == flair_name:
+            return flair_object
+   return None
+
+async def remove_flairs_by_name(client, member, *flair_names, case_sensitive=True):
+   to_remove = []
+   if case_sensitive:
+      for flair_object in member.roles:
+         if flair_object.name in flair_names:
+            to_remove.append(flair_object)
+   else:
+      flair_names_lower = [e.lower() for e in flair_names]
+      for flair_object in member.roles:
+         if flair_object.name.lower() in flair_names_lower:
+            to_remove.append(flair_object)
+   await client.remove_roles(member, *to_remove)
+   return
+
+#################################################################################
 # OTHERS ########################################################################
 #################################################################################
 
@@ -145,21 +184,6 @@ def member_is_online(member):
 
 def remove_blank_strings(string_list):
    return list(filter(None, string_list))
-
-def flair_names_to_object(server, flair_names):
-   flair_objects = []
-   for flair_object in server.roles:
-      if flair_object.name in flair_names:
-         flair_objects.append(flair_object)
-         continue
-   return flair_objects
-
-# A non-list version of the function...
-def flair_name_to_object(server, flair_name):
-   for flair_object in server.roles:
-      if flair_object.name == flair_name:
-         return flair_object
-   return None
 
 def datetime_rounddown_to_day(datetime_object):
    date_object = datetime_object.date()

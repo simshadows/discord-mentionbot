@@ -5,12 +5,12 @@ An extensible, module-based chatroom bot for [Discord](https://discordapp.com/).
 
 # Key features:
 
+* **Modularity**
 * **Persistent data and settings**
-	* A **message caching service** is also provided to speed up the operation of message searches and statistics generation.
-* **Modularity**: Modules give the bot functionality.
-	* Each module has the ability to pre-process incoming commands, allowing for some very interesting uses.
+	* A **message caching service** is provided to modules to speed up the operation of message searches and statistics generation.
 * **Server-wise customizability**: Server owners are able to set up installed modules and change settings as desired. Settings are unique to each server (with rare exceptions).<sup>[1]</sup>
 * **Internal permissions system**: Assign roles/flairs/tags and users different permission levels to use commands. Apart from the bot owner and server owner, there are 9 assignable permission levels, including a "No Privileges" level.
+	* For example, a server could have a `Staff` role, which has a bot command privilege level of `Admin`.
 
 # Available Modules
 

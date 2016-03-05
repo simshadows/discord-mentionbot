@@ -60,6 +60,12 @@ For reference, I require the following modules to be installed:
 
    STARKRAVINGMADBOT_DEFAULTID = "121281613660160000"
 
+   _MBTI_TYPES = [
+      "INTJ","INTP","ENTJ","ENTP","INFJ","INFP","ENFJ","ENFP",
+      "ISTJ","ISFJ","ESTJ","ESFJ","ISTP","ISFP","ESTP","ESFP",
+   ]
+   _MBTI_TYPES_SET = set(_MBTI_TYPES) # Faster access to get set membership
+
    async def _initialize(self, resources):
       self._client = resources.client
       self._server = resources.server
@@ -71,29 +77,29 @@ For reference, I require the following modules to be installed:
 
       self._stark = self._client.search_for_user(self.STARKRAVINGMADBOT_DEFAULTID, enablenamesearch=False, serverrestriction=self._server)
       self._preprocessor_replace = { # Maps commands to their exact substitute.
-         "$avatar": pf + "basicinfo avatar",
-         "$blame": cmdnotimplemented,
-         "$choose": pf + "random choose",
-         "$color": cmdnotimplemented,
-         "$doot": cmdnotimplemented,
-         "$flip": pf + "random coin",
-         "$git": this + " git",
-         "$help": this + " help",
-         "$intensify": cmdnotimplemented,
-         "$invite": cmdnotimplemented,
-         "$pengu": cmdnotimplemented,
-         "$reddit": cmdnotimplemented,
-         "$rip": this + " rip",
-         "$roll": pf + "random dice",
-         "$say": this + " say",
-         "$serverstats": pf + "basicinfo server",
-         "$sleep": this + " sleep",
-         "$spooderman": cmdnotimplemented,
-         "$subreddit": cmdnotimplemented,
-         "$swole": cmdnotimplemented,
-         "$truth": cmdnotimplemented,
-         "$ud": cmdnotimplemented,
-         "$whois": pf + "basicinfo user",
+         "avatar": pf + "basicinfo avatar",
+         "blame": cmdnotimplemented,
+         "choose": pf + "random choose",
+         "color": cmdnotimplemented,
+         "doot": cmdnotimplemented,
+         "flip": pf + "random coin",
+         "git": this + " git",
+         "help": this + " help",
+         "intensify": cmdnotimplemented,
+         "invite": cmdnotimplemented,
+         "pengu": cmdnotimplemented,
+         "reddit": cmdnotimplemented,
+         "rip": this + " rip",
+         "roll": pf + "random dice",
+         "say": this + " say",
+         "serverstats": pf + "basicinfo server",
+         "sleep": this + " sleep",
+         "spooderman": cmdnotimplemented,
+         "subreddit": cmdnotimplemented,
+         "swole": cmdnotimplemented,
+         "truth": cmdnotimplemented,
+         "ud": cmdnotimplemented,
+         "whois": pf + "basicinfo user",
       }
 
       self._sleep_choices = [
@@ -108,20 +114,25 @@ For reference, I require the following modules to be installed:
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
       if self.dont_run_module():
          return content # Short-circuit if stark is not offline.
-      
-      # IMPORTANT: This might be a problem if the message implementation of
-      #            StarkRavingMadBot changes. e.g. if messages are
-      #            invoked with a prefix that has a space.
-      (left, right) = utils.separate_left_word(content)
-      try:
-         left = self._preprocessor_replace[left.lower()]
-      except KeyError:
-         return content
 
-      if right == "":
-         return left
-      else:
-         return left + " " + right
+      if content.startswith("$"):
+         new_content = content[1:]
+         (left, right) = utils.separate_left_word(new_content)
+         
+         # Deal with type flair commands
+         if left.upper() in self._MBTI_TYPES_SET:
+            return default_cmd_prefix + "jcfdiscord typeflair " + left
+
+         # Any other command
+         try:
+            left = "$" + self._preprocessor_replace[left.lower()]
+         except KeyError:
+            return content
+         if right == "":
+            return left
+         else:
+            return left + " " + right
+      return content
 
    @cmd.add(_cmd_dict, "cmdnotimplemented")
    async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):

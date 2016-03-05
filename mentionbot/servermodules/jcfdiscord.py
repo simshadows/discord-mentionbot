@@ -46,11 +46,20 @@ See `{modhelp}` for JCF Discord commands.
       "INTJ","INTP","ENTJ","ENTP","INFJ","INFP","ENFJ","ENFP",
       "ISTJ","ISFJ","ESTJ","ESFJ","ISTP","ISFP","ESTP","ESFP",
    ]
+   _MBTI_TYPES_SET = set(_MBTI_TYPES) # Faster access to get set membership
 
    async def _initialize(self, resources):
       self._res = resources
       self._client = self._res.client
       return
+
+   async def msg_preprocessor(self, content, msg, default_cmd_prefix):
+      if content.startswith(default_cmd_prefix):
+         new_content = content[len(default_cmd_prefix):]
+         (left, right) = utils.separate_left_word(new_content)
+         if left.upper() in self._MBTI_TYPES_SET:
+            return default_cmd_prefix + self.cmd_names[0] + " typeflair " + left
+      return await super(JCFDiscord, self).msg_preprocessor(content, msg, default_cmd_prefix)
 
    @cmd.add(_cmd_dict, "functions", "fn", "stack")
    @cmd.preprocess(_cmd_prep_factory, cmd_name="functions")
@@ -60,7 +69,7 @@ See `{modhelp}` for JCF Discord commands.
       types = []
       for arg in args:
          arg = arg.upper()
-         if arg in self._MBTI_TYPES:
+         if arg in self._MBTI_TYPES_SET:
             types.append(arg)
       if len(types) == 0:
          types = self._MBTI_TYPES
@@ -105,4 +114,21 @@ See `{modhelp}` for JCF Discord commands.
       buf = buf[:-2]
       await self._client.send_msg(msg, buf)
       return
+
+   @cmd.add(_cmd_dict, "typeflair")
+   async def _cmdf_typeflair(self, substr, msg, privilege_level):
+      (left, right) = utils.separate_left_word(substr)
+      new_role_name = left.upper()
+      if not new_role_name in self._MBTI_TYPES_SET:
+         raise errors.InvalidCommandArgumentsError
+      new_role = utils.flair_name_to_object(self._res.server, new_role_name, case_sensitive=False)
+      if new_role is None:
+         await self._client.send_msg(msg, "Role '{}'' does not exist. Aborting with no changes.".format(new_role))
+         raise errors.OperationAborted
+      await utils.remove_flairs_by_name(self._client, msg.author, *self._MBTI_TYPES, case_sensitive=False)
+      await self._client.add_roles(msg.author, new_role)
+      await self._client.send_msg(msg, "Assigned <@{0}> the type flair '{1}'.".format(msg.author.id, new_role_name))
+      return
+
+
 
