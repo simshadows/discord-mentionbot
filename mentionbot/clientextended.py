@@ -3,6 +3,7 @@ import re
 
 import discord
 
+import utils
 import errors
 
 # To provide additional functionality.
@@ -12,8 +13,6 @@ class ClientExtended(discord.Client):
       super(ClientExtended, self).__init__(**kwargs)
       self._MESSAGE_MAX_LEN = 2000
       self._re_alldigits = re.compile("\d+")
-      self._re_mentionstr = re.compile("<@\d+>")
-      self._re_chmentionstr = re.compile("<#\d+>")
 
       self._normal_game_status = ""
       return
@@ -31,7 +30,7 @@ class ClientExtended(discord.Client):
    #                                If None, search occurs over all reachable searchers.
    #                                If it's a valid server, the search is done on only that server.
    def search_for_user(self, text, enablenamesearch=False, serverrestriction=None): # TYPE: User
-      if self._re_mentionstr.fullmatch(text):
+      if utils.re_user_mention.fullmatch(text):
          searchkey = lambda user : user.id == str(text[2:-1])
       elif self._re_alldigits.fullmatch(text):
          searchkey = lambda user : user.id == str(text)
@@ -63,7 +62,7 @@ class ClientExtended(discord.Client):
    #                                If None, search occurs over all reachable searchers.
    #                                If it's a valid server, the search is done on only that server.
    def search_for_channel(self, text, enablenamesearch=False, serverrestriction=None): # Type: Channel
-      if self._re_chmentionstr.fullmatch(text):
+      if utils.re_ch_mention.fullmatch(text):
          return self.get_channel(text[2:-1])
       elif self._re_alldigits.fullmatch(text):
          return self.get_channel(text)

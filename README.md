@@ -26,6 +26,7 @@ View all installed and available modules in discord using the command `/mods`.
 	* Generate random numbers of arbitrary ranges, flip coins, get random RGB colour codes, and use dice notation.
 * **Self-Serve Colours**: Allows users to pick their own RGB colour.
 	* `/colour 00FF00` assigns the user a flair named `00ff00` with the appropriate colour.
+* **Truth Game**: Facilities to play a game of "Truth".
 * **Wolfram Alpha**: Allows users to query Wolfram Alpha. *(Installed by default.)*
 
 Some community-specific modules:

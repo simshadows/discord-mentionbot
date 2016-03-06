@@ -546,8 +546,13 @@ See `{modhelp}` for commands to generate user activity statistics.
          buf += " and use `/stats login` for it take effect.)"
          await self._client.send_msg(msg, buf)
          raise errors.OperationAborted
-      await self._client.perm_send_file(channel, temp_filename + temp_file_ext)
-      os.remove(temp_filename + temp_file_ext)
+      try:
+         await self._client.perm_send_file(channel, temp_filename + temp_file_ext)
+         os.remove(temp_filename + temp_file_ext)
+      except:
+         print("Hopefully this allows us to identify the bug.")
+         print(traceback.format_exc())
+         await self._client.send_msg(msg, "Oops! Something went wrong that would've crashed me... but it didn't!")
       print("GRAPH SENT!")
       return
 

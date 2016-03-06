@@ -30,7 +30,7 @@ See `{modhelp}` for StarkRavingMadBot standin commands.
 - $avatar
 - $blame
 - $choose
-~~- $color~~
+- $color
 ~~- $doot~~
 - $flip
 - $git
@@ -109,6 +109,7 @@ For reference, I require the following modules to be installed:
       self._sleep_choices = [
          "Go to sleep",
          "Git to bed",
+         "The addiction is more satisfying while conscious",
          "(ﾉಠ_ಠ)ﾉ*:・ﾟ✧\ngit to sleep"
       ]
 
@@ -156,7 +157,7 @@ For reference, I require the following modules to be installed:
    @cmd.add(_cmd_dict, "blame")
    @cmd.preprocess(_cmd_prep_factory)
    async def _cmdf_blame(self, substr, msg, privilege_level):
-      """`{cmd}`"""
+      """`{p}{c}`"""
       if (substr == "<@{}>".format(self._res.botowner_ID)) or (substr == "<@{}>".format(self._res.me_ID)):
          # TODO: Consider also checking name matches... idk
          buf = "{} did nothing wrong."
@@ -168,6 +169,16 @@ For reference, I require the following modules to be installed:
          await self._client.send_msg(msg, buf.format("<@" + msg.author.id+ ">"))
       else:
          await self._client.send_msg(msg, buf.format(substr))
+      return
+
+   @cmd.add(_cmd_dict, "doot")
+   @cmd.preprocess(_cmd_prep_factory)
+   async def _cmdf_doot(self, substr, msg, privilege_level):
+      """`{p}{c}`"""
+      # var m = await Client.SendMessage(e.Channel, "doot doot");
+      # await Task.Delay(1000);
+      # TODO: Figure out how to do this with asyncio without hanging up the bot for the whole 1 second...
+      await self._client.send_msg(msg, "doot doot (thank mr skeltal)")
       return
 
    @cmd.add(_cmd_dict, "git")
@@ -187,14 +198,18 @@ For reference, I require the following modules to be installed:
    @cmd.add(_cmd_dict, "sleep")
    @cmd.preprocess(_cmd_prep_factory)
    async def _cmdf_sleep(self, substr, msg, privilege_level):
-      """`{cmd}`"""
+      """`{p}{c}`"""
+      # The original command takes a user mention from substr and appends it to the end.
+      # so "$sleep" -> "Go to sleep"
+      # and "$sleep <@123> <@456>" -> "Go to sleep <@123>"
+      # Something like that.
       await self._client.send_msg(msg, random.choice(self._sleep_choices))
       return
 
    @cmd.add(_cmd_dict, "rip")
    @cmd.preprocess(_cmd_prep_factory)
    async def _cmdf_rip(self, substr, msg, privilege_level):
-      """`{cmd}`"""
+      """`{p}{c}`"""
       await self._client.send_msg(msg, "doesnt even deserve a funeral")
       return
 

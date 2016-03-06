@@ -12,6 +12,7 @@ from servermodules.jcfdiscord import JCFDiscord
 from servermodules.bsistarkravingmadbot import BsiStarkRavingMadBot
 from servermodules.debugging import Debugging
 from servermodules.selfservecolours import SelfServeColours
+from servermodules.truthgame import TruthGame
 
 class ServerModuleFactory:
    
@@ -29,6 +30,7 @@ class ServerModuleFactory:
       BsiStarkRavingMadBot,
       Debugging,
       SelfServeColours,
+      TruthGame,
    ]
 
    @classmethod

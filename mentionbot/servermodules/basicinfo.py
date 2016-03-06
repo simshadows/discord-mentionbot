@@ -31,7 +31,7 @@ See `{modhelp}` for basic server/user information commands.
    @cmd.add(_cmd_dict, "avatar", "dp", "avatarurl")
    @cmd.preprocess(_cmd_prep_factory)
    async def _cmdf_avatar(self, substr, msg, privilege_level):
-      """`{p}avatar [user]` - Get a user's avatar."""
+      """`{p}{c} [user]` - Get a user's avatar."""
       substr = substr.strip()
       user = None
       if len(substr) == 0:
@@ -51,7 +51,7 @@ See `{modhelp}` for basic server/user information commands.
    @cmd.add(_cmd_dict, "user", "whois", "who")
    @cmd.preprocess(_cmd_prep_factory)
    async def _cmdf_user(self, substr, msg, privilege_level):
-      """`{p}user [user]` - Get user info."""
+      """`{p}{c} [user]` - Get user info."""
       # Get user. Copied from _cmd_avatar()...
       substr = substr.strip()
       user = None
@@ -83,7 +83,7 @@ See `{modhelp}` for basic server/user information commands.
    @cmd.add(_cmd_dict, "thisserver", "server")
    @cmd.preprocess(_cmd_prep_factory)
    async def _cmdf_server(self, substr, msg, privilege_level):
-      """`{p}thisserver` - Get some simple server info and statistics."""
+      """`{p}{c}` - Get some simple server info and statistics."""
       s = msg.server
       # Count voice and text channels
       text_ch_total = 0
@@ -114,7 +114,7 @@ See `{modhelp}` for basic server/user information commands.
    @cmd.add(_cmd_dict, "servericon")
    @cmd.preprocess(_cmd_prep_factory)
    async def _cmdf_servericon(self, substr, msg, privilege_level):
-      """`{p}servericon` - Get server icon."""
+      """`{p}{c}` - Get server icon."""
       if msg.server.icon_url == "":
          return await self._client.send_msg(msg, "This server has no icon.")
       else:

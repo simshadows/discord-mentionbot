@@ -8,7 +8,8 @@ import traceback
 
 import discord
 
-_RE_PRIVLVL_LINE = re.compile(">>> PRIVILEGE LEVEL \d+")
+re_user_mention = re.compile("<@\d+>")
+re_ch_mention = re.compile("<#\d+>")
 
 #################################################################################
 # BASIC STRING OPERATIONS #######################################################
@@ -206,10 +207,9 @@ def datetime_rounddown_to_hour(datetime_object):
       hour=hour,
    )
 
-_re_mention = re.compile("<@\d+>")
 def get_all_mentions(text):
    mentions = []
-   for mention_string in _re_mention.findall(text):
+   for mention_string in re_user_mention.findall(text):
       mentions.append(mention_string[2:-1])
    return mentions
 
