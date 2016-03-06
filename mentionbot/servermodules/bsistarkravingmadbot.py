@@ -1,5 +1,6 @@
 import asyncio
 import random
+import urllib.parse as urllibparse
 
 import discord
 
@@ -31,7 +32,7 @@ See `{modhelp}` for StarkRavingMadBot standin commands.
 - $blame
 - $choose
 - $color
-~~- $doot~~
+- $doot
 - $flip
 - $git
 - $help
@@ -45,10 +46,10 @@ See `{modhelp}` for StarkRavingMadBot standin commands.
 - $serverstats
 - $sleep
 ~~- $spooderman~~
-~~- $subreddit~~
+- $subreddit
 - $swole
-~~- $truth~~
-~~- $ud~~
+- $truth
+- $ud
 - $whois
 
 *Reference commit: 89c88d92c98e7ccdf4b45092b6a139982d01acec, 6/2/16*
@@ -102,10 +103,10 @@ For reference, I require the following modules to be installed:
          "serverstats": pf + "basicinfo server",
          "sleep": this + " sleep",
          "spooderman": cmdnotimplemented,
-         "subreddit": cmdnotimplemented,
+         "subreddit": pf + "jcfdiscord subreddit",
          "swole": pf + "jcfdiscord swole",
-         "truth": cmdnotimplemented,
-         "ud": cmdnotimplemented,
+         "truth": this + " truth",
+         "ud": this + " ud",
          "whois": pf + "basicinfo user",
       }
 
@@ -192,6 +193,13 @@ For reference, I require the following modules to be installed:
       await self._client.send_msg(msg, buf)
       return
 
+   @cmd.add(_cmd_dict, "rip")
+   @cmd.preprocess(_cmd_prep_factory)
+   async def _cmdf_rip(self, substr, msg, privilege_level):
+      """`{p}{c}`"""
+      await self._client.send_msg(msg, "doesnt even deserve a funeral")
+      return
+
    @cmd.add(_cmd_dict, "say")
    async def _cmdf_say(self, substr, msg, privilege_level):
       """`{cmd}`"""
@@ -209,11 +217,38 @@ For reference, I require the following modules to be installed:
       await self._client.send_msg(msg, random.choice(self._sleep_choices))
       return
 
-   @cmd.add(_cmd_dict, "rip")
+   @cmd.add(_cmd_dict, "truth")
+   async def _cmdf_truth(self, substr, msg, privilege_level):
+      """`{cmd}`"""
+      buf = None
+      if len(substr) == 0:
+         buf = "They're "
+      else:
+         buf = "\a" + substr + " is "
+
+      if random.randint(0,1) == 1:
+         buf += "telling the truth."
+      else:
+         buf += "lying."
+      
+      # Small chance of bypassing and doing an easter egg response instead.
+      if random.randint(1,400) == 1:
+         buf = "m8"
+      elif random.randint(1,400) == 1:
+         buf = "This one's a hard one... I can't tell you."
+      elif random.randint(1,400) == 1:
+         buf = "Literally impossible to tell. Sorry."
+      elif random.randint(1,400) == 1:
+         buf = "What they're saying is trulse."
+
+      await self._client.send_msg(msg, buf)
+      return
+
+   @cmd.add(_cmd_dict, "ud", "urbandictionary", "urban")
    @cmd.preprocess(_cmd_prep_factory)
-   async def _cmdf_rip(self, substr, msg, privilege_level):
+   async def _cmdf_ud(self, substr, msg, privilege_level):
       """`{p}{c}`"""
-      await self._client.send_msg(msg, "doesnt even deserve a funeral")
+      await self._client.send_msg(msg, "http://www.urbandictionary.com/define.php?term=" + urllibparse.quote(substr))
       return
 
    def dont_run_module(self):

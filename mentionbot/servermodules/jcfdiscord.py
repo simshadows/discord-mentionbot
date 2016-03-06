@@ -97,6 +97,12 @@ See `{modhelp}` for JCF Discord commands.
       await self._client.send_msg(msg, "Assigned <@{0}> the type flair '{1}'.".format(msg.author.id, new_role_name))
       return
 
+   @cmd.add(_cmd_dict, "subreddit")
+   async def _cmdf_noot(self, substr, msg, privilege_level):
+      """`{cmd}`"""
+      await self._client.send_msg(msg, "Our subreddit is at https://www.reddit.com/r/JCFDiscord/.")
+      return
+
    @cmd.add(_cmd_dict, "swole")
    @cmd.preprocess(_cmd_prep_factory)
    async def _cmdf_swole(self, substr, msg, privilege_level):

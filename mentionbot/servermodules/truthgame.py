@@ -1,6 +1,7 @@
 import asyncio
 import random
 import re
+import textwrap
 
 import discord
 
@@ -30,6 +31,11 @@ See `{modhelp}` for truth game commands.
 
    _PARTICIPANT_DELIMITER = " --> "
 
+   _RULES_STRING = textwrap.dedent("""\
+   **Rules for a game of _Truth_**:
+   idk, ask the people playing it.
+   """)
+
    async def _initialize(self, resources):
       self._client = resources.client
       self._res = resources
@@ -42,7 +48,6 @@ See `{modhelp}` for truth game commands.
       settings = self._res.get_settings()
       if settings is None:
          self._res.save_settings(self.DEFAULT_SETTINGS)
-         return
 
       self._enabled_channels = []
       try:
@@ -67,11 +72,17 @@ See `{modhelp}` for truth game commands.
          substr = "newgame"
       return await super(TruthGame, self).process_cmd(substr, msg, privilege_level)
 
+   @cmd.add(_cmd_dict, "rules")
+   async def _cmdf_enable(self, substr, msg, privilege_level):
+      """`{cmd}` - View game rules."""
+      await self._client.send_msg(channel, self._RULES_STRING)
+      return
+
    @cmd.add(_cmd_dict, "newgame")
    @cmd.preprocess(_cmd_prep_factory) # This might clash with future game modules...
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_newgame(self, substr, msg, privilege_level):
-      """`{p}{b}` - New game."""
+      """`{p}{c}` - New game."""
       channel = msg.channel
       await self._abort_if_not_truth_channel(channel)
       await self._new_game(channel)
@@ -90,11 +101,9 @@ See `{modhelp}` for truth game commands.
       channel = msg.channel
       await self._abort_if_not_truth_channel(channel)
       new_participant = None
-      if len(substr) == 0:
+      if (privilege_level < PrivilegeLevel.MODERATOR) or (len(substr) == 0):
          new_participant = "<@" + msg.author.id + ">"
       else:
-         if privilege_level < PrivilegeLevel.MODERATOR:
-            raise errors.CommandPrivilegeError
          new_participant = substr
          if self._PARTICIPANT_DELIMITER in new_participant:
             await self._client.send_msg(channel, "Error: Not allowed to use the delimiter characters.")
@@ -118,20 +127,18 @@ See `{modhelp}` for truth game commands.
       channel = msg.channel
       await self._abort_if_not_truth_channel(channel)
       participant = None
-      if len(substr) == 0:
+      if (privilege_level < PrivilegeLevel.MODERATOR) or (len(substr) == 0):
          participant = "<@" + msg.author.id + ">"
       else:
-         if privilege_level < PrivilegeLevel.MODERATOR:
-            raise errors.CommandPrivilegeError
          participant = substr
       if participant in self._get_participants(channel):
          await self._remove_participant(channel, participant)
-         await self._client.send_msg(channel, "Removed {} to the game.".format(participant))
+         await self._client.send_msg(channel, "Removed {} from the game.".format(participant))
       else:
          await self._client.send_msg(channel, "Error: {} is not already a participant.".format(participant))
       return
 
-   @cmd.add(_cmd_dict, "enable")
+   @cmd.add(_cmd_dict, "enablechannel")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_enable(self, substr, msg, privilege_level):
       """`{cmd}` - Enable Truth in this channel."""
@@ -144,7 +151,7 @@ See `{modhelp}` for truth game commands.
          await self._client.send_msg(channel, "This channel is now a Truth game channel.")
       return
 
-   @cmd.add(_cmd_dict, "disable")
+   @cmd.add(_cmd_dict, "disablechannel")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_disable(self, substr, msg, privilege_level):
       """`{cmd}` - Disable Truth in this channel."""
