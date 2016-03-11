@@ -48,6 +48,15 @@ See `{modhelp}` for JCF Discord commands.
    ]
    _MBTI_TYPES_SET = set(_MBTI_TYPES) # Faster access to get set membership
 
+   _EASTER_EGG_STACKS = {
+      "ESPN": "Sn - Ps - Jn - Ns",
+   }
+
+   _EASTER_EGG_TYPES = [
+      "ESPN",
+   ]
+   _EASTER_EGG_TYPES_SET = set(_EASTER_EGG_TYPES) # Faster access to get set membership
+
    _SWOLEBRO_ID = "100335016025788416"
 
    async def _initialize(self, resources):
@@ -71,13 +80,18 @@ See `{modhelp}` for JCF Discord commands.
       types = []
       for arg in args:
          arg = arg.upper()
-         if arg in self._MBTI_TYPES_SET:
+         if (arg in self._MBTI_TYPES_SET) or (arg in self._EASTER_EGG_TYPES_SET):
             types.append(arg)
       if len(types) == 0:
          types = self._MBTI_TYPES
       buf = "```\n"
       for mbti_type in types:
-         buf += mbti_type + " = " + self._FUNCTION_STACKS[mbti_type] + "\n"
+         function_stack_str = None
+         if mbti_type in self._MBTI_TYPES_SET:
+            function_stack_str = self._FUNCTION_STACKS[mbti_type]
+         else:
+            function_stack_str = self._EASTER_EGG_STACKS[mbti_type]
+         buf += mbti_type + " = " + function_stack_str + "\n"
       buf += "```"
       await self._client.send_msg(msg, buf)
       return

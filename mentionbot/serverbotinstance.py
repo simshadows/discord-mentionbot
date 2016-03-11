@@ -532,7 +532,7 @@ class ServerBotInstance:
          await self.process_text(right, replacement_msg) # TODO: Make this call on_message()
       return
 
-   @cmd.add(_cmd_dict, "setgame")
+   @cmd.add(_cmd_dict, "setgame", "setgamestatus")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setgame(self, substr, msg, privilege_level):

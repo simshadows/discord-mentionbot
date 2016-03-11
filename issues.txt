@@ -416,3 +416,43 @@ Traceback (most recent call last):
   File "E:\Program Files\Python35-32\lib\site-packages\websockets\protocol.py", line 421, in write_frame
     "in the {} state".format(self.state_name))
 websockets.exceptions.InvalidState: Cannot write to a WebSocket in the CLOSING state
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+msg rcv #music: *by writing more.*
+>>>>>>>>>>>>>>>>>>> TICK!!!
+>>>>>>>>>>>>>>>>>>> TICK!!!
+>>>>>>>>>>>>>>>>>>> TICK!!!
+>>>>>>>>>>>>>>>>>>> TICK!!!
+msg rcv #music: annnnd he failed
+>>>>>>>>>>>>>>>>>>> TICK!!!
+msg rcv #music: *the crushing weight of failure falls on his shoulder,\\nand he is lying there, lifeless, under the boulder*
+>>>>>>>>>>>>>>>>>>> TICK!!!
+SENDING MESSAGE...
+MentionNotifyModule: A notification was sent!
+msg rcv #typology: <@124127042764537857> aku > me in malay, evil in japanese\\n\\n<@119296324783964160> wow they banned you from BGI, jango? damn\\n\\n<@119384097473822727> sims, i dont thinkt that's a sensor or any function specific trait. functions are not behaviour.
+>>>>>>>>>>>>>>>>>>> TICK!!!
+msg rcv #typology: both are fitting. *being an egotistic asshole* \\U0001f604
+msg rcv #typology: thats why i pointed out \\U0001f61b
+msg rcv #typology: but
+msg rcv #typology: i dont think you're egotistical asshole
+>>>>>>>>>>>>>>>>>>> TICK!!!
+msg rcv #typology: ^^
+Task was destroyed but it is pending!
+task: <Task pending coro=<ChannelCloseScheduler.run() running at E:\Application Documents\Git\mentionbot_stable\mentionbot\servermodules\dynamicchannels.py:446> wait_for=<Future pending cb=[Task._wakeup()]>>

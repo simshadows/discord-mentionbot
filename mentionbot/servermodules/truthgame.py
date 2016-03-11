@@ -75,7 +75,7 @@ See `{modhelp}` for truth game commands.
    @cmd.add(_cmd_dict, "rules")
    async def _cmdf_enable(self, substr, msg, privilege_level):
       """`{cmd}` - View game rules."""
-      await self._client.send_msg(channel, self._RULES_STRING)
+      await self._client.send_msg(msg, self._RULES_STRING)
       return
 
    @cmd.add(_cmd_dict, "newgame")
