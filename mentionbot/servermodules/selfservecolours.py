@@ -57,7 +57,8 @@ class SelfServeColours(ServerModule):
       colour_obj = discord.Colour(rgb_code_int)
       role_obj = utils.flair_name_to_object(self._res.server, rgb_code_str, case_sensitive=False)
       if role_obj is None:
-         role_obj = await self._client.create_role(self._res.server, name=rgb_code_str, colour=colour_obj)
+         perm_obj = discord.Permissions.none()
+         role_obj = await self._client.create_role(self._res.server, name=rgb_code_str, colour=colour_obj, permissions=perm_obj)
       else:
          # Ensure role object has the correct colour.
          await self._client.edit_role(self._res.server, role_obj, colour=colour_obj)

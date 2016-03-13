@@ -456,3 +456,52 @@ msg rcv #typology: i dont think you're egotistical asshole
 msg rcv #typology: ^^
 Task was destroyed but it is pending!
 task: <Task pending coro=<ChannelCloseScheduler.run() running at E:\Application Documents\Git\mentionbot_stable\mentionbot\servermodules\dynamicchannels.py:446> wait_for=<Future pending cb=[Task._wakeup()]>>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>>>>>>>>>>>>>> TICK!!!
+>>>>>>>>>>>>>>>>>>> TICK!!!
+>>>>>>>>>>>>>>>>>>> TICK!!!
+MessageCache moving messages to disk.
+SENDING MESSAGE...
+MentionNotifyModule: A notification was sent!
+msg rcv #truth: hey fuck you <@119296324783964160>
+msg rcv #truth: wow, r00d
+>>>>>>>>>>>>>>>>>>> TICK!!!
+msg rcv #r9k-testroom: wtf, the bot learns?
+msg rcv #r9k-testroom: it just maintains a database of the messages
+>>>>>>>>>>>>>>>>>>> TICK!!!
+msg rcv #r9k-testroom: when you sent a picture, it was really an empty message with an attachment
+msg rcv #r9k-testroom: so no more pictures allowed?
+msg rcv #r9k-testroom: anytime someone senda a picture and doesn't write anything in the box, it will be an empty message with an attachment
+msg rcv #r9k-testroom: you casn, but you need to write something in teh box
+msg rcv #r9k-testroom: lol
+msg rcv #r9k-testroom: lel
+msg rcv #r9k-testroom: haha, did the bot work? \\U0001f61b
+>>>>>>>>>>>>>>>>>>> TICK!!!
+msg rcv #r9k-testroom: yes sir
+msg rcv #r9k-testroom: well, this is what I call a job (realtively) well done
+>>>>>>>>>>>>>>>>>>> TICK!!!
+msg rcv #r9k-testroom: question now is if anyone's going to actually use this channel, or just avoid it
+Task was destroyed but it is pending!
+task: <Task pending coro=<ChannelCloseScheduler.run() running at E:\Application Documents\Git\mentionbot_stable\mentionbot\servermodules\dynamicchannels.py:446> wait_for=<Future pending cb=[Task._wakeup()]>>

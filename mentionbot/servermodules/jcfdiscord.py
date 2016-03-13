@@ -49,11 +49,22 @@ See `{modhelp}` for JCF Discord commands.
    _MBTI_TYPES_SET = set(_MBTI_TYPES) # Faster access to get set membership
 
    _EASTER_EGG_STACKS = {
-      "ESPN": "Sn - Ps - Jn - Ns",
+      "ESPN": "Sp - Or - Ts - Tv", "ISPN": "Or - Sp - Tv - Ts",
+      "ESPS": "Op - Sr - Ts - Tv", "ISPS": "Sr - Op - Tv - Ts",
+      "ENPN": "Tp - Or - Ts - Sv", "INPN": "Or - Tp - Sv - Ts",
+      "ENPS": "Op - Tr - Ss - Tv", "INPS": "Tr - Op - Tv - Ss",
+      "ESJN": "Sp - Tr - Os - Tv", "ISJN": "Tr - Sp - Tv - Os",
+      "ESJS": "Tp - Sr - Ts - Ov", "ISJS": "Sr - Tp - Ov - Ts",
+      "ENJN": "Tp - Tr - Os - Sv", "INJN": "Tr - Tp - Sv - Os",
+      "ENJS": "Tp - Tr - Ss - Ov", "INJS": "Tr - Tp - Ov - Ss",
+
+      "XXXX": "Xx - Xx - Xx - Xx",
    }
 
    _EASTER_EGG_TYPES = [
-      "ESPN",
+      "ESPN", "ISPN", "ESPS", "ISPS", "ENPN", "INPN", "ENPS", "INPS",
+      "ESJN", "ISJN", "ESJS", "ISJS", "ENJN", "INJN", "ENJS", "INJS",
+      "XXXX",
    ]
    _EASTER_EGG_TYPES_SET = set(_EASTER_EGG_TYPES) # Faster access to get set membership
 
