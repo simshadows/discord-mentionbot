@@ -505,3 +505,34 @@ msg rcv #r9k-testroom: well, this is what I call a job (realtively) well done
 msg rcv #r9k-testroom: question now is if anyone's going to actually use this channel, or just avoid it
 Task was destroyed but it is pending!
 task: <Task pending coro=<ChannelCloseScheduler.run() running at E:\Application Documents\Git\mentionbot_stable\mentionbot\servermodules\dynamicchannels.py:446> wait_for=<Future pending cb=[Task._wakeup()]>>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>>>>>>>>>>>>>> TICK!!!
+CHANNEL NONE
+A CHANNEL CLOSED.
+Traceback (most recent call last):
+  File "E:\Application Documents\Git\mentionbot_stable\mentionbot\servermodules\dynamicchannels.py", line 441, in run
+    await utils.close_channel(self._client, ch, self._module.bot_flairs)
+  File "E:\Application Documents\Git\mentionbot_stable\mentionbot\utils.py", line 81, in close_channel
+    everyone = channel.server.default_role
+AttributeError: 'NoneType' object has no attribute 'server'
+
+msg rcv #brogramming: but I gues there are still null errors in C++

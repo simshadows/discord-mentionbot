@@ -544,7 +544,7 @@ See `{modhelp}` for commands to generate user activity statistics.
          buf = "Unknown error occurred. Maybe you forgot to sign in..."
          buf += "\n(Bot owner must manually enter plotly login details in settings files,"
          buf += " and use `/stats login` for it take effect.)"
-         await self._client.send_msg(msg, buf)
+         await self._client.send_msg(channel, buf)
          raise errors.OperationAborted
       try:
          await self._client.perm_send_file(channel, temp_filename + temp_file_ext)
@@ -552,7 +552,7 @@ See `{modhelp}` for commands to generate user activity statistics.
       except:
          print("Hopefully this allows us to identify the bug.")
          print(traceback.format_exc())
-         await self._client.send_msg(msg, "Oops! Something went wrong that would've crashed me... but it didn't!")
+         await self._client.send_msg(channel, "Oops! Something went wrong that would've crashed me... but it didn't!")
       print("GRAPH SENT!")
       return
 
