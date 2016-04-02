@@ -188,5 +188,14 @@ class Random(ServerModule):
       await self._client.send_msg(msg, buf)
       return
 
+   @cmd.add(_cmd_dict, "user", "member", "u", "mem")
+   async def _cmdf_colour(self, substr, msg, privilege_level):
+      """`{cmd}` - Chooses a random member from this server."""
+      random_member = random.choice(list(msg.server.members))
+      buf = "**Your random user is:** {0} (UID: {1})\n".format(random_member.name, random_member.id)
+      buf += "(Chosen out of {} users.)".format(str(len(msg.server.members))) # TODO: Fix concurrent access?
+      await self._client.send_msg(msg, buf)
+      return
+
 
    
