@@ -34,7 +34,7 @@ def separate_right_word(text): # TYPE: Tuple<String>
    return tuple(substrings)
 
 def remove_whitespace(text):
-   return "".join(text.split()) # TODO: Find a nicer implementation.
+   return text.replace(" ", "") # TODO: Find a nicer implementation.
 
 def str_asciionly(text):
    buf = ""
