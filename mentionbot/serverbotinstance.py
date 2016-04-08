@@ -196,9 +196,18 @@ class ServerBotInstance:
    @cmd.add(_cmd_dict, "lmgtfy", "google", "goog", "yahoo")
    async def _cmdf_say(self, substr, msg, privilege_level):
       """`{cmd} [text]` - Let me google that for you..."""
+      if len(substr) == 0:
+         raise errors.InvalidCommandArgumentsError
       await self._client.send_msg(msg, "http://lmgtfy.com/?q=" + urllibparse.quote(substr))
       return
 
+   @cmd.add(_cmd_dict, "testbell")
+   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
+   async def _cmdf_msgcachedebug(self, substr, msg, privilege_level):
+      """`{cmd}`"""
+      buf = "<@\a119384097473822727>"
+      await self._client.send_msg(msg, buf)
+      return
 
    #######################################
    ### MODULE INFO/MANAGEMENT COMMANDS ###
