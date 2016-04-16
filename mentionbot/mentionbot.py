@@ -143,7 +143,7 @@ class MentionBot(clientextended.ClientExtended):
             print("FAILED TO SEND BOTOWNER STACKTRACE.")
          buf = "**EXCEPTION:** " + type(e).__name__
          buf += "\n" + str(e)
-         buf += "\n<@" + BOTOWNER_ID + "> m8, fix this. I PM'd you the traceback."
+         buf += "\n<@" + MentionBot.BOTOWNER_ID + "> m8, fix this. I PM'd you the traceback."
          buf += "\n\n**THIS BOT WILL NOW TERMINATE. Please fix the bug before relaunching.**"
          try:
             await self.send_msg(msg, buf)

@@ -573,7 +573,7 @@ class ServerBotInstance:
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setusername(self, substr, msg, privilege_level):
       """`{cmd} [text]`"""
-      await self._client.edit_profile(password, username=substr)
+      await self._client.edit_profile(None, username=substr)
       self._bot_name = substr # TODO: Consider making this a function. Or stop using bot_name...
       await self._client.send_msg(msg, "**Username set to:** " + substr)
       return
