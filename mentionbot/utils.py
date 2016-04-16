@@ -54,7 +54,7 @@ _ENCODING = "utf-8"
 
 # This overwrites whatever file is specified with the data.
 def json_write(relfilepath, data=None):
-   _mkdir_recursive(relfilepath)
+   mkdir_recursive(relfilepath)
    with open(relfilepath, encoding=_ENCODING, mode="w") as f:
       f.write(json.dumps(data, sort_keys=True, indent=3))
    return
@@ -63,7 +63,7 @@ def json_read(relfilepath):
    with open(relfilepath, encoding=_ENCODING, mode="r") as f:
       return json.loads(f.read())
 
-def _mkdir_recursive(relfilepath):
+def mkdir_recursive(relfilepath):
    absfilepath = os.path.join(_CWD, relfilepath)
    absdir = os.path.dirname(absfilepath)
    try:

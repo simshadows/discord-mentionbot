@@ -1,6 +1,7 @@
 # TEMP
 import urllib.parse as urllibparse
 
+import os
 import asyncio
 import random
 import re
@@ -568,7 +569,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, "**Reverted game.**")
       return
 
-   @cmd.add(_cmd_dict, "setusername")
+   @cmd.add(_cmd_dict, "setusername", "updateusername", "newusername")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setusername(self, substr, msg, privilege_level):
@@ -576,6 +577,37 @@ class ServerBotInstance:
       await self._client.edit_profile(None, username=substr)
       self._bot_name = substr # TODO: Consider making this a function. Or stop using bot_name...
       await self._client.send_msg(msg, "**Username set to:** " + substr)
+      return
+
+   @cmd.add(_cmd_dict, "setavatar", "updateavatar")
+   @cmd.category("Admin Commands")
+   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
+   async def _cmdf_setusername(self, substr, msg, privilege_level):
+      """
+      `{cmd}` - Updates avatar to the cache file.
+
+      This file is in cache/updateavatar.
+      """
+      our_dir = self._client.CACHE_DIRECTORY + "updateavatar/"
+      # TODO: Make that filename a constant
+      # TODO: Nicer cache directory name use?
+      utils.mkdir_recursive(our_dir)
+      files_list = os.listdir(our_dir)
+      if len(files_list) == 0:
+         await self._client.send_msg(msg, "Please add a file in `" + our_dir + "`.")
+      else:
+         operation_failed = False
+         # try:
+         filename = files_list[0]
+         filepath = our_dir + filename
+         with open(filepath, "rb") as img_file:
+            img_bytes = img_file.read()
+         await self._client.edit_profile(None, avatar=img_bytes)
+         buf = "Avatar changed successfully with file `" + filename + "`."
+         await self._client.send_msg(msg, buf)
+         # except Exception as e:
+         #    buf = "Failed to change avatar. Exception: " + str(type(e).__name__)
+         #    await self._client.send_msg(msg, buf)
       return
 
    @cmd.add(_cmd_dict, "joinserver")
@@ -586,7 +618,7 @@ class ServerBotInstance:
       try:
          await self._client.accept_invite(substr)
          await self._client.send_msg(msg, "Successfully joined a new server.")
-      except discord.InvalidArgument:
+      except:
          await self._client.send_msg(msg, "Failed to join a new server.")
       return
 
