@@ -570,7 +570,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, "**Reverted game.**")
       return
 
-   @cmd.add(_cmd_dict, "setusername", "updateusername", "newusername")
+   @cmd.add(_cmd_dict, "setusername", "updateusername", "newusername", "setname", "newname")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setusername(self, substr, msg, privilege_level):
@@ -580,7 +580,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, "**Username set to:** " + substr)
       return
 
-   @cmd.add(_cmd_dict, "setavatar", "updateavatar")
+   @cmd.add(_cmd_dict, "setavatar", "updateavatar", "setdp", "newdp")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setusername(self, substr, msg, privilege_level):
@@ -592,14 +592,28 @@ class ServerBotInstance:
       This file is in cache/updateavatar.
       """
       if len(substr) != 0:
+         await self._client.send_msg(msg, "Setting avatar via url...")
          try:
             data = utils.download_from_url(substr)
             await self._client.edit_profile(None, avatar=data)
             await self._client.send_msg(msg, "Avatar changed successfully.")
          except Exception as e:
+            print(traceback.format_exc())
+            buf = "Failed to set avatar. (Error: `{}`.)".format(str(type(e).__name__))
+            await self._client.send_msg(msg, buf)
+      elif len(msg.attachments) != 0:
+         await self._client.send_msg(msg, "Setting avatar via attached file...")
+         # TODO: This code is quite identical to the case above. Fix this!!!
+         try:
+            data = utils.download_from_url(msg.attachments[0]["url"])
+            await self._client.edit_profile(None, avatar=data)
+            await self._client.send_msg(msg, "Avatar changed successfully.")
+         except Exception as e:
+            print(traceback.format_exc())
             buf = "Failed to set avatar. (Error: `{}`.)".format(str(type(e).__name__))
             await self._client.send_msg(msg, buf)
       else:
+         await self._client.send_msg(msg, "Setting avatar via saved file...")
          our_dir = self._client.CACHE_DIRECTORY + "updateavatar/"
          # TODO: Make that filename a constant
          # TODO: Nicer cache directory name use?
@@ -618,7 +632,8 @@ class ServerBotInstance:
                buf = "Avatar changed successfully with file `" + filename + "`."
                await self._client.send_msg(msg, buf)
             except Exception as e:
-               buf = "Failed to change avatar. (Error: `{}`.)".format(str(type(e).__name__))
+               print(traceback.format_exc())
+               buf = "Failed to set avatar. (Error: `{}`.)".format(str(type(e).__name__))
                await self._client.send_msg(msg, buf)
       return
 

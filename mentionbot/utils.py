@@ -53,8 +53,9 @@ def str_asciionly(text):
 
 # RETURNS: Bytes object of the file.
 def download_from_url(url):
-   response_obj = urllib.request.urlopen(url)
-   return response_obj.read()
+   request = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+   response = urllib.request.urlopen(request)
+   return response.read()
 
 #################################################################################
 # FILE I/O ######################################################################

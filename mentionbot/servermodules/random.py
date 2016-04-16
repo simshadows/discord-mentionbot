@@ -112,11 +112,11 @@ class Random(ServerModule):
       choices = list(filter(None, choices)) # Remove empty strings
       if len(choices) == 0:
          raise errors.InvalidCommandArgumentsError
-      buf = random.choice(choices) + "\n"
-      buf += "My choices were: "
+      buf = "\a" + random.choice(choices).strip() + "\n"
+      buf += "**My choices were**: "
       for choice in choices:
-         buf += choice + ";"
-      buf = buf[:-1]
+         buf += choice.strip() + "; "
+      buf = buf[:-2]
       await self._client.send_msg(msg, buf)
       return
 
