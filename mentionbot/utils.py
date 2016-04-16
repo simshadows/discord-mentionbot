@@ -5,6 +5,8 @@ import json
 import datetime
 import asyncio
 import traceback
+import urllib.request
+import http.client
 
 import discord
 
@@ -44,6 +46,15 @@ def str_asciionly(text):
       buf = ">>>>>>>>>>>>>>>>>>>>>>>>UNKNOWN"
       print("ERROR: Failed to convert string.")
    return buf[2:-1]
+
+#################################################################################
+# WEB HELPER FUNCTIONS ##########################################################
+#################################################################################
+
+# RETURNS: Bytes object of the file.
+def download_from_url(url):
+   response_obj = urllib.request.urlopen(url)
+   return response_obj.read()
 
 #################################################################################
 # FILE I/O ######################################################################

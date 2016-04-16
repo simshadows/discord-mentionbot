@@ -2,6 +2,7 @@
 import urllib.parse as urllibparse
 
 import os
+import sys
 import asyncio
 import random
 import re
@@ -584,30 +585,41 @@ class ServerBotInstance:
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setusername(self, substr, msg, privilege_level):
       """
-      `{cmd}` - Updates avatar to the cache file.
+      `{cmd} [url]` - Updates avatar to the URL. (Other options are available.)
+
+      If the URL is omitted, the cache file is instead used.
 
       This file is in cache/updateavatar.
       """
-      our_dir = self._client.CACHE_DIRECTORY + "updateavatar/"
-      # TODO: Make that filename a constant
-      # TODO: Nicer cache directory name use?
-      utils.mkdir_recursive(our_dir)
-      files_list = os.listdir(our_dir)
-      if len(files_list) == 0:
-         await self._client.send_msg(msg, "Please add a file in `" + our_dir + "`.")
+      if len(substr) != 0:
+         try:
+            data = utils.download_from_url(substr)
+            await self._client.edit_profile(None, avatar=data)
+            await self._client.send_msg(msg, "Avatar changed successfully.")
+         except Exception as e:
+            buf = "Failed to set avatar. (Error: `{}`.)".format(str(type(e).__name__))
+            await self._client.send_msg(msg, buf)
       else:
-         operation_failed = False
-         # try:
-         filename = files_list[0]
-         filepath = our_dir + filename
-         with open(filepath, "rb") as img_file:
-            img_bytes = img_file.read()
-         await self._client.edit_profile(None, avatar=img_bytes)
-         buf = "Avatar changed successfully with file `" + filename + "`."
-         await self._client.send_msg(msg, buf)
-         # except Exception as e:
-         #    buf = "Failed to change avatar. Exception: " + str(type(e).__name__)
-         #    await self._client.send_msg(msg, buf)
+         our_dir = self._client.CACHE_DIRECTORY + "updateavatar/"
+         # TODO: Make that filename a constant
+         # TODO: Nicer cache directory name use?
+         utils.mkdir_recursive(our_dir)
+         files_list = os.listdir(our_dir)
+         if len(files_list) == 0:
+            await self._client.send_msg(msg, "Please add a file in `" + our_dir + "`.")
+         else:
+            operation_failed = False
+            try:
+               filename = files_list[0]
+               filepath = our_dir + filename
+               with open(filepath, "rb") as img_file:
+                  img_bytes = img_file.read()
+               await self._client.edit_profile(None, avatar=img_bytes)
+               buf = "Avatar changed successfully with file `" + filename + "`."
+               await self._client.send_msg(msg, buf)
+            except Exception as e:
+               buf = "Failed to change avatar. (Error: `{}`.)".format(str(type(e).__name__))
+               await self._client.send_msg(msg, buf)
       return
 
    @cmd.add(_cmd_dict, "joinserver")
@@ -640,7 +652,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "throwexception")
+   @cmd.add(_cmd_dict, "throwexception", "exception", "quit")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_throwexception(self, substr, msg, privilege_level):
