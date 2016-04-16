@@ -63,5 +63,6 @@ target/
 
 # Project-specific ignores
 login_details
+bot_user_token
 notes.txt
 cache/

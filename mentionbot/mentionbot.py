@@ -23,7 +23,7 @@ handler = logging.FileHandler(filename='mentionbot.log', encoding='utf-8', mode=
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
-LOGIN_DETAILS_FILENAME = "login_details" # This file is used to login. Only contains two lines. Line 1 is email, line 2 is password.
+LOGIN_DETAILS_FILENAME = "bot_user_token" # This file is used to login. Only contains two lines. Line 1 is email, line 2 is password.
 
 class MentionBot(clientextended.ClientExtended):
    BOTOWNER_ID = "119384097473822727"
@@ -38,9 +38,6 @@ class MentionBot(clientextended.ClientExtended):
       print("INITIAL_GAME_STATUS = '{}'".format(MentionBot.INITIAL_GAME_STATUS))
       print("CACHE_DIRECTORY = '{}'".format(MentionBot.CACHE_DIRECTORY))
 
-      self.bot_mention = None
-      self.bot_name = None
-      self.botowner_mention = None
       self.botowner = None
 
       self._bot_instances = None
@@ -52,9 +49,6 @@ class MentionBot(clientextended.ClientExtended):
    async def on_ready(self):
       await self.set_game_status(MentionBot.INITIALIZING_GAME_STATUS)
       self._on_message_locked = True
-      self.bot_mention = "<@{}>".format(self.user.id)
-      self.bot_name = self.user.name
-      self.botowner_mention = "<@{}>".format(MentionBot.BOTOWNER_ID)
       self.botowner = self.search_for_user(MentionBot.BOTOWNER_ID)
 
       self._bot_instances = {}
@@ -64,8 +58,13 @@ class MentionBot(clientextended.ClientExtended):
       self.message_cache = await MessageCache.get_instance(self, self.CACHE_DIRECTORY)
 
       await self.set_game_status(MentionBot.INITIAL_GAME_STATUS)
-      print("Bot owner: " + self.botowner.name)
-      print("Bot name: " + self.bot_name)
+      try:
+         botowner = self.search_for_user(MentionBot.BOTOWNER_ID)
+         print("Bot owner: " + self.botowner.name)
+      except:
+         print("Bot owner: (NOT FOUND. UNKNOWN ERROR.)")
+         print("Bot owner ID: " + MentionBot.BOTOWNER_ID)
+      print("Bot name: " + self.user.name)
       print("")
       print("Initialization complete.")
       self._on_message_delayed = False
@@ -144,7 +143,7 @@ class MentionBot(clientextended.ClientExtended):
             print("FAILED TO SEND BOTOWNER STACKTRACE.")
          buf = "**EXCEPTION:** " + type(e).__name__
          buf += "\n" + str(e)
-         buf += "\n" + self.botowner_mention + " m8, fix this. I PM'd you the traceback."
+         buf += "\n<@" + BOTOWNER_ID + "> m8, fix this. I PM'd you the traceback."
          buf += "\n\n**THIS BOT WILL NOW TERMINATE. Please fix the bug before relaunching.**"
          try:
             await self.send_msg(msg, buf)
@@ -169,20 +168,20 @@ client = MentionBot()
 print("\nAttempting to log in using file '" + LOGIN_DETAILS_FILENAME + "'.")
 if not os.path.isfile(LOGIN_DETAILS_FILENAME):
    login_file = open(LOGIN_DETAILS_FILENAME, "w")
-   login_file.write("USERNAME\nPASSWORD")
+   login_file.write("TOKEN")
    login_file.close()
    print("File does not exist. Please edit the file {} with your login details.")
    sys.exit()
 login_file = open(LOGIN_DETAILS_FILENAME, "r")
-email = login_file.readline().strip()
-password = login_file.readline().strip()
+email = "(No email. This variable is depreciated.)"
+password = "(No password. This variable is depreciated.)"
+bot_user_token = login_file.readline().strip()
 login_file.close()
-print("Email: " + email)
-print("Password: " + len(password) * "*")
+print("Token found.")
 print("Logging in...") # print("Logging in...", end="")
 
 try:
-   client.run(email, password)
+   client.run(bot_user_token)
 except Exception as e:
    print("Error launching client!")
    print("Details are below.\n\n")

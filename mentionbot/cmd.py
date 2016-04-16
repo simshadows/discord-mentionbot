@@ -39,7 +39,6 @@ def get(cmd_dict, cmd_name, privilege_level):
    except KeyError:
       raise errors.InvalidCommandArgumentsError
 
-# This should no
 def compose_help_summary(cmd_dict, privilege_level):
    # Make separate help strings for each group.
    seen_set = set()
