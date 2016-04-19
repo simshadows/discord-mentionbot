@@ -327,7 +327,7 @@ See `{modhelp}` for commands to generate user activity statistics.
    def _sg2_weekday(self):
       ret = {
          "fn": lambda d: 6 - d["t"].weekday(),
-         "axis": "Each day of the week (0 = Mon, 1 = Tue, etc.)",
+         "axis": "Each day of the week (1 = Mon, 2 = Tue, etc.)",
          "title": "Each Day Of The Week",
       }
       return ret

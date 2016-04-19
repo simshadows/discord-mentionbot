@@ -124,6 +124,7 @@ class ClientExtended(discord.Client):
    async def send_msg(self, destination, text):
       text = str(text)
       text = text.replace("@everyone", "@-everyone")
+      text = text.replace("@here", "@-here")
       if len(text) > 2000:
          text_to_append = "\nSorry m8, can't send more than " + str(self._MESSAGE_MAX_LEN) + " characters."
          content_len = self._MESSAGE_MAX_LEN - len(text_to_append)
