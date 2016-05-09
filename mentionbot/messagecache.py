@@ -92,17 +92,20 @@ class MessageCache:
 
    async def _fill_buffers(self):
       await self._client.set_temp_game_status("filling cache buffers.")
-      for server in self._client.servers:
+      loop = asyncio.get_event_loop()
+      
+      async def cache_server(server):
          ch_dict = None
+         ch_dict_lock = asyncio.Lock()
          try:
             ch_dict = self._data[server.id]
          except KeyError:
             ch_dict = {}
             self._data[server.id] = ch_dict
 
-         for ch in server.channels:
+         async def cache_channel(ch):
             if ch.type is discord.ChannelType.voice:
-               continue
+               return
             print("MessageCache caching messages in #" + ch.name)
 
             # TODO: Rename these variable names.
@@ -136,7 +139,9 @@ class MessageCache:
                   msg_buffer.insert(0, self._message_dict(msg))
             except discord.errors.Forbidden:
                print("MessageCache unable to read #" + ch.name)
-               continue
+               return
+
+            await ch_dict_lock.acquire()
 
             ch_dict[ch.id] = msg_buffer
 
@@ -151,6 +156,20 @@ class MessageCache:
             # Now move every 200 messages to disk.
             while len(ch_dict[ch.id]) >= 200:
                self._move_to_disk(server.id, ch.id, messages=200)
+
+            ch_dict_lock.release()
+
+            return
+
+         chcache_futures = []
+         for j in server.channels:
+            chcache_futures.append(loop.create_task(cache_channel(j)))
+         await asyncio.gather(*chcache_futures)
+
+      scache_futures = []
+      for i in self._client.servers:
+         scache_futures.append(loop.create_task(cache_server(i)))
+      await asyncio.gather(*scache_futures)
 
       await self._client.remove_temp_game_status()
       return
