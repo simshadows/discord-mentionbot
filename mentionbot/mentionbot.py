@@ -35,6 +35,8 @@ class MentionBot(clientextended.ClientExtended):
    def __init__(self, **kwargs):
       super(MentionBot, self).__init__(**kwargs)
 
+      self.on_message_lock = asyncio.Lock()
+
       print("BOTOWNER_ID = '{}'".format(MentionBot.BOTOWNER_ID))
       print("INITIAL_GAME_STATUS = '{}'".format(MentionBot.INITIAL_GAME_STATUS))
       print("CACHE_DIRECTORY = '{}'".format(MentionBot.CACHE_DIRECTORY))
@@ -42,15 +44,15 @@ class MentionBot(clientextended.ClientExtended):
       self.botowner = None
 
       self._bot_instances = None
-      self._delayed_messages = []
-      self._on_message_delayed = True
       return
 
 
    async def on_ready(self):
       try:
+         await self.on_message_lock.acquire() # To be released when ready.
+         # TODO: Acquire this earlier to avoid a race condition.
+
          await self.set_game_status(MentionBot.INITIALIZING_GAME_STATUS)
-         self._on_message_locked = True
          self.botowner = self.search_for_user(MentionBot.BOTOWNER_ID)
 
          self._bot_instances = {}
@@ -69,31 +71,18 @@ class MentionBot(clientextended.ClientExtended):
          print("Bot name: " + self.user.name)
          print("")
          print("Initialization complete.")
-         self._on_message_delayed = False
+         self.on_message_lock.release()
       except (SystemExit, KeyboardInterrupt):
          raise
       except BaseException as e:
+         print(traceback.format_exc())
          sys.exit(1)
       return
 
-   # My feeble attempt at getting around async initialization.
-   # TODO: Do this better somehow? idk what cases this can fail on.
+   # TODO: Ensure this method actually lets in messages in a queued fashion...
    async def on_message(self, msg):
-      if self._on_message_delayed:
-         print("MESSAGE DELAYED: " + utils.str_asciionly(msg.content))
-         self._delayed_messages.append(msg)
-         return
-      if len(self._delayed_messages) != 0:
-         delayed_messages = self._delayed_messages
-         self._on_message_delayed = True
-         self._delayed_messages = []
-         for delayed_message in delayed_messages:
-            print("PROCESSING DELAYED MESSAGE: " + utils.str_asciionly(delayed_message.content))
-            await self._on_message_process(delayed_message)
-         self._on_message_delayed = False
-      await self._on_message_process(msg)
+      await self.on_message_lock.acquire()
 
-   async def _on_message_process(self, msg):
       await self.message_cache.record_message(msg)
       if msg.author == self.user:
          return # Should no longer process own messages.
@@ -139,6 +128,8 @@ class MentionBot(clientextended.ClientExtended):
          raise
       except BaseException as e:
          await self._handle_general_error(e, msg, close_bot=True)
+      
+      self.on_message_lock.release()
       return
 
    async def _handle_general_error(self, e, msg, *, close_bot=True):
