@@ -70,8 +70,8 @@ class MentionBot(clientextended.ClientExtended):
             print("Bot owner ID: " + MentionBot.BOTOWNER_ID)
          print("Bot name: " + self.user.name)
          print("")
-         print("Initialization complete.")
          self.on_message_lock.release()
+         print("Initialization complete.")
       except (SystemExit, KeyboardInterrupt):
          raise
       except BaseException as e:
@@ -79,10 +79,18 @@ class MentionBot(clientextended.ClientExtended):
          sys.exit(1)
       return
 
-   # TODO: Ensure this method actually lets in messages in a queued fashion...
    async def on_message(self, msg):
+      if self.on_message_lock.locked():
+         print("[delayed processing] Message received.")
       await self.on_message_lock.acquire()
+      try:
+         await self._on_message(msg)
+      finally:
+         self.on_message_lock.release()
+      return
 
+   # TODO: Ensure this method actually lets in messages in a queued fashion...
+   async def _on_message(self, msg):
       await self.message_cache.record_message(msg)
       if msg.author == self.user:
          return # Should no longer process own messages.
@@ -128,8 +136,6 @@ class MentionBot(clientextended.ClientExtended):
          raise
       except BaseException as e:
          await self._handle_general_error(e, msg, close_bot=True)
-      
-      self.on_message_lock.release()
       return
 
    async def _handle_general_error(self, e, msg, *, close_bot=True):
