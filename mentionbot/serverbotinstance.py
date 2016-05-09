@@ -665,7 +665,15 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "throwexception", "exception", "quit")
+   @cmd.add(_cmd_dict, "closebot", "quit", "exit")
+   @cmd.category("Admin Commands")
+   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
+   async def _cmdf_closebot(self, substr, msg, privilege_level):
+      """`{cmd}`"""
+      await self._client.send_msg(msg, "brb killing self")
+      sys.exit(0)
+
+   @cmd.add(_cmd_dict, "throwexception", "exception")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_throwexception(self, substr, msg, privilege_level):
