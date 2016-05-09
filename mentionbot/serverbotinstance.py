@@ -689,6 +689,13 @@ class ServerBotInstance:
       await self._client.send_message(msg, "If you're reading this, it failed to throw...")
       return
 
+   @cmd.add(_cmd_dict, "throwbaseexception", "baseexception")
+   @cmd.category("Admin Commands")
+   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
+   async def _cmdf_throwexception(self, substr, msg, privilege_level):
+      """`{cmd}`"""
+      raise BaseException
+
    def _get_help_content(self, substr, msg, cmd_prefix, privilege_level):
       buf = None
       if substr == "":

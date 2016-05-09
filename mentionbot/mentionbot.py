@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import datetime
 import sys
@@ -15,7 +16,9 @@ from . import utils, errors, clientextended
 from .serverbotinstance import ServerBotInstance
 from .messagecache import MessageCache
 
-logger = logging.getLogger('mentionbot')
+discord_logger = logging.getLogger('discord')
+discord_logger.setLevel(logging.CRITICAL)
+logger = logging.getLogger()
 logger.setLevel(logging.CRITICAL)
 handler = logging.FileHandler(filename='mentionbot.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
@@ -109,46 +112,55 @@ class MentionBot(clientextended.ClientExtended):
          print("Caught SilentUnknownCommandError.")
       except errors.UnknownCommandError:
          print("Caught UnknownCommandError.")
-         await self.send_msg(msg, "sry m8 idk what ur asking") # intentional typos. pls don't lynch me.
+         await self.send_msg(msg, "Error: Unknown command.")
       except errors.InvalidCommandArgumentsError as e:
          print("Caught InvalidCommandArgumentsError.")
          if str(e) == "":
-            buf = "soz m8 one or more (or 8) arguments are invalid"
+            buf = "Error: Invalid command arguments."
          else:
             buf = str(e)
          await self.send_msg(msg, buf)
       except errors.CommandPrivilegeError:
          print("Caught CommandPrivilegeError.")
-         await self.send_msg(msg, "Permission denied.")
+         await self.send_msg(msg, "Error: Permission denied.")
       except errors.NoHelpContentExists:
          print("Caught NoHelpContentExists.")
          await self.send_msg(msg, "No help content exists.")
       except errors.OperationAborted:
          print("Caught OperationAborted.")
-      except BaseException as e:
-         # This is only for feedback. Exception will continue to propagate.
-         print(traceback.format_exc())
-         buf = "**EXCEPTION**"
-         buf += "\n**From:** <#" + msg.channel.id + "> **in** " + msg.server.name
-         buf += "\n**Command issued by:** <@" + msg.author.id + ">"
-         buf += "\n**Full message:**"
-         buf += "\n" + msg.content
-         buf += "\n**Stack Trace:**"
-         buf += "\n```" + traceback.format_exc() + "```"
-         try:
-            await self.send_msg(self.botowner, buf)
-         except:
-            print("FAILED TO SEND BOTOWNER STACKTRACE.")
-         buf = "**EXCEPTION:** " + type(e).__name__
-         buf += "\n" + str(e)
-         buf += "\n<@" + MentionBot.BOTOWNER_ID + "> m8, fix this. I PM'd you the traceback."
-         buf += "\n\n**THIS BOT WILL NOW TERMINATE. Please fix the bug before relaunching.**"
-         try:
-            await self.send_msg(msg, buf)
-         except:
-            print("FAILED TO MESSAGE BOT TERMINATION BACK TO THE CHANNEL.")
+      except Exception as e:
+         await self._handle_general_error(e, msg, close_bot=True)
+      except (SystemExit, KeyboardInterrupt):
          sys.exit(0)
-      
+      except BaseException as e:
+         await self._handle_general_error(e, msg, close_bot=True)
+      return
+
+   async def _handle_general_error(self, e, msg, *, close_bot=True):
+      # This is only for feedback. Exception will continue to propagate.
+      print(traceback.format_exc())
+      buf = "**EXCEPTION**"
+      buf += "\n**From:** <#" + msg.channel.id + "> **in** " + msg.server.name
+      buf += "\n**Command issued by:** <@" + msg.author.id + ">"
+      buf += "\n**Full message:**"
+      buf += "\n" + msg.content
+      buf += "\n**Stack Trace:**"
+      buf += "\n```" + traceback.format_exc() + "```"
+      try:
+         await self.send_msg(self.botowner, buf)
+      except:
+         print("FAILED TO SEND BOTOWNER STACKTRACE.")
+      buf = "**EXCEPTION:** " + type(e).__name__
+      buf += "\n" + str(e)
+      buf += "\n<@" + MentionBot.BOTOWNER_ID + "> Check it out, will ya?"
+      if close_bot:
+         buf += "\n\n**THIS BOT WILL NOW TERMINATE. Please fix the bug before relaunching.**"
+      try:
+         await self.send_msg(msg, buf)
+      except:
+         print("FAILED TO MESSAGE BOT TERMINATION BACK TO THE CHANNEL.")
+      if close_bot:
+         sys.exit(1)
       return
 
    ##################
@@ -161,7 +173,16 @@ class MentionBot(clientextended.ClientExtended):
    def message_cache_debug_str(self):
       return self.message_cache.get_debugging_info()
 
+@asyncio.coroutine
+def _client_login(client, token):
+   yield from client.login(token)
+   yield from client.connect()
+   print("FINISHED CLIENT LOGIN ROUTINE!!!")
+   return
+
 def run():
+   loop = asyncio.get_event_loop()
+
    # Log in to discord
    client = MentionBot()
    print("\nAttempting to log in using file '" + LOGIN_DETAILS_FILENAME + "'.")
@@ -180,13 +201,15 @@ def run():
    print("Logging in...") # print("Logging in...", end="")
 
    try:
-      client.run(bot_user_token)
+      loop.run_until_complete(_client_login(client, bot_user_token))
    except Exception as e:
+      loop.run_until_complete(client.logout())
       print("Error launching client!")
-      print("Details are below.\n\n")
       print(traceback.format_exc())
-      print("\n\nClosing in 30 seconds.")
-      time.sleep(30)
+   finally:
+      loop.close()
+   print("FINISHED RUN ROUTINE!!!")
+   return
 
 if __name__ == '__main__':
    run()
