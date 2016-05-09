@@ -536,3 +536,157 @@ Traceback (most recent call last):
 AttributeError: 'NoneType' object has no attribute 'server'
 
 msg rcv #brogramming: but I gues there are still null errors in C++
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>>>>>>>>>>>>>> TICK!!!
+>>>>>>>>>>>>>>>>>>> TICK!!!
+>>>>>>>>>>>>>>>>>>> TICK!!!
+>>>>>>>>>>>>>>>>>>> TICK!!!
+>>>>>>>>>>>>>>>>>>> TICK!!!
+>>>>>>>>>>>>>>>>>>> TICK!!!
+>>>>>>>>>>>>>>>>>>> TICK!!!
+Task was destroyed but it is pending!
+task: <Task pending coro=<ChannelCloseScheduler.run() running at E:\Application Documents\Git\mentionbot_stable\mentionbot\servermodules\dynamicchannels.py:446> wait_for=<Future pending cb=[Task._wakeup()]>>
+
+
+
+
+
+
+
+
+
+
+MessageCache unable to read #planning-talk
+MessageCache caching messages in #cool-beans
+Ignoring exception in on_ready
+Traceback (most recent call last):
+  File "E:\Program Files\Python35-32\lib\site-packages\discord\client.py", line 267, in _run_event
+    yield from getattr(self, event)(*args, **kwargs)
+  File "mentionbot.py", line 58, in on_ready
+    self.message_cache = await MessageCache.get_instance(self, self.CACHE_DIRECTORY)
+  File "E:\Application Documents\Git\mentionbot_stable\mentionbot\messagecache.py", line 33, in get_instance
+    await inst._fill_buffers()
+  File "E:\Application Documents\Git\mentionbot_stable\mentionbot\messagecache.py", line 132, in _fill_buffers
+    async for msg in self._client.logs_from(ch, limit=ARBITRARILY_LARGE_NUMBER):
+  File "E:\Program Files\Python35-32\lib\site-packages\discord\iterators.py", line 63, in __anext__
+    yield from self.fill_messages()
+  File "E:\Program Files\Python35-32\lib\site-packages\discord\iterators.py", line 48, in fill_messages
+    data = yield from self.client._logs_from(self.channel, retrieve, self.before, self.after)
+  File "E:\Program Files\Python35-32\lib\site-packages\discord\client.py", line 1252, in _logs_from
+    yield from utils._verify_successful_response(response)
+  File "E:\Program Files\Python35-32\lib\site-packages\discord\utils.py", line 215, in _verify_successful_response
+    raise HTTPException(response, message, text)
+discord.errors.HTTPException: Bad Gateway (status code: 502)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+msg rcv #feels: ah fuck that sucks i'm sorry
+msg rcv #feels: i hope it gets better
+>>>>>>>>>>>>>>>>>>> TICK!!!
+CHANNEL TYPE: <class 'discord.channel.Channel'>
+A CHANNEL CLOSED.
+>>>>>>>>>>>>>>>>>>> TICK!!!
+>>>>>>>>>>>>>>>>>>> TICK!!!
+>>>>>>>>>>>>>>>>>>> TICK!!!
+>>>>>>>>>>>>>>>>>>> TICK!!!
+>>>>>>>>>>>>>>>>>>> TICK!!!
+>>>>>>>>>>>>>>>>>>> TICK!!!
+>>>>>>>>>>>>>>>>>>> TICK!!!
+>>>>>>>>>>>>>>>>>>> TICK!!!
+>>>>>>>>>>>>>>>>>>> TICK!!!
+msg rcv #feels: O_O
+>>>>>>>>>>>>>>>>>>> TICK!!!
+Task was destroyed but it is pending!
+task: <Task pending coro=<ChannelCloseScheduler.run() running at E:\Application Documents\Git\mentionbot_stable\mentionbot\servermodules\dynamicchannels.py:446> wait_for=<Future pending cb=[Task._wakeup()]>>
+
+
+
+
+
+
+
+
+
+
+
+msg rcv #general: belly is rdy 4 pets
+msg rcv #lobby: That is really good
+msg rcv #lobby: Did the anime get the entire story?
+>>>>>>>>>>>>>>>>>>> TICK!!!
+>>>>>>>>>>>>>>>>>>> TICK!!!
+>>>>>>>>>>>>>>>>>>> TICK!!!
+>>>>>>>>>>>>>>>>>>> TICK!!!
+Task was destroyed but it is pending!
+task: <Task pending coro=<ChannelCloseScheduler.run() running at E:\Application Documents\Git\mentionbot_stable\mentionbot\servermodules\dynamicchannels.py:446> wait_for=<Future pending cb=[Task._wakeup()]>>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+E:\Application Documents\Git\mentionbot_stable\mentionbot>python mentionbot.py
+BOTOWNER_ID = '119384097473822727'
+INITIAL_GAME_STATUS = 'bot is running'
+CACHE_DIRECTORY = 'cache/'
+
+Attempting to log in using file 'bot_user_token'.
+Token found.
+Logging in...
+Ignoring exception in on_ready
+Traceback (most recent call last):
+  File "E:\Program Files\Python35-32\lib\site-packages\discord\client.py", line 267, in _run_event
+    yield from getattr(self, event)(*args, **kwargs)
+  File "mentionbot.py", line 56, in on_ready
+    self._bot_instances[server] = await ServerBotInstance.get_instance(self, server)
+  File "E:\Application Documents\Git\mentionbot_stable\mentionbot\serverbotinstance.py", line 52, in get_instance
+    serverowner_ID = inst._server.owner.id
+AttributeError: 'NoneType' object has no attribute 'id'
