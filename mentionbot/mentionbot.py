@@ -48,27 +48,32 @@ class MentionBot(clientextended.ClientExtended):
 
 
    async def on_ready(self):
-      await self.set_game_status(MentionBot.INITIALIZING_GAME_STATUS)
-      self._on_message_locked = True
-      self.botowner = self.search_for_user(MentionBot.BOTOWNER_ID)
-
-      self._bot_instances = {}
-      for server in self.servers:
-         self._bot_instances[server] = await ServerBotInstance.get_instance(self, server)
-
-      self.message_cache = await MessageCache.get_instance(self, self.CACHE_DIRECTORY)
-
-      await self.set_game_status(MentionBot.INITIAL_GAME_STATUS)
       try:
-         botowner = self.search_for_user(MentionBot.BOTOWNER_ID)
-         print("Bot owner: " + self.botowner.name)
-      except:
-         print("Bot owner: (NOT FOUND. UNKNOWN ERROR.)")
-         print("Bot owner ID: " + MentionBot.BOTOWNER_ID)
-      print("Bot name: " + self.user.name)
-      print("")
-      print("Initialization complete.")
-      self._on_message_delayed = False
+         await self.set_game_status(MentionBot.INITIALIZING_GAME_STATUS)
+         self._on_message_locked = True
+         self.botowner = self.search_for_user(MentionBot.BOTOWNER_ID)
+
+         self._bot_instances = {}
+         for server in self.servers:
+            self._bot_instances[server] = await ServerBotInstance.get_instance(self, server)
+
+         self.message_cache = await MessageCache.get_instance(self, self.CACHE_DIRECTORY)
+
+         await self.set_game_status(MentionBot.INITIAL_GAME_STATUS)
+         try:
+            botowner = self.search_for_user(MentionBot.BOTOWNER_ID)
+            print("Bot owner: " + self.botowner.name)
+         except:
+            print("Bot owner: (NOT FOUND. UNKNOWN ERROR.)")
+            print("Bot owner ID: " + MentionBot.BOTOWNER_ID)
+         print("Bot name: " + self.user.name)
+         print("")
+         print("Initialization complete.")
+         self._on_message_delayed = False
+      except (SystemExit, KeyboardInterrupt):
+         raise
+      except BaseException as e:
+         sys.exit(1)
       return
 
    # My feeble attempt at getting around async initialization.
@@ -131,7 +136,7 @@ class MentionBot(clientextended.ClientExtended):
       except Exception as e:
          await self._handle_general_error(e, msg, close_bot=True)
       except (SystemExit, KeyboardInterrupt):
-         sys.exit(0)
+         raise
       except BaseException as e:
          await self._handle_general_error(e, msg, close_bot=True)
       return
@@ -177,7 +182,6 @@ class MentionBot(clientextended.ClientExtended):
 def _client_login(client, token):
    yield from client.login(token)
    yield from client.connect()
-   print("FINISHED CLIENT LOGIN ROUTINE!!!")
    return
 
 def run():
@@ -207,9 +211,11 @@ def run():
       print("Error launching client!")
       print(traceback.format_exc())
    finally:
-      loop.close()
-   print("FINISHED RUN ROUTINE!!!")
-   return
+      try:
+         loop.close()
+      except:
+         print(traceback.format_exc())
+   sys.exit(1) # Should only return on error.
 
 if __name__ == '__main__':
    run()
