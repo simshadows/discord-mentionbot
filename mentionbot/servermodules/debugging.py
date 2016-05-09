@@ -2,11 +2,9 @@ import asyncio
 
 import discord
 
-import utils
-import errors
-from enums import PrivilegeLevel
-from servermodule import ServerModule
-import cmd
+from .. import utils, errors, cmd
+from ..servermodule import ServerModule
+from ..enums import PrivilegeLevel
 
 class Debugging(ServerModule):
 

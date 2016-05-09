@@ -3,8 +3,7 @@ import re
 
 import discord
 
-import utils
-import errors
+from . import utils, errors
 
 # To provide additional functionality.
 class ClientExtended(discord.Client):

@@ -1,7 +1,7 @@
 import discord
 
-from enums import PrivilegeLevel
-import errors
+from . import errors
+from .enums import PrivilegeLevel
 
 # Since users often have multiple roles, it's the highest role that counts.
 # TODO: Allow for polling of server owner (in case of owner swap)?

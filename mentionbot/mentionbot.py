@@ -10,12 +10,10 @@ import traceback
 import discord # pip install git+https://github.com/Rapptz/discord.py@async
 # pip install git+https://github.com/Julian/jsonschema
 
-import utils
-import errors
-import clientextended
+from . import utils, errors, clientextended
 
-from serverbotinstance import ServerBotInstance
-from messagecache import MessageCache
+from .serverbotinstance import ServerBotInstance
+from .messagecache import MessageCache
 
 logger = logging.getLogger('mentionbot')
 logger.setLevel(logging.CRITICAL)
@@ -163,28 +161,32 @@ class MentionBot(clientextended.ClientExtended):
    def message_cache_debug_str(self):
       return self.message_cache.get_debugging_info()
 
-# Log in to discord
-client = MentionBot()
-print("\nAttempting to log in using file '" + LOGIN_DETAILS_FILENAME + "'.")
-if not os.path.isfile(LOGIN_DETAILS_FILENAME):
-   login_file = open(LOGIN_DETAILS_FILENAME, "w")
-   login_file.write("TOKEN")
+def run():
+   # Log in to discord
+   client = MentionBot()
+   print("\nAttempting to log in using file '" + LOGIN_DETAILS_FILENAME + "'.")
+   if not os.path.isfile(LOGIN_DETAILS_FILENAME):
+      login_file = open(LOGIN_DETAILS_FILENAME, "w")
+      login_file.write("TOKEN")
+      login_file.close()
+      print("File does not exist. Please edit the file {} with your login details.")
+      sys.exit()
+   login_file = open(LOGIN_DETAILS_FILENAME, "r")
+   email = "(No email. This variable is depreciated.)"
+   password = "(No password. This variable is depreciated.)"
+   bot_user_token = login_file.readline().strip()
    login_file.close()
-   print("File does not exist. Please edit the file {} with your login details.")
-   sys.exit()
-login_file = open(LOGIN_DETAILS_FILENAME, "r")
-email = "(No email. This variable is depreciated.)"
-password = "(No password. This variable is depreciated.)"
-bot_user_token = login_file.readline().strip()
-login_file.close()
-print("Token found.")
-print("Logging in...") # print("Logging in...", end="")
+   print("Token found.")
+   print("Logging in...") # print("Logging in...", end="")
 
-try:
-   client.run(bot_user_token)
-except Exception as e:
-   print("Error launching client!")
-   print("Details are below.\n\n")
-   print(traceback.format_exc())
-   print("\n\nClosing in 30 seconds.")
-   time.sleep(30)
+   try:
+      client.run(bot_user_token)
+   except Exception as e:
+      print("Error launching client!")
+      print("Details are below.\n\n")
+      print(traceback.format_exc())
+      print("\n\nClosing in 30 seconds.")
+      time.sleep(30)
+
+if __name__ == '__main__':
+   run()

@@ -4,10 +4,8 @@ import urllib.parse as urllibparse
 
 import discord
 
-import utils
-import errors
-from servermodule import ServerModule
-import cmd
+from .. import utils, errors, cmd
+from ..servermodule import ServerModule
 
 class BsiStarkRavingMadBot(ServerModule):
 

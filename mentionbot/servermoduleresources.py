@@ -3,7 +3,7 @@ import copy
 
 import discord
 
-import utils
+from . import utils
 
 class ServerModuleResources:
 

@@ -1,5 +1,4 @@
-import utils
-import cmd
+from . import utils, cmd
 
 # Abstract Class (would've been an interface...)
 # All server modules are subclasses of ServerModule.

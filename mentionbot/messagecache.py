@@ -7,7 +7,7 @@ import copy
 import discord
 import dateutil.parser
 
-import utils
+from . import utils
 
 ARBITRARILY_LARGE_NUMBER = 10000000000000
 

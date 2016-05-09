@@ -1,8 +1,7 @@
 import inspect
 
-import utils
-from enums import PrivilegeLevel
-import errors
+from . import utils, errors
+from .enums import PrivilegeLevel
 
 # Help message string formatting arguments:
 #     Everywhere:

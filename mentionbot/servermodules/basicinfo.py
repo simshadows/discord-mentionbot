@@ -2,10 +2,8 @@ import asyncio
 
 import discord
 
-import utils
-import errors
-from servermodule import ServerModule
-import cmd
+from .. import utils, errors, cmd
+from ..servermodule import ServerModule
 
 class BasicInfo(ServerModule):
 

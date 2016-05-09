@@ -12,15 +12,13 @@ import traceback
 
 import discord
 
-import utils
-from enums import PrivilegeLevel
-import errors
-import cmd
+from . import utils, errors, cmd
+from .enums import PrivilegeLevel
 
-from servermodulegroup import ServerModuleGroup
-from serverpersistentstorage import ServerPersistentStorage
-from privilegemanager import PrivilegeManager
-from servermodulefactory import ServerModuleFactory
+from .servermodulegroup import ServerModuleGroup
+from .serverpersistentstorage import ServerPersistentStorage
+from .privilegemanager import PrivilegeManager
+from .servermodulefactory import ServerModuleFactory
 
 # ServerBotInstance manages everything to do with a particular server.
 # IMPORTANT: client is a MentionBot instance!!!

@@ -1,6 +1,6 @@
 import enum
 
-import errors
+from . import errors
 
 class PrivilegeLevel(enum.IntEnum):
    # IMPORTANT: PrivilegeLevel has two kinds of names:

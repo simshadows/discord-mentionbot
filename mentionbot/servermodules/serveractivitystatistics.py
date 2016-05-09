@@ -9,11 +9,9 @@ import discord
 import plotly.plotly as py
 import plotly.graph_objs as go
 
-import utils
-import errors
-from enums import PrivilegeLevel
-from servermodule import ServerModule
-import cmd
+from .. import utils, errors, cmd
+from ..servermodule import ServerModule
+from ..enums import PrivilegeLevel
 
 class ServerActivityStatistics(ServerModule):
 

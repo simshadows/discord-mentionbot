@@ -2,7 +2,7 @@ import copy
 
 # import jsonschema
 
-import utils
+from . import utils
 
 class ServerPersistentStorage:
 

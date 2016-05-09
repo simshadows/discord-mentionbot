@@ -1,18 +1,18 @@
-import utils
-from servermoduleresources import ServerModuleResources
+from . import utils
+from .servermoduleresources import ServerModuleResources
 
 # Modules
-from servermodules.basicinfo import BasicInfo
-from servermodules.dynamicchannels import DynamicChannels
-from servermodules.mentionsnotify import MentionsNotify
-from servermodules.serveractivitystatistics import ServerActivityStatistics
-from servermodules.random import Random
-from servermodules.wolframalpha import WolframAlpha
-from servermodules.jcfdiscord import JCFDiscord
-from servermodules.bsistarkravingmadbot import BsiStarkRavingMadBot
-from servermodules.debugging import Debugging
-from servermodules.selfservecolours import SelfServeColours
-from servermodules.truthgame import TruthGame
+from .servermodules.basicinfo import BasicInfo
+from .servermodules.dynamicchannels import DynamicChannels
+from .servermodules.mentionsnotify import MentionsNotify
+from .servermodules.serveractivitystatistics import ServerActivityStatistics
+from .servermodules.random import Random
+from .servermodules.wolframalpha import WolframAlpha
+from .servermodules.jcfdiscord import JCFDiscord
+from .servermodules.bsistarkravingmadbot import BsiStarkRavingMadBot
+from .servermodules.debugging import Debugging
+from .servermodules.selfservecolours import SelfServeColours
+from .servermodules.truthgame import TruthGame
 
 class ServerModuleFactory:
    
