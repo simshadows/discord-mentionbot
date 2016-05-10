@@ -104,8 +104,6 @@ class MentionBot(clientextended.ClientExtended):
       sys.exit(1)
 
    async def on_message(self, msg):
-      if self.on_message_lock.locked():
-         print("[delayed processing] Message received.")
       await self.on_message_lock.acquire()
       try:
          await self._on_message(msg)

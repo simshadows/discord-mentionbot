@@ -312,6 +312,8 @@ See `{modhelp}` for managing the Dynamic Channels module.
 
       if new_default is None:
          await self._client.send_msg(msg, "Error: Channel not found.")
+      elif new_default in self._default_channels:
+         await self._client.send_msg(msg, "Error: <#{}> is already in default channels.".format(new_default.id))
       else:
          self._default_channels.append(new_default)
          self._save_settings()
@@ -322,10 +324,15 @@ See `{modhelp}` for managing the Dynamic Channels module.
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_removedefault(self, substr, msg, privilege_level):
       """`{cmd}`"""
-      to_remove = self._client.search_for_channel(substr, serverrestriction=self._server)
+      to_remove = None
+      if len(substr) == 0:
+         to_remove = msg.channel
+      else:
+         to_remove = self._client.search_for_channel(substr, serverrestriction=self._server)
+
       if to_remove is None:
          await self._client.send_msg(msg, "Error: Channel not found.")
-      if to_remove in self._default_channels:
+      elif to_remove in self._default_channels:
          self._default_channels.remove(to_remove)
          self._save_settings()
          await self._client.send_msg(msg, "<#{}> successfully removed to default list.".format(to_remove.id))
