@@ -118,8 +118,25 @@ class ServerBotInstance:
       if privilege_level == PrivilegeLevel.NO_PRIVILEGE:
          return # Without warning.
       substr = await self._modules.msg_preprocessor(substr, msg, self._cmd_prefix)
+
+      is_command = False
+      bot_mention = "<@{}>".format(str(self._client.user.id))
+      bot_mention2 = "<@!{}>".format(str(self._client.user.id))
       if substr.startswith(self._cmd_prefix):
          substr = substr[len(self._cmd_prefix):].strip()
+         is_command = True
+      elif substr.startswith(bot_mention):
+         # If message starts with this bot being mentioned, treat it as a command.
+         # This is done as a guaranteed way of invoking commands.
+         # Useful when multiple bots share the same command predicate.
+         substr = substr[len(bot_mention):].strip()
+         is_command = True
+      elif substr.startswith(bot_mention2):
+         # TODO: Do something about the exclamation mark thing...
+         substr = substr[len(bot_mention2):].strip()
+         is_command = True
+
+      if is_command:
          print("processing command: {pf}" + utils.str_asciionly(substr)) # Intentional un-substituted "{pf}"
          
          cmd_to_execute = None
