@@ -483,6 +483,11 @@ class ServerBotInstance:
                buf = "Successfully unassigned personal command privilege level for {}.".format(user_obj.name)
             except errors.NoRecordExists:
                buf = "Error: {} doesn't have a personally assigned command privilege level.".format(user_obj.name)
+      
+      # Save settings
+      settings_dict = self._privileges.get_json_settings_struct()
+      self._storage.save_bot_command_privilege_settings(settings_dict)
+
       await self._client.send_msg(msg, buf)
       return
 
@@ -499,6 +504,11 @@ class ServerBotInstance:
             buf = "Successfully unassigned role command privilege level for {}.".format(substr)
          except errors.NoRecordExists:
             buf = "Error: {} doesn't have an assigned command privilege level.".format(substr)
+      
+      # Save settings
+      settings_dict = self._privileges.get_json_settings_struct()
+      self._storage.save_bot_command_privilege_settings(settings_dict)
+
       await self._client.send_msg(msg, buf)
       return
 
