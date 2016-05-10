@@ -76,7 +76,8 @@ class MentionBot(clientextended.ClientExtended):
          sys.exit(1)
       return
 
-   # This is the API event routine.
+   # General routine for uncaught exceptions from events (called by the API).
+   # However, event handler routines should ideally implement their own.
    async def on_error(self, event, *args, **kwargs):
       buf = "MentionBot.on_error() called. \n\n"
       buf += "```\n" + traceback.format_exc() + "\n```"
@@ -93,7 +94,7 @@ class MentionBot(clientextended.ClientExtended):
       else:
          for (kwarg, item) in kwargs.items():
             buf += "{0}: {1}\n".format(str(kwarg), str(item))
-      buf += "\n\n**Attempting to exit with code 1.**"
+      buf += "\n**Attempting to exit with code 1.**"
       print(buf, file=sys.stderr)
       try:
          await self.send_msg(self.botowner, buf)
@@ -188,6 +189,12 @@ class MentionBot(clientextended.ClientExtended):
       except BaseException as e:
          await handle_general_error(e, msg, close_bot=True)
       return
+
+   async def on_server_join(self, server):
+      raise RuntimeError("Undefined behaviour on server join. Must restart.")
+
+   async def on_server_remove(self, server):
+      raise RuntimeError("Undefined behaviour on server leave. Must restart.")
 
    ##################
    # Other Services #
