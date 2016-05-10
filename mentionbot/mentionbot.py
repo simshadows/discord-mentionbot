@@ -46,12 +46,8 @@ class MentionBot(clientextended.ClientExtended):
       self._bot_instances = None
       return
 
-
    async def on_ready(self):
       try:
-         await self.on_message_lock.acquire() # To be released when ready.
-         # TODO: Acquire this earlier to avoid a race condition.
-
          await self.set_game_status(MentionBot.INITIALIZING_GAME_STATUS)
          self.botowner = self.search_for_user(MentionBot.BOTOWNER_ID)
 
@@ -71,6 +67,7 @@ class MentionBot(clientextended.ClientExtended):
          print("Bot name: " + self.user.name)
          print("")
          self.on_message_lock.release()
+         logging.info("MentionBot initialization complete.")
          print("Initialization complete.")
       except (SystemExit, KeyboardInterrupt):
          raise
@@ -78,6 +75,32 @@ class MentionBot(clientextended.ClientExtended):
          print(traceback.format_exc())
          sys.exit(1)
       return
+
+   # This is the API event routine.
+   async def on_error(self, event, *args, **kwargs):
+      buf = "MentionBot.on_error() called. \n\n"
+      buf += "```\n" + traceback.format_exc() + "\n```"
+      buf += "\nEVENT:\n" + str(event)
+      buf += "\nARGS:\n"
+      if len(args) == 0:
+         buf += "(none)\n"
+      else:
+         for arg in args:
+            buf += str(arg) + "\n"
+      buf += "KWARGS:\n"
+      if not kwargs:
+         buf += "(none)\n"
+      else:
+         for (kwarg, item) in kwargs.items():
+            buf += "{0}: {1}\n".format(str(kwarg), str(item))
+      buf += "\n\n**Attempting to exit with code 1.**"
+      print(buf, file=sys.stderr)
+      try:
+         await self.send_msg(self.botowner, buf)
+      except:
+         print("FAILED TO SEND BOTOWNER STACKTRACE.")
+      logging.critical(buf)
+      sys.exit(1)
 
    async def on_message(self, msg):
       if self.on_message_lock.locked():
@@ -94,6 +117,34 @@ class MentionBot(clientextended.ClientExtended):
       await self.message_cache.record_message(msg)
       if msg.author == self.user:
          return # Should no longer process own messages.
+
+      # Common code for exception handling in _on_message().
+      async def handle_general_error(e, msg, *, close_bot=True):
+         # This is only for feedback. Exception will continue to propagate.
+         print(traceback.format_exc())
+         buf = "**EXCEPTION**"
+         buf += "\n**From:** <#" + msg.channel.id + "> **in** " + msg.server.name
+         buf += "\n**Command issued by:** <@" + msg.author.id + ">"
+         buf += "\n**Full message:**"
+         buf += "\n" + msg.content
+         buf += "\n**Stack Trace:**"
+         buf += "\n```" + traceback.format_exc() + "```"
+         try:
+            await self.send_msg(self.botowner, buf)
+         except:
+            print("FAILED TO SEND BOTOWNER STACKTRACE.")
+         buf = "**EXCEPTION:** " + type(e).__name__
+         buf += "\n" + str(e)
+         buf += "\n<@" + MentionBot.BOTOWNER_ID + "> Check it out, will ya?"
+         if close_bot:
+            buf += "\n\n**THIS BOT WILL NOW RESTART.**"
+         try:
+            await self.send_msg(msg, buf)
+         except:
+            print("FAILED TO MESSAGE BOT TERMINATION BACK TO THE CHANNEL.")
+         if close_bot:
+            sys.exit(1)
+         return
 
       try:
          text = msg.content.strip()
@@ -131,38 +182,11 @@ class MentionBot(clientextended.ClientExtended):
       except errors.OperationAborted:
          print("Caught OperationAborted.")
       except Exception as e:
-         await self._handle_general_error(e, msg, close_bot=True)
+         await handle_general_error(e, msg, close_bot=True)
       except (SystemExit, KeyboardInterrupt):
          raise
       except BaseException as e:
-         await self._handle_general_error(e, msg, close_bot=True)
-      return
-
-   async def _handle_general_error(self, e, msg, *, close_bot=True):
-      # This is only for feedback. Exception will continue to propagate.
-      print(traceback.format_exc())
-      buf = "**EXCEPTION**"
-      buf += "\n**From:** <#" + msg.channel.id + "> **in** " + msg.server.name
-      buf += "\n**Command issued by:** <@" + msg.author.id + ">"
-      buf += "\n**Full message:**"
-      buf += "\n" + msg.content
-      buf += "\n**Stack Trace:**"
-      buf += "\n```" + traceback.format_exc() + "```"
-      try:
-         await self.send_msg(self.botowner, buf)
-      except:
-         print("FAILED TO SEND BOTOWNER STACKTRACE.")
-      buf = "**EXCEPTION:** " + type(e).__name__
-      buf += "\n" + str(e)
-      buf += "\n<@" + MentionBot.BOTOWNER_ID + "> Check it out, will ya?"
-      if close_bot:
-         buf += "\n\n**THIS BOT WILL NOW TERMINATE. Please fix the bug before relaunching.**"
-      try:
-         await self.send_msg(msg, buf)
-      except:
-         print("FAILED TO MESSAGE BOT TERMINATION BACK TO THE CHANNEL.")
-      if close_bot:
-         sys.exit(1)
+         await handle_general_error(e, msg, close_bot=True)
       return
 
    ##################
@@ -175,10 +199,11 @@ class MentionBot(clientextended.ClientExtended):
    def message_cache_debug_str(self):
       return self.message_cache.get_debugging_info()
 
-@asyncio.coroutine
-def _client_login(client, token):
-   yield from client.login(token)
-   yield from client.connect()
+async def _client_login(client, token):
+   await client.on_message_lock.acquire() # To be released when ready.
+   # TODO: Acquire the lock elsewhere. It's a little out-of-place here...
+   await client.login(token)
+   await client.connect()
    return
 
 def run():
