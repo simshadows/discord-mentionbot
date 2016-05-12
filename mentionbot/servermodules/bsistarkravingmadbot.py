@@ -114,8 +114,6 @@ For reference, I require the following modules to be installed:
          "The addiction is more satisfying while conscious",
          "(ﾉಠ_ಠ)ﾉ*:・ﾟ✧\ngit to sleep"
       ]
-
-      self._c = self._cmd_names[0] # A shorter name. This will be used a LOT.
       return
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):

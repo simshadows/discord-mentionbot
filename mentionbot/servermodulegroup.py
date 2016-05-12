@@ -13,7 +13,7 @@ class ServerModuleGroup:
       self._modules_cmd_dict = {}
       self._modules_list = initial_modules
       for module in self._modules_list:
-         for cmd_name in module.cmd_names:
+         for cmd_name in module.cmd_aliases:
             self._modules_cmd_dict[cmd_name] = module
       return
 
@@ -41,7 +41,7 @@ class ServerModuleGroup:
    # Module is referenced by its module name.
    def module_is_installed(self, module_name):
       for module in self._modules_list:
-         if module.MODULE_NAME == module_name:
+         if module.module_name == module_name:
             return True
       return False
 
@@ -50,7 +50,7 @@ class ServerModuleGroup:
    #               but its use often requires
    async def add_server_module(self, new_module):
       self._modules_list.append(new_module)
-      for cmd_name in new_module.cmd_names:
+      for cmd_name in new_module.cmd_aliases:
          self._modules_cmd_dict[cmd_name] = new_module
 
    # Installs the module referenced by its base command name.
@@ -58,10 +58,10 @@ class ServerModuleGroup:
    async def remove_server_module(self, module_name):
       module_to_remove = None
       for module in self._modules_list:
-         if module.MODULE_NAME == module_name:
+         if module.module_name == module_name:
             module_to_remove = module
             break
-      for cmd_name in module_to_remove.cmd_names:
+      for cmd_name in module_to_remove.cmd_aliases:
          del self._modules_cmd_dict[cmd_name]
       self._modules_list.remove(module_to_remove)
 
@@ -103,7 +103,7 @@ class ServerModuleGroup:
    #          (module_name, module_short_description)
    def gen_module_info(self):
       for module in self._modules_list:
-         yield (module.MODULE_NAME, module.MODULE_SHORT_DESCRIPTION)
+         yield (module.module_name, module.module_short_description)
 
 
 # servermodules.mentions.notify.MentionNotifyModule(client, enabled=self.INIT_MENTIONS_NOTIFY_ENABLED),
