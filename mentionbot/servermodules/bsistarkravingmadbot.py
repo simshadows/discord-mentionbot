@@ -72,7 +72,7 @@ For reference, I require the following modules to be installed:
 
       # pf = self._client.get_server_bot_instance(self._server).cmd_prefix
       pf = "/"
-      this = pf + self._cmd_names[0]
+      this = pf + self._res.module_cmd_aliases[0]
       cmdnotimplemented = this + " cmdnotimplemented"
 
       self._stark = self._client.search_for_user(self.STARKRAVINGMADBOT_DEFAULTID, enablenamesearch=False, serverrestriction=self._server)

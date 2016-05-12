@@ -69,6 +69,7 @@ class ServerBotInstance:
          try:
             modules.append(await inst._module_factory.new_module_instance(module_name, inst))
          except:
+            print(traceback.format_exc())
             print("Error installing module {}. Skipping.".format(module_name))
       inst._modules = ServerModuleGroup(initial_modules=modules)
 

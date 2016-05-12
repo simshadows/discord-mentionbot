@@ -567,7 +567,7 @@ See `{modhelp}` for commands to generate user activity statistics.
       buf += "\n\n**Argument 4 (Filter) is one of:**"
       for line in self._sg_arghelp4:
          buf += "\n" + line
-      buf += "\n\n**Example:** `" + self._res.cmd_prefix + self._cmd_names[0]
+      buf += "\n\n**Example:** `" + self._res.cmd_prefix + self._res.module_cmd_aliases[0]
       buf += " chars eachday vbar wholeserver` - Bar graph of all characters"
       buf += " received by the server each day."
       return buf

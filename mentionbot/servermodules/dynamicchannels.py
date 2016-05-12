@@ -129,9 +129,9 @@ See `{modhelp}` for managing the Dynamic Channels module.
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
       if content.startswith("++"):
-         content = default_cmd_prefix + self._cmd_names[0] + " open " + content[2:]
+         content = default_cmd_prefix + self._res.module_cmd_aliases[0] + " open " + content[2:]
       elif content.startswith("+"):
-         content = default_cmd_prefix + self._cmd_names[0] + " search " + content[1:]
+         content = default_cmd_prefix + self._res.module_cmd_aliases[0] + " search " + content[1:]
       return content
 
    async def process_cmd(self, substr, msg, privilege_level):
@@ -230,7 +230,7 @@ See `{modhelp}` for managing the Dynamic Channels module.
             buf += "\n<#{0}> (ID: {0})".format(ch.id)
       if privilege_level >= PrivilegeLevel.ADMIN:
          pf = self._res.cmd_prefix
-         base = pf + self._cmd_names[0]
+         base = pf + self._res.module_cmd_aliases[0]
          buf += "\n\n`{} scheduled` to view what's scheduled for closure.".format(base)
          buf += "\n\nOther management commands:"
          buf += "\n`{} adddefault [channel]`".format(base)

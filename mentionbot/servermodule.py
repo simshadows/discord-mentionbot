@@ -40,24 +40,15 @@ class ServerModule:
 
    @classmethod
    async def get_instance(cls, cmd_names, resources):
-      inst = cls(cls._SECRET_TOKEN, cmd_names)
-      inst._cmd_prep = inst._cmd_prep_factory.get_preprocessor(inst.cmd_names[0])
+      inst = cls(cls._SECRET_TOKEN)
+      inst._cmd_prep = inst._cmd_prep_factory.get_preprocessor(cmd_names[0])
       await inst._initialize(resources)
       return inst
 
-   def __init__(self, token, cmd_names):
-      self._cmd_names = cmd_names
+   def __init__(self, token):
       if not token is self._SECRET_TOKEN:
          raise RuntimeError("Not allowed to instantiate directly. Please use get_instance().")
       return
-
-   # Return a list of strings to be used to invoke a module command.
-   # For example, if command_names=["foo","baz"], then subcommands
-   # "foo example" or "baz example" SHOULD both cause the ServerModule
-   # process_cmd() function to be called with substr="example".
-   @property
-   def cmd_names(self):
-      return self._cmd_names
 
    ##############################################################################
    # THE BELOW USE EXISTING SERVICES THAT MAY BE OVERRIDDEN #####################
