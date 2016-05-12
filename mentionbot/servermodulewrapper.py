@@ -1,4 +1,5 @@
 from . import utils, errors
+from .servermoduleresources import ServerModuleResources
 
 class ServerModuleWrapper:
 
@@ -6,29 +7,35 @@ class ServerModuleWrapper:
 
    @property
    def module_name(self):
-      return self._module_instance.MODULE_NAME
+      return self._module_class.MODULE_NAME
 
    @property
    def module_short_description(self):
-      return self._module_instance.MODULE_SHORT_DESCRIPTION
+      return self._module_class.MODULE_SHORT_DESCRIPTION
 
    @property
-   def cmd_aliases(self):
-      return self._cmd_aliases
+   def module_cmd_aliases(self):
+      return self._module_cmd_aliases
 
    @classmethod
-   async def get_instance(cls, module_instance, *args):
+   async def get_instance(cls, module_class, server_bot_instance, *args):
       self = cls(cls._SECRET_TOKEN)
 
       # Arguments
-      cmd_aliases = None
+      module_cmd_aliases = None
       if len(args) == 1:
-         cmd_aliases = list(args[0])
+         module_cmd_aliases = list(args[0])
       else:
-         cmd_aliases = module_instance.RECOMMENDED_CMD_NAMES
+         module_cmd_aliases = module_class.RECOMMENDED_CMD_NAMES
       
-      self._module_instance = module_instance
-      self._cmd_aliases = cmd_aliases
+      self._module_class = module_class
+      self._module_instance = None
+      self._sbi = server_bot_instance
+      self._module_cmd_aliases = module_cmd_aliases
+
+      # Initialize the module instance
+      module_resources = ServerModuleResources(module_class.MODULE_NAME, server_bot_instance, self)
+      self._module_instance = await module_class.get_instance(module_cmd_aliases, module_resources)
 
       return self
 

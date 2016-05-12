@@ -7,8 +7,9 @@ from . import utils
 
 class ServerModuleResources:
 
-   def __init__(self, module_name, server_bot_instance):
+   def __init__(self, module_name, server_bot_instance, module_wrapper):
       self._sbi = server_bot_instance
+      self._module_wrapper = module_wrapper
 
       self._server = self._sbi.server
       self._data_directory = self._sbi.data_directory + utils.remove_whitespace("m-" + module_name) + "/"
@@ -37,6 +38,10 @@ class ServerModuleResources:
    @property
    def cmd_prefix(self):
       return self._sbi.cmd_prefix
+
+   @property
+   def module_cmd_aliases(self):
+      return list(self._module_wrapper.module_cmd_aliases)
    
    # Get the server to process text again.
    async def process_text(self, substr, msg):

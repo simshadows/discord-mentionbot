@@ -1,5 +1,4 @@
 from . import utils
-from .servermoduleresources import ServerModuleResources
 from .servermodulewrapper import ServerModuleWrapper
 
 # Modules
@@ -65,9 +64,7 @@ class ServerModuleFactory:
    # PRECONDITION: self.module_exists(module_name) == True
    async def new_module_instance(self, module_name, server_bot_instance):
       module_class = self._modules[module_name]
-      resources = ServerModuleResources(module_name, server_bot_instance)
-      module = await module_class.get_instance(module_class.RECOMMENDED_CMD_NAMES, resources)
-      wrapped_module = await ServerModuleWrapper.get_instance(module)
+      wrapped_module = await ServerModuleWrapper.get_instance(module_class, server_bot_instance)
       return wrapped_module
 
 
