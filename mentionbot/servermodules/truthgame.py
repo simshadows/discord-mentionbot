@@ -17,7 +17,6 @@ class TruthGame(ServerModule):
    
    _SECRET_TOKEN = utils.SecretToken()
    _cmd_dict = {}
-   _cmd_prep_factory = cmd.CMDPreprocessorFactory()
 
    _HELP_SUMMARY = """
 See `{modhelp}` for truth game commands.
@@ -77,7 +76,7 @@ See `{modhelp}` for truth game commands.
       return
 
    @cmd.add(_cmd_dict, "newgame")
-   @cmd.preprocess(_cmd_prep_factory) # This might clash with future game modules...
+   @cmd.top_level_alias() # This might clash with future game modules...
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_newgame(self, substr, msg, privilege_level):
       """`{p}{c}` - New game."""
@@ -88,7 +87,7 @@ See `{modhelp}` for truth game commands.
       return
 
    @cmd.add(_cmd_dict, "in")
-   @cmd.preprocess(_cmd_prep_factory) # This might clash with future game modules...
+   @cmd.top_level_alias() # This might clash with future game modules...
    async def _cmdf_in(self, substr, msg, privilege_level):
       """
       `{p}{c}` - Adds you to the game.
@@ -114,7 +113,7 @@ See `{modhelp}` for truth game commands.
       return
 
    @cmd.add(_cmd_dict, "out")
-   @cmd.preprocess(_cmd_prep_factory) # This might clash with future game modules...
+   @cmd.top_level_alias() # This might clash with future game modules...
    async def _cmdf_out(self, substr, msg, privilege_level):
       """
       `{p}{c}` - Removes you from the game.

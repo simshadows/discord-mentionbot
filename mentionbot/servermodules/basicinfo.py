@@ -13,7 +13,6 @@ class BasicInfo(ServerModule):
    
    _SECRET_TOKEN = utils.SecretToken()
    _cmd_dict = {}
-   _cmd_prep_factory = cmd.CMDPreprocessorFactory()
 
    _HELP_SUMMARY = """
 See `{modhelp}` for basic server/user information commands.
@@ -27,7 +26,7 @@ See `{modhelp}` for basic server/user information commands.
       return
 
    @cmd.add(_cmd_dict, "avatar", "dp", "avatarurl")
-   @cmd.preprocess(_cmd_prep_factory)
+   @cmd.top_level_alias()
    async def _cmdf_avatar(self, substr, msg, privilege_level):
       """`{p}{c} [user]` - Get a user's avatar."""
       substr = substr.strip()
@@ -47,7 +46,7 @@ See `{modhelp}` for basic server/user information commands.
          return await self._client.send_msg(msg, avatar)
 
    @cmd.add(_cmd_dict, "user", "whois", "who")
-   @cmd.preprocess(_cmd_prep_factory)
+   @cmd.top_level_alias()
    async def _cmdf_user(self, substr, msg, privilege_level):
       """`{p}{c} [user]` - Get user info."""
       # Get user. Copied from _cmd_avatar()...
@@ -79,7 +78,7 @@ See `{modhelp}` for basic server/user information commands.
       return await self._client.send_msg(msg, buf)
 
    @cmd.add(_cmd_dict, "thisserver", "server")
-   @cmd.preprocess(_cmd_prep_factory)
+   @cmd.top_level_alias()
    async def _cmdf_server(self, substr, msg, privilege_level):
       """`{p}{c}` - Get some simple server info and statistics."""
       s = msg.server
@@ -110,7 +109,7 @@ See `{modhelp}` for basic server/user information commands.
       return await self._client.send_msg(msg, buf)
 
    @cmd.add(_cmd_dict, "servericon")
-   @cmd.preprocess(_cmd_prep_factory)
+   @cmd.top_level_alias()
    async def _cmdf_servericon(self, substr, msg, privilege_level):
       """`{p}{c}` - Get server icon."""
       if msg.server.icon_url == "":

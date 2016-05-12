@@ -13,7 +13,7 @@ class ServerModuleGroup:
       self._modules_cmd_dict = {}
       self._modules_list = initial_modules
       for module in self._modules_list:
-         for cmd_name in module.module_cmd_aliases:
+         for cmd_name in module.all_cmd_aliases:
             self._modules_cmd_dict[cmd_name] = module
       return
 
@@ -30,7 +30,7 @@ class ServerModuleGroup:
    async def process_cmd(self, substr, msg, privilege_level, silentfail=False):
       (left, right) = utils.separate_left_word(substr)
       try:
-         await self._modules_cmd_dict[left].process_cmd(right, msg, privilege_level)
+         await self._modules_cmd_dict[left].process_cmd(right, msg, privilege_level, left)
       except KeyError:
          if silentfail:
             raise errors.SilentUnknownCommandError
@@ -50,7 +50,7 @@ class ServerModuleGroup:
    #               but its use often requires
    async def add_server_module(self, new_module):
       self._modules_list.append(new_module)
-      for cmd_name in new_module.module_cmd_aliases:
+      for cmd_name in new_module.all_cmd_aliases:
          self._modules_cmd_dict[cmd_name] = new_module
 
    # Installs the module referenced by its base command name.
@@ -61,7 +61,7 @@ class ServerModuleGroup:
          if module.module_name == module_name:
             module_to_remove = module
             break
-      for cmd_name in module_to_remove.module_cmd_aliases:
+      for cmd_name in module_to_remove.all_cmd_aliases:
          del self._modules_cmd_dict[cmd_name]
       self._modules_list.remove(module_to_remove)
 

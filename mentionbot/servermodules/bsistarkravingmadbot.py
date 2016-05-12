@@ -15,7 +15,6 @@ class BsiStarkRavingMadBot(ServerModule):
    
    _SECRET_TOKEN = utils.SecretToken()
    _cmd_dict = {}
-   _cmd_prep_factory = cmd.CMDPreprocessorFactory()
 
    _HELP_SUMMARY = """
 See `{modhelp}` for StarkRavingMadBot standin commands.
@@ -155,7 +154,7 @@ For reference, I require the following modules to be installed:
       return
 
    @cmd.add(_cmd_dict, "blame")
-   @cmd.preprocess(_cmd_prep_factory)
+   @cmd.top_level_alias()
    async def _cmdf_blame(self, substr, msg, privilege_level):
       """`{p}{c}`"""
       if (substr == "<@{}>".format(self._res.botowner_ID)) or (substr == "<@{}>".format(self._res.me_ID)):
@@ -172,7 +171,7 @@ For reference, I require the following modules to be installed:
       return
 
    @cmd.add(_cmd_dict, "doot")
-   @cmd.preprocess(_cmd_prep_factory)
+   @cmd.top_level_alias()
    async def _cmdf_doot(self, substr, msg, privilege_level):
       """`{p}{c}`"""
       # var m = await Client.SendMessage(e.Channel, "doot doot");
@@ -190,7 +189,7 @@ For reference, I require the following modules to be installed:
       return
 
    @cmd.add(_cmd_dict, "rip")
-   @cmd.preprocess(_cmd_prep_factory)
+   @cmd.top_level_alias()
    async def _cmdf_rip(self, substr, msg, privilege_level):
       """`{p}{c}`"""
       await self._client.send_msg(msg, "doesnt even deserve a funeral")
@@ -203,7 +202,7 @@ For reference, I require the following modules to be installed:
       return
 
    @cmd.add(_cmd_dict, "sleep")
-   @cmd.preprocess(_cmd_prep_factory)
+   @cmd.top_level_alias()
    async def _cmdf_sleep(self, substr, msg, privilege_level):
       """`{p}{c}`"""
       # The original command takes a user mention from substr and appends it to the end.
@@ -241,7 +240,7 @@ For reference, I require the following modules to be installed:
       return
 
    @cmd.add(_cmd_dict, "ud", "urbandictionary", "urban")
-   @cmd.preprocess(_cmd_prep_factory)
+   @cmd.top_level_alias()
    async def _cmdf_ud(self, substr, msg, privilege_level):
       """`{p}{c}`"""
       await self._client.send_msg(msg, "http://www.urbandictionary.com/define.php?term=" + urllibparse.quote(substr))

@@ -15,7 +15,6 @@ class JCFDiscord(ServerModule):
    
    _SECRET_TOKEN = utils.SecretToken()
    _cmd_dict = {}
-   _cmd_prep_factory = cmd.CMDPreprocessorFactory()
 
    _HELP_SUMMARY = """
 See `{modhelp}` for JCF Discord commands.
@@ -82,7 +81,7 @@ See `{modhelp}` for JCF Discord commands.
       return await super(JCFDiscord, self).msg_preprocessor(content, msg, default_cmd_prefix)
 
    @cmd.add(_cmd_dict, "functions", "fn", "stack")
-   @cmd.preprocess(_cmd_prep_factory, cmd_name="functions")
+   @cmd.top_level_alias("functions")
    async def _cmdf_functions(self, substr, msg, privilege_level):
       """`{cmd}`"""
       args = substr.split()
@@ -127,7 +126,7 @@ See `{modhelp}` for JCF Discord commands.
       return
 
    @cmd.add(_cmd_dict, "swole")
-   @cmd.preprocess(_cmd_prep_factory)
+   @cmd.top_level_alias()
    async def _cmdf_swole(self, substr, msg, privilege_level):
       """`{cmd}`"""
       if msg.author.id == self._SWOLEBRO_ID:
@@ -139,7 +138,7 @@ See `{modhelp}` for JCF Discord commands.
       return
 
    @cmd.add(_cmd_dict, "noot")
-   @cmd.preprocess(_cmd_prep_factory)
+   @cmd.top_level_alias()
    async def _cmdf_noot(self, substr, msg, privilege_level):
       """`{cmd}`"""
       # var m = await Client.SendMessage(e.Channel, "Penguins will rule the earth!");

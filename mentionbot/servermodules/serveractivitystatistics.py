@@ -21,7 +21,6 @@ class ServerActivityStatistics(ServerModule):
 
    _SECRET_TOKEN = utils.SecretToken()
    _cmd_dict = {}
-   _cmd_prep_factory = cmd.CMDPreprocessorFactory()
 
    _HELP_SUMMARY = """
 See `{modhelp}` for commands to generate user activity statistics.
@@ -39,7 +38,7 @@ See `{modhelp}` for commands to generate user activity statistics.
       self._log_in_from_file()
       return
 
-   def get_help_detail(self, substr, privilege_level):
+   def get_help_detail(self, substr, privilege_level, module_alias):
       return self._get_usage_info()
 
    async def process_cmd(self, substr, msg, privilege_level):

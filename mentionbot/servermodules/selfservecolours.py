@@ -15,7 +15,6 @@ class SelfServeColours(ServerModule):
    
    _SECRET_TOKEN = utils.SecretToken()
    _cmd_dict = {}
-   _cmd_prep_factory = cmd.CMDPreprocessorFactory()
 
    _HELP_SUMMARY = """
 `{p}colour [rgb code]` - Assign yourself a colour. `{p}colour` clears.

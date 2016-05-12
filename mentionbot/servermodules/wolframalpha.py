@@ -16,7 +16,6 @@ class WolframAlpha(ServerModule):
    
    _SECRET_TOKEN = utils.SecretToken()
    _cmd_dict = {}
-   _cmd_prep_factory = cmd.CMDPreprocessorFactory()
 
    _HELP_SUMMARY = """
 See `{modhelp}` to manage the Wolfram Alpha module.
@@ -79,7 +78,7 @@ See `{modhelp}` to manage the Wolfram Alpha module.
       return
 
    @cmd.add(_cmd_dict, "query", "q")
-   @cmd.preprocess(_cmd_prep_factory, cmd_name="wa")
+   @cmd.top_level_alias("wa")
    async def _cmdf_query(self, substr, msg, privilege_level):
       """`{p}wa [query]` - Make a Wolfram Alpha query."""
       if substr == "":
@@ -117,7 +116,7 @@ See `{modhelp}` to manage the Wolfram Alpha module.
       return
 
    @cmd.add(_cmd_dict, "define", "def")
-   @cmd.preprocess(_cmd_prep_factory, cmd_name="define")
+   @cmd.top_level_alias("define")
    async def _cmdf_define(self, substr, msg, privilege_level):
       """`{p}define [word]` - Get word definition from WA."""
       if substr == "":

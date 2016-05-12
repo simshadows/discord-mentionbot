@@ -23,11 +23,6 @@ class ServerModule:
    #     get_help_detail()
    #     process_cmd()
    _cmd_dict = NotImplemented
-
-   # Must instantiate a new cmd.CMDPreprocessorFactory instance unless overriding
-   # the service.
-   # It is this class that the cmd preprocessor decorators operate on.
-   _cmd_prep_factory = NotImplemented
    
    # A string, potentially multi-line, giving a brief summary of the module.
    # Formatting arguments "modhelp", "mod", and "p" are used here, evaluated
@@ -41,7 +36,6 @@ class ServerModule:
    @classmethod
    async def get_instance(cls, cmd_names, resources):
       inst = cls(cls._SECRET_TOKEN)
-      inst._cmd_prep = inst._cmd_prep_factory.get_preprocessor(cmd_names[0])
       await inst._initialize(resources)
       return inst
 
@@ -50,6 +44,16 @@ class ServerModule:
          raise RuntimeError("Not allowed to instantiate directly. Please use get_instance().")
       return
 
+   @classmethod
+   def get_cmd_functions(self):
+      if self._cmd_dict is NotImplemented:
+         raise NotImplementedError
+      seen_set = set()
+      for (alias, function) in self._cmd_dict.items():
+         if function not in seen_set:
+            seen_set.add(function)
+            yield function
+
    ##############################################################################
    # THE BELOW USE EXISTING SERVICES THAT MAY BE OVERRIDDEN #####################
    ##############################################################################
@@ -57,14 +61,35 @@ class ServerModule:
    # Get a help-message string summarising the module functionality,
    # or at least directing the user to more detailed help.
    # Returned string has no leading/trailing whitespace.
-   def get_help_summary(self, privilege_level):
-      return cmd.format_mod_evaluate(self._HELP_SUMMARY, mod=self.cmd_names[0])
+   def get_help_summary(self, privilege_level, module_alias):
+      return cmd.format_mod_evaluate(self._HELP_SUMMARY, mod=module_alias)
 
    # Get a detailed help-message string about the module.
    # String has no leading/trailing whitespace.
-   def get_help_detail(self, substr, privilege_level):
+   def get_help_detail(self, substr, privilege_level, module_alias):
       buf = cmd.compose_help_summary(self._cmd_dict, privilege_level)
-      return buf.format(b=self.cmd_names[0] + " ", p="{p}")
+      return buf.format(b=module_alias + " ", p="{p}")
+
+   # This method is called if a command is to be handled by the module.
+   # By default, it processes a command in _cmd_dict.
+   # Overriding to add further pre-processing and other things would
+   # usually involve calling this with super() rather than rewriting
+   # it completely.
+   # Complete rewrite should only happen if implementing a more complicated
+   # bot command processing system.
+   async def process_cmd(self, substr, msg, privilege_level):
+      (left, right) = utils.separate_left_word(substr)
+      cmd_to_execute = cmd.get(self._cmd_dict, left, privilege_level)
+      await cmd_to_execute(self, right, msg, privilege_level)
+      return
+
+   ##############################################################################
+   # THE METHODS BELOW ARE UNUSED UNLESS OVERRIDDEN. ############################
+   ##############################################################################
+
+   # Do whatever initialization you wish here.
+   async def _initialize(self, resources):
+      pass
 
    # Every module has the opportunity to pre-process the contents of a message.
    # This is carried out after all modules have carried out their on_message()
@@ -88,30 +113,7 @@ class ServerModule:
    #     and if so, the module will process messages to redirect
    #     commands to itself to serve them.
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
-      # TODO: Consider optimizing this by bypassing it if the service is not being
-      #       used (i.e. the preprocessor won't do anything).
-      return self._cmd_prep.perform_transformation(content, default_cmd_prefix)
-
-   # This method is called if a command is to be handled by the module.
-   # By default, it processes a command in _cmd_dict.
-   # Overriding to add further pre-processing and other things would
-   # usually involve calling this with super() rather than rewriting
-   # it completely.
-   # Complete rewrite should only happen if implementing a more complicated
-   # bot command heirarchy (which should be never).
-   async def process_cmd(self, substr, msg, privilege_level):
-      (left, right) = utils.separate_left_word(substr)
-      cmd_to_execute = cmd.get(self._cmd_dict, left, privilege_level)
-      await cmd_to_execute(self, right, msg, privilege_level)
-      return
-
-   ##############################################################################
-   # THE METHODS BELOW ARE UNUSED UNLESS OVERRIDDEN. ############################
-   ##############################################################################
-
-   # Do whatever initialization you wish here.
-   async def _initialize(self, resources):
-      pass
+      return content
 
    # This method is always called every time a message from the module's associated
    # server is received.

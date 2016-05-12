@@ -1,4 +1,5 @@
 import inspect
+import enum
 
 from . import utils, errors
 from .enums import PrivilegeLevel
@@ -154,76 +155,19 @@ def category(text):
       return function
    return function_decorator
 
-def preprocess(cmd_preprocessor_factory, cmd_name=None):
+# Defines top-level aliases of the command.
+def top_level_alias(*aliases):
    def function_decorator(function):
-      def preprocessor_setup(cmd_preprocessor, module_cmd_name):
-         input_cmds = None
-         if cmd_name is None:
-            input_cmds = function.cmd_names
-         else:
-            input_cmds = [cmd_name]
-         output_cmd = module_cmd_name + " " + function.cmd_names[0]
-         for input_cmd in input_cmds:
-            cmd_preprocessor.add_transformation(input_cmd, output_cmd)
-         return
-      cmd_preprocessor_factory.add_setup_function(preprocessor_setup)
+      if len(aliases) == 0:
+         # Instructs other components to use the existing aliases as top-level aliases.
+         function.top_level_alias_type = TopLevelAliasAction.USE_EXISTING_ALIASES
+         function.top_level_aliases = None
+      else:
+         function.top_level_alias_type = TopLevelAliasAction.USE_NEW_ALIASES
+         function.top_level_aliases = list(aliases)
       return function
    return function_decorator
 
-###########################################################################################
-# CMD PREPROCESSOR CLASS AND FACTORY ######################################################
-###########################################################################################
-
-class CMDPreprocessorFactory:
-   """
-   Produces CMDPreprocessor instances catering to a module instance's needs.
-
-   Reasons for this class:
-      1: Server module instances may have different module command names during runtime.
-         Having a factory class allows us to keep this flexibility.
-      2: Allows command function decorators to be used in any order.
-   """
-
-   def __init__(self):
-      self._setup_functions = []
-      return
-
-   def get_preprocessor(self, module_cmd_name):
-      new_preprocessor = CMDPreprocessor()
-      for setup_function in self._setup_functions:
-         setup_function(new_preprocessor, module_cmd_name)
-      return new_preprocessor
-
-   def add_setup_function(self, setup_function):
-      self._setup_functions.append(setup_function)
-      return
-
-
-class CMDPreprocessor:
-   """
-   This class allows simple processing of "core command name" into a module command.
-
-   One instance is attached to each server module instance (not the class).
-   (The reasons for this are detailed in CMDPreprocessorFactory.)
-   """
-
-   def __init__(self):
-      self._simple_transformations = {} # FORMAT: {string: function string->string}
-      return
-
-   def perform_transformation(self, content, cmd_prefix):
-      if content.startswith(cmd_prefix):
-         new_content = content[len(cmd_prefix):]
-         (left, right) = utils.separate_left_word(new_content)
-         # Expected that they key will seldom-match, so we check for the key.
-         if left in self._simple_transformations:
-            content = cmd_prefix + self._simple_transformations[left]
-            if len(right) != 0:
-               content += " " + right
-      return content
-
-   def add_transformation(self, input_cmd, output_cmd):
-      self._simple_transformations[input_cmd] = output_cmd
-      return
-
-
+class TopLevelAliasAction(enum.Enum):
+   USE_EXISTING_ALIASES = 0
+   USE_NEW_ALIASES = 1
