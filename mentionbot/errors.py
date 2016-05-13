@@ -50,4 +50,20 @@ class OperationAborted(GeneralMentionbotException):
    def __init__(self):
       return
 
+# Proposed but unused.
+# ##########################
+# ### Special exceptions ###
+# ##########################
 
+# class SpecialMentionbotException(MentionbotException):
+#    def __init__(self):
+#       return
+
+# class ServerModuleUninitialized(SpecialMentionbotException):
+#    def __init__(self, module_name):
+#       self._module_name = module_name
+#       return
+
+#    @property
+#    def module_name(self):
+#       return self._module_name

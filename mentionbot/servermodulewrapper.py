@@ -1,9 +1,71 @@
+import asyncio
+
 from . import utils, errors, cmd
 from .servermoduleresources import ServerModuleResources
 
 class ServerModuleWrapper:
+   """
+   Wraps the operations of a server module.
+
+   Has two states:
+      Active
+         The module instance is running as intended.
+      Inactive
+         The module is not running. The wrapper holds no reference to the
+         module.
+         The behaviour of methods that would've been served by the module
+         vary. Notably, get_help_detail() and process_cmd() raise
+         errors.ServerModuleUninitialized.
+         This behaviour is shown at the beginning of each of those method
+         definitions.
+   """
 
    _SECRET_TOKEN = NotImplemented
+
+   # Note that the initial state of ServerModuleWrapper is deactivated.
+   @classmethod
+   async def get_instance(cls, module_class, server_bot_instance, *args):
+      self = cls(cls._SECRET_TOKEN)
+
+      # Arguments
+      module_cmd_aliases = None
+      if len(args) == 1:
+         module_cmd_aliases = list(args[0])
+      else:
+         module_cmd_aliases = module_class.RECOMMENDED_CMD_NAMES
+
+      self._client = server_bot_instance.client
+      self._sbi = server_bot_instance
+      
+      self._module_class = module_class
+      self._module_cmd_aliases = module_cmd_aliases
+      self._shortcut_cmd_aliases = None # Maps top-level command alias to module command alias.
+
+      self._module_instance = None
+
+      # Initialize self._shortcut_cmd_aliases
+      self._shortcut_cmd_aliases = {}
+      for cmd_fn in self._module_class.get_cmd_functions():
+         if not hasattr(cmd_fn, "top_level_alias_type"):
+            continue
+         module_cmd_alias = cmd_fn.cmd_names[0]
+         top_level_aliases = None
+         if cmd_fn.top_level_alias_type is cmd.TopLevelAliasAction.USE_EXISTING_ALIASES:
+            top_level_aliases = cmd_fn.cmd_names
+         elif cmd_fn.top_level_alias_type is cmd.TopLevelAliasAction.USE_NEW_ALIASES:
+            top_level_aliases = cmd_fn.top_level_aliases
+         else:
+            raise RuntimeError("Not a recognized enum value.")
+         for top_level_alias in top_level_aliases:
+            self._shortcut_cmd_aliases[top_level_alias] = module_cmd_alias
+
+      await self.activate() # TEMPORARY
+      return self
+
+   def __init__(self, token):
+      if not token is self._SECRET_TOKEN:
+         raise RuntimeError("Not allowed to instantiate directly. Please use get_instance().")
+      return
 
    @property
    def module_name(self):
@@ -27,59 +89,35 @@ class ServerModuleWrapper:
          aliases.append(alias)
       return aliases
 
-   @classmethod
-   async def get_instance(cls, module_class, server_bot_instance, *args):
-      self = cls(cls._SECRET_TOKEN)
+   def is_active(self):
+      return not self._module_instance is None
 
-      # Arguments
-      module_cmd_aliases = None
-      if len(args) == 1:
-         module_cmd_aliases = list(args[0])
-      else:
-         module_cmd_aliases = module_class.RECOMMENDED_CMD_NAMES
-      
-      self._module_class = module_class
-      self._module_instance = None
-      self._sbi = server_bot_instance
-      self._module_cmd_aliases = module_cmd_aliases
-      self._shortcut_cmd_aliases = None # Maps top-level command alias to module command alias.
-
-      # Initialize self._shortcut_cmd_aliases
-      self._shortcut_cmd_aliases = {}
-      for cmd_fn in self._module_class.get_cmd_functions():
-         if not hasattr(cmd_fn, "top_level_alias_type"):
-            continue
-         module_cmd_alias = cmd_fn.cmd_names[0]
-         top_level_aliases = None
-         if cmd_fn.top_level_alias_type is cmd.TopLevelAliasAction.USE_EXISTING_ALIASES:
-            top_level_aliases = cmd_fn.cmd_names
-         elif cmd_fn.top_level_alias_type is cmd.TopLevelAliasAction.USE_NEW_ALIASES:
-            top_level_aliases = cmd_fn.top_level_aliases
-         else:
-            raise RuntimeError("Not a recognized enum value.")
-         for top_level_alias in top_level_aliases:
-            self._shortcut_cmd_aliases[top_level_alias] = module_cmd_alias
-
-      # Initialize the module instance
-      module_resources = ServerModuleResources(module_class.MODULE_NAME, server_bot_instance, self)
-      self._module_instance = await module_class.get_instance(module_cmd_aliases, module_resources)
-
-      return self
-
-   def __init__(self, token):
-      if not token is self._SECRET_TOKEN:
-         raise RuntimeError("Not allowed to instantiate directly. Please use get_instance().")
+   async def activate(self):
+      res = ServerModuleResources(self._module_class.MODULE_NAME, self._sbi, self)
+      self._module_instance = await self._module_class.get_instance(self._module_cmd_aliases, res)
       return
 
+   async def kill(self):
+      self._module_instance = None
+      return
+
+   ########################################################################################
+   # METHODS SERVED BY THE MODULE #########################################################
+   ########################################################################################
+
+   # PRECONDITION: is_active()
    def get_help_summary(self, privilege_level):
       return self._module_instance.get_help_summary(privilege_level, self._module_cmd_aliases[0])
 
+   # PRECONDITION: is_active()
    def get_help_detail(self, substr, privilege_level):
       return self._module_instance.get_help_detail(substr, privilege_level, self._module_cmd_aliases[0])
 
+   # PRECONDITION: is_active()
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
       return await self._module_instance.msg_preprocessor(content, msg, default_cmd_prefix)
 
+   # PRECONDITION: is_active()
    # PARAMETER: upper_cmd_alias is the command alias that was split off before
    #            the substring was passed into this function.
    #            E.g. if the full command was `/random choice A;B;C`, ServerBotInstance
@@ -89,5 +127,6 @@ class ServerModuleWrapper:
          substr = self._shortcut_cmd_aliases[upper_cmd_alias] + " " + substr
       return await self._module_instance.process_cmd(substr, msg, privilege_level)
 
+   # PRECONDITION: is_active()
    async def on_message(self, msg):
       return await self._module_instance.on_message(msg)
