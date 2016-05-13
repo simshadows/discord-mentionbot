@@ -12,11 +12,8 @@ class ServerModuleWrapper:
          The module instance is running as intended.
       Inactive
          The module is not running. The wrapper holds no reference to the
-         module.
-         The behaviour of methods that would've been served by the module
-         vary. Notably, get_help_detail() and process_cmd() raise
-         errors.ServerModuleUninitialized.
-         This behaviour is shown at the beginning of each of those method
+         module. Calls to methods that would've been served by the module
+         instance vary. This behaviour is found at the beginning of function
          definitions.
    """
 
@@ -59,7 +56,7 @@ class ServerModuleWrapper:
          for top_level_alias in top_level_aliases:
             self._shortcut_cmd_aliases[top_level_alias] = module_cmd_alias
 
-      await self.activate() # TEMPORARY
+      await self.activate() # TODO: TEMPORARY
       return self
 
    def __init__(self, token):
@@ -105,28 +102,43 @@ class ServerModuleWrapper:
    # METHODS SERVED BY THE MODULE #########################################################
    ########################################################################################
 
-   # PRECONDITION: is_active()
    def get_help_summary(self, privilege_level):
+      if not self.is_active():
+         return "(The `{}` module is not active.)".format(self.module_name)
       return self._module_instance.get_help_summary(privilege_level, self._module_cmd_aliases[0])
 
-   # PRECONDITION: is_active()
    def get_help_detail(self, substr, privilege_level):
+      if not self.is_active():
+         return "The `{}` module is not active.".format(self.module_name)
       return self._module_instance.get_help_detail(substr, privilege_level, self._module_cmd_aliases[0])
 
-   # PRECONDITION: is_active()
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
+      if not self.is_active():
+         return content
       return await self._module_instance.msg_preprocessor(content, msg, default_cmd_prefix)
 
-   # PRECONDITION: is_active()
    # PARAMETER: upper_cmd_alias is the command alias that was split off before
    #            the substring was passed into this function.
    #            E.g. if the full command was `/random choice A;B;C`, ServerBotInstance
    #            would pass in substr="choice A;B;C" and upper_cmd_alias="random".
    async def process_cmd(self, substr, msg, privilege_level, upper_cmd_alias):
+      if not self.is_active():
+         buf = "Error: The `{}` server module is not active."
+         buf += "\n(Automatic deactivation is usually caused by an unhandled error within"
+         buf += " the module. This is done as a security measure to prevent further damage,"
+         buf += " especially from exploitable bugs.)"
+         await self._client.send_msg(msg, buf)
+         return
       if upper_cmd_alias in self._shortcut_cmd_aliases:
          substr = self._shortcut_cmd_aliases[upper_cmd_alias] + " " + substr
-      return await self._module_instance.process_cmd(substr, msg, privilege_level)
+      try:
+         await self._module_instance.process_cmd(substr, msg, privilege_level)
+      except Exception as e:
+         # print(traceback.format_exc())
+         raise # TODO: TEMPORARY
+      return
 
-   # PRECONDITION: is_active()
    async def on_message(self, msg):
+      if not self.is_active():
+         return
       return await self._module_instance.on_message(msg)
