@@ -67,7 +67,9 @@ class ServerBotInstance:
       modules = []
       for module_name in data["Installed Modules"]:
          try:
-            modules.append(await inst._module_factory.new_module_instance(module_name, inst))
+            new_module = await inst._module_factory.new_module_instance(module_name, inst)
+            modules.append(new_module)
+            await new_module.activate()
          except:
             print(traceback.format_exc())
             print("Error installing module {}. Skipping.".format(module_name))
@@ -236,14 +238,28 @@ class ServerBotInstance:
    async def _cmdf_mods(self, substr, msg, privilege_level):
       """`{cmd}` - View installed and available modules."""
       installed_mods = list(self._modules.gen_module_info())
+      buf = ""
       if len(installed_mods) == 0:
          buf = "**No modules are installed.**"
       else:
-         buf = "**The following modules are installed:**"
+         installed_mods.sort(key=lambda x: x[0])
+         buf_active = ""
+         buf_inactive = ""
          for val in installed_mods:
-            buf += "\n`{0}`: {1}".format(val[0], val[1])
+            if val[2]: # IF module is active
+               buf_active += "`{}`\n".format(val[0])
+            else:
+               buf_inactive += "`{}`\n".format(val[0])
+         if len(buf_active) != 0:
+            buf += "**The following modules are installed and active:**\n"
+            buf += buf_active[:-1] # Chop off the extra NL
+            buf += "\n\n"
+         if len(buf_inactive) != 0:
+            buf += "**The following modules are installed but inactive:**\n"
+            buf += buf_inactive[:-1] # Chop off the extra NL
+            buf += "\n\n"
       
-      buf2 = "\n\n**The following modules are available for installation:**"
+      buf2 = "**The following modules are available for installation:**\n"
       buf3 = ""
       for val in self._module_factory.gen_available_modules():
          not_installed = True
@@ -252,11 +268,11 @@ class ServerBotInstance:
                not_installed = False
                break
          if not_installed:
-            buf3 += "\n`{0}`: {1}".format(val[0], val[1])
+            buf3 += "`{}`\n".format(val[0])
       if len(buf3) == 0:
-         buf += "\n\n**No modules are available for installation.**"
+         buf += "**No modules are available for installation.**"
       else:
-         buf += buf2 + buf3
+         buf += buf2 + buf3[:-1] # Chop off the extra NL
 
       await self._client.send_msg(msg, buf)
       return
@@ -268,14 +284,15 @@ class ServerBotInstance:
       """`{cmd} [module name]` - Add a module."""
       if self._module_factory.module_exists(substr):
          if self._modules.module_is_installed(substr):
-            await self._client.send_msg(msg, "`{}` is already installed.".format(substr))
+            await self._client.send_msg(msg, "Error: `{}` is already installed.".format(substr))
          else:
             new_module = await self._module_factory.new_module_instance(substr, self)
             await self._modules.add_server_module(new_module)
+            await new_module.activate()
             self._storage.add_module(substr)
             await self._client.send_msg(msg, "`{}` successfully installed.".format(substr))
       else:
-         await self._client.send_msg(msg, "`{}` does not exist.".format(substr))
+         await self._client.send_msg(msg, "Error: `{}` does not exist.".format(substr))
       return
 
    @cmd.add(_cmd_dict, "remove", "uninstall", "removemodule")
@@ -288,7 +305,44 @@ class ServerBotInstance:
          self._storage.remove_module(substr)
          await self._client.send_msg(msg, "`{}` successfully uninstalled.".format(substr))
       else:
-         await self._client.send_msg(msg, "`{}` is not installed.".format(substr))
+         await self._client.send_msg(msg, "Error: `{}` is not installed.".format(substr))
+      return
+
+   @cmd.add(_cmd_dict, "activate", "activatemodule")
+   @cmd.category("Module Info/Management")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   async def _cmdf_activate(self, substr, msg, privilege_level):
+      """
+      `{cmd} [module name]` - Activate an inactive module.
+
+      Modules are usually automatically killed/deactivated upon encountering an error.
+      Modules may also be deactivated manually.
+      """
+      if self._modules.module_is_installed(substr):
+         if self._modules.module_is_active(substr):
+            await self._client.send_msg(msg, "Error: `{}` is already active.".format(substr))
+         else:
+            await self._modules.activate_module(substr)
+            await self._client.send_msg(msg, "`{}` successfully activated.".format(substr))
+      else:
+         await self._client.send_msg(msg, "Error: `{}` is not installed.".format(substr))
+      return
+
+   @cmd.add(_cmd_dict, "deactivate", "kill", "deactivatemodule", "killmodule")
+   @cmd.category("Module Info/Management")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   async def _cmdf_activate(self, substr, msg, privilege_level):
+      """
+      `{cmd} [module name]` - Deactivate an active module.
+      """
+      if self._modules.module_is_installed(substr):
+         if self._modules.module_is_active(substr):
+            await self._modules.kill_module(substr)
+            await self._client.send_msg(msg, "`{}` successfully deactivated.".format(substr))
+         else:
+            await self._client.send_msg(msg, "Error: `{}` is already inactive.".format(substr))
+      else:
+         await self._client.send_msg(msg, "Error: `{}` is not installed.".format(substr))
       return
 
    ###########################################

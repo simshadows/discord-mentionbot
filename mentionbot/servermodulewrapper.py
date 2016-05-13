@@ -55,8 +55,6 @@ class ServerModuleWrapper:
             raise RuntimeError("Not a recognized enum value.")
          for top_level_alias in top_level_aliases:
             self._shortcut_cmd_aliases[top_level_alias] = module_cmd_alias
-
-      await self.activate() # TODO: TEMPORARY
       return self
 
    def __init__(self, token):
@@ -123,7 +121,7 @@ class ServerModuleWrapper:
    #            would pass in substr="choice A;B;C" and upper_cmd_alias="random".
    async def process_cmd(self, substr, msg, privilege_level, upper_cmd_alias):
       if not self.is_active():
-         buf = "Error: The `{}` server module is not active."
+         buf = "Error: The `{}` server module is not active.".format(self.module_name)
          buf += "\n(Automatic deactivation is usually caused by an unhandled error within"
          buf += " the module. This is done as a security measure to prevent further damage,"
          buf += " especially from exploitable bugs.)"

@@ -4,6 +4,8 @@ from . import utils, errors
 
 class ServerModuleGroup:
 
+   # TODO: Implement more efficient data structures. Too much linear searching is going on.
+
    # PRECONDITION: initial_modules is a list of unique modules.
    # PRECONDITION: initial_modules is already sorted by desired appearance
    #               when getting summary help content.
@@ -100,10 +102,34 @@ class ServerModuleGroup:
 
    # Returns list of all installed modules in this instance.
    # RETURNS: A list of tuples, each tuple in the format:
-   #          (module_name, module_short_description)
+   #          (module_name, module_short_description, is_active)
    def gen_module_info(self):
       for module in self._modules_list:
-         yield (module.module_name, module.module_short_description)
+         yield (module.module_name, module.module_short_description, module.is_active())
+
+   # PRECONDITION: module_is_installed(module_name)
+   def module_is_active(self, module_name):
+      for module in self._modules_list:
+         if module.module_name == module_name:
+            return module.is_active()
+      raise RuntimeError("No such server module exists.")
+
+   # PRECONDITION: module_is_installed(module_name)
+   async def activate_module(self, module_name):
+      for module in self._modules_list:
+         if module.module_name == module_name:
+            await module.activate()
+            return
+      raise RuntimeError("No such server module exists.")
+
+   # PRECONDITION: module_is_installed(module_name)
+   async def kill_module(self, module_name):
+      for module in self._modules_list:
+         if module.module_name == module_name:
+            await module.kill()
+            return
+      raise RuntimeError("No such server module exists.")
+
 
 
 # servermodules.mentions.notify.MentionNotifyModule(client, enabled=self.INIT_MENTIONS_NOTIFY_ENABLED),
