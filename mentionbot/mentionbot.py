@@ -81,28 +81,27 @@ class MentionBot(clientextended.ClientExtended):
    # General routine for uncaught exceptions from events (called by the API).
    # However, event handler routines should ideally implement their own.
    async def on_error(self, event, *args, **kwargs):
-      buf = "MentionBot.on_error() called. \n\n"
-      buf += "```\n" + traceback.format_exc() + "\n```"
-      buf += "\nEVENT:\n" + str(event)
-      buf += "\nARGS:\n"
-      if len(args) == 0:
-         buf += "(none)\n"
-      else:
-         for arg in args:
-            buf += str(arg) + "\n"
-      buf += "KWARGS:\n"
-      if not kwargs:
-         buf += "(none)\n"
-      else:
-         for (kwarg, item) in kwargs.items():
-            buf += "{0}: {1}\n".format(str(kwarg), str(item))
-      buf += "\n**Attempting to exit with code 1.**"
-      print(buf, file=sys.stderr)
       try:
-         await self.send_msg(self.botowner, buf)
+         buf_hb = "MentionBot.on_error()."
+         buf_ei = "EVENT:\n" + str(event)
+         buf_ei += "\nARGS:\n"
+         if len(args) == 0:
+            buf_ei += "(none)\n"
+         else:
+            for arg in args:
+               buf_ei += str(arg) + "\n"
+         buf_ei += "KWARGS:\n"
+         if not kwargs:
+            buf_ei += "(none)\n"
+         else:
+            for (kwarg, item) in kwargs.items():
+               buf_ei += "{0}: {1}\n".format(str(kwarg), str(item))
+         buf_fi = "Attempting to exit with code 1."
+         await self.report_exception(event, handled_by=buf_hb, extra_info=buf_ei, final_info=buf_fi)
       except:
-         print("FAILED TO SEND BOTOWNER STACKTRACE.")
-      logging.critical(buf)
+         buf = "ERROR WITHIN on_error()!\n" + traceback.format_exc()
+         print(buf, file=sys.stderr)
+         logging.critical(buf)
       sys.exit(1)
 
    async def on_message(self, msg):
@@ -121,28 +120,11 @@ class MentionBot(clientextended.ClientExtended):
 
       # Common code for exception handling in _on_message().
       async def handle_general_error(e, msg, *, close_bot=True):
-         # This is only for feedback. Exception will continue to propagate.
-         print(traceback.format_exc())
-         buf = "**EXCEPTION**"
-         buf += "\n**From:** <#" + msg.channel.id + "> **in** " + msg.server.name
-         buf += "\n**Command issued by:** <@" + msg.author.id + ">"
-         buf += "\n**Full message:**"
-         buf += "\n" + msg.content
-         buf += "\n**Stack Trace:**"
-         buf += "\n```" + traceback.format_exc() + "```"
-         try:
-            await self.send_msg(self.botowner, buf)
-         except:
-            print("FAILED TO SEND BOTOWNER STACKTRACE.")
-         buf = "**EXCEPTION:** " + type(e).__name__
-         buf += "\n" + str(e)
-         buf += "\n<@" + MentionBot.BOTOWNER_ID + "> Check it out, will ya?"
+         buf_hb = "MentionBot._on_message()."
+         buf_fi = None
          if close_bot:
-            buf += "\n\n**THIS BOT WILL NOW RESTART.**"
-         try:
-            await self.send_msg(msg, buf)
-         except:
-            print("FAILED TO MESSAGE BOT TERMINATION BACK TO THE CHANNEL.")
+            buf_fi = "**THIS BOT WILL NOW RESTART.**"
+         await self.report_exception(e, cmd_msg=msg, handled_by=buf_hb, final_info=buf_fi)
          if close_bot:
             sys.exit(1)
          return
@@ -228,78 +210,90 @@ class MentionBot(clientextended.ClientExtended):
    #
    # RETURNS: A string which may be sent back to a channel for user feedback.
    async def report_exception(self, e, **kwargs):
-      traceback_str = traceback.format_exc()
-      print(traceback_str, file=sys.stderr)
+      try:
+         traceback_str = traceback.format_exc()
+         print(traceback_str, file=sys.stderr)
 
-      # Obtain keyword arguments
-      cmd_msg = kwargs.get("cmd_msg", None) # Discord Message Object
-      extra_info = str(kwargs.get("extra_info", None)) # String
-      final_info = str(kwargs.get("final_info", None)) # String
+         # Obtain keyword arguments
+         cmd_msg = kwargs.get("cmd_msg", None) # Discord Message Object
+         handled_by = str(kwargs.get("handled_by", "")).strip()
+         extra_info = str(kwargs.get("extra_info", "")).strip()
+         final_info = str(kwargs.get("final_info", "")).strip()
 
-      # STEP 1: Send the error report to the bot owner (via PM) and log it.
+         # STEP 1: Send the error report to the bot owner (via PM) and log it.
 
-      buf = "**EXCEPTION**"
-      if not cmd_msg is None:
-         buf0 = textwrap.dedent("""
-            **The error was triggered by a command.**
-            **From:** <#{msg.channel.id}> **in** {msg.server.name}
-            **Command issued by:** <@{msg.author.id}>
-            **Full Message:**
-            {msg.content}
+         buf = "**EXCEPTION**"
+
+         if len(handled_by) != 0:
+            buf += "\n\n**This error is being handled by:**\n" + handled_by
+
+         if not cmd_msg is None:
+            buf0 = textwrap.dedent("""
+               **The error was triggered by a command.**
+               **From:** <#{msg.channel.id}> **in** {msg.server.name}
+               **Command issued by:** <@{msg.author.id}>
+               **Full Message:**
+               {msg.content}
+               """)
+            buf0 = buf0.format(msg=cmd_msg).strip()
+            buf += "\n\n" + buf0
+
+         if len(extra_info) != 0:
+            buf += "\n\n**Extra Info:**\n" + extra_info
+
+         buf0 = textwrap.dedent("""\
+            **Traceback:**
+            ```
+            {traceback_str}
+            ```
             """)
-         buf0 = buf0.format(msg=cmd_msg).strip()
+         buf0 = buf0.format(traceback_str=traceback_str).strip()
          buf += "\n\n" + buf0
 
-      if not extra_info is None:
-         buf += "\n\n**Extra Info:**\n" + extra_info
+         if len(final_info) != 0:
+            buf += "\n\n" + final_info
 
-      buf0 = textwrap.dedent("""\
-         **Traceback:**
-         ```
-         {traceback_str}
-         ```
-         """)
-      buf0 = buf0.format(traceback_str=traceback_str, final_info=final_info).strip()
-      buf += "\n\n" + buf0
-
-      if not final_info is None:
-         buf += "\n\n" + final_info
-
-      logging.critical(buf)
-      try:
-         await self.send_msg(self.botowner, buf)
-      except:
-         buf = "FAILED TO SEND BOTOWNER STACKTRACE."
          logging.critical(buf)
-         print(buf, file=sys.stderr)
-
-      # STEP 2: Create user feedback, and if a command message was supplied,
-      #         send this message into that channel.
-
-      buf = None
-      if e is None:
-         buf = "**AN UNKNOWN ERROR OCCURRED.**"
-      else:
-         buf = textwrap.dedent("""\
-            **AN ERROR OCCURRED.**
-            **EXCEPTION:** {e_name}
-            {e_des}
-            """)
-         buf = buf.format(e_name=type(e).__name__, e_des=str(e)).strip()
-
-      buf += "\n<@{}> Check it out, will ya?".format(MentionBot.BOTOWNER_ID)
-
-      if not final_info is None:
-         buf += "\n\n" + final_info
-
-      if not cmd_msg is None:
          try:
-            await self.send_msg(cmd_msg, buf)
+            await self.send_msg(self.botowner, buf)
          except:
-            buf0 = "FAILED TO MESSAGE BOT TERMINATION BACK TO THE CHANNEL."
-            logging.critical(buf0)
-            print(buf0, file=sys.stderr)
+            buf = "FAILED TO SEND BOTOWNER STACKTRACE."
+            logging.critical(buf)
+            print(buf, file=sys.stderr)
 
+         # STEP 2: Create user feedback, and if a command message was supplied,
+         #         send this message into that channel.
+
+         buf = None
+         if e is None:
+            buf = "**AN UNKNOWN ERROR OCCURRED.**"
+         else:
+            buf = textwrap.dedent("""\
+               **AN ERROR OCCURRED.**
+               **EXCEPTION:** {e_name}
+               {e_des}
+               """)
+            buf = buf.format(e_name=type(e).__name__, e_des=str(e)).strip()
+
+         buf += "\n<@{}> Check it out, will ya?".format(MentionBot.BOTOWNER_ID)
+
+         if len(final_info) != 0:
+            buf += "\n\n" + final_info
+
+         if not cmd_msg is None:
+            try:
+               await self.send_msg(cmd_msg, buf)
+            except:
+               buf0 = "FAILED TO MESSAGE BOT TERMINATION BACK TO THE CHANNEL."
+               logging.critical(buf0)
+               print(buf0, file=sys.stderr)
+      except:
+         buf = "ERROR WITHIN report_exception()!\n" + traceback.format_exc()
+         buf += "\nThis error is completely unrecoverable."
+         buf += "\nExiting with code 1."
+         print(buf, file=sys.stderr)
+         logging.critical(buf)
+         sys.exit(1)
       return buf
 
    def message_cache_read(self, server_id, ch_id):
