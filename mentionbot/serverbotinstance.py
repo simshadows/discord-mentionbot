@@ -177,7 +177,7 @@ class ServerBotInstance:
 
       This text should only show when obtaining additional help.
       """
-      help_content = self._get_help_content(substr, msg, self.cmd_prefix, privilege_level)
+      help_content = await self._get_help_content(substr, msg, self.cmd_prefix, privilege_level)
       await self._client.send_msg(msg, help_content)
       return
 
@@ -308,7 +308,7 @@ class ServerBotInstance:
          await self._client.send_msg(msg, "Error: `{}` is not installed.".format(substr))
       return
 
-   @cmd.add(_cmd_dict, "activate", "activatemodule")
+   @cmd.add(_cmd_dict, "activate", "reactivate", "activatemodule", "reactivatemodule")
    @cmd.category("Module Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_activate(self, substr, msg, privilege_level):
@@ -778,16 +778,16 @@ class ServerBotInstance:
       """`{cmd}`"""
       raise BaseException
 
-   def _get_help_content(self, substr, msg, cmd_prefix, privilege_level):
+   async def _get_help_content(self, substr, msg, cmd_prefix, privilege_level):
       buf = None
       if substr == "":
          buf = cmd.compose_help_summary(self._cmd_dict, privilege_level) + "\n\n"
          buf = buf.format(p="{p}", b="")
-         buf2 = self._modules.get_help_content("", privilege_level)
+         buf2 = await self._modules.get_help_content("", privilege_level)
          buf2 = "\n".join(sorted(buf2.splitlines(), key=lambda e: e.lower()))
          buf += buf2
       else:
-         buf = self._modules.get_help_content(substr, privilege_level)
+         buf = await self._modules.get_help_content(substr, privilege_level)
       return buf.format(p=cmd_prefix)
    
    def get_presence_timedelta(self):

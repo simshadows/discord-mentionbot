@@ -1,4 +1,5 @@
 import asyncio
+import sys
 
 from . import utils, errors, cmd
 from .servermoduleresources import ServerModuleResources
@@ -18,6 +19,8 @@ class ServerModuleWrapper:
    """
 
    _SECRET_TOKEN = NotImplemented
+
+   SUPPRESS_AUTOKILL_DEFAULT = False
 
    # Note that the initial state of ServerModuleWrapper is deactivated.
    @classmethod
@@ -39,6 +42,7 @@ class ServerModuleWrapper:
       self._shortcut_cmd_aliases = None # Maps top-level command alias to module command alias.
 
       self._module_instance = None
+      self._suppress_autokill = self.SUPPRESS_AUTOKILL_DEFAULT
 
       # Initialize self._shortcut_cmd_aliases
       self._shortcut_cmd_aliases = {}
@@ -88,6 +92,7 @@ class ServerModuleWrapper:
       return not self._module_instance is None
 
    async def activate(self):
+      self._suppress_autokill = self.SUPPRESS_AUTOKILL_DEFAULT
       res = ServerModuleResources(self._module_class.MODULE_NAME, self._sbi, self)
       self._module_instance = await self._module_class.get_instance(self._module_cmd_aliases, res)
       return
@@ -96,24 +101,53 @@ class ServerModuleWrapper:
       self._module_instance = None
       return
 
+   # If setting=True, then module auto-kill will be less aggressive.
+   def set_suppress_autokill(self, setting):
+      self._suppress_autokill = bool(setting)
+      return
+
+   # PRECONDITION: The function must be called within an except block.
+   # PARAMETER: e: Error event that caused the error.
+   # RETURNS: A string which may be sent back to a channel for user feedback.
+   async def _common_error_handler(self, e, cmd_msg=None):
+      buf_ei = "Exception caught by SeverModuleWrapper."
+      if self._suppress_autokill:
+         buf_ei += "\nModule autokill is suppressed."
+      else:
+         await self.kill()
+         buf_ei += "\nModule has been automatically killed."
+      buf_fi = "This error occurred within the module `{}`.".format(self.module_name)
+      return await self._client.report_exception(e, cmd_msg=cmd_msg, extra_info=buf_ei, final_info=buf_fi)
+
    ########################################################################################
    # METHODS SERVED BY THE MODULE #########################################################
    ########################################################################################
 
-   def get_help_summary(self, privilege_level):
+   async def get_help_summary(self, privilege_level):
       if not self.is_active():
          return "(The `{}` module is not active.)".format(self.module_name)
-      return self._module_instance.get_help_summary(privilege_level, self._module_cmd_aliases[0])
+      try:
+         return self._module_instance.get_help_summary(privilege_level, self._module_cmd_aliases[0])
+      except Exception as e:
+         await self._common_error_handler(e)
+         return "(Unable to obtain `{}` help.)".format(self.module_name)
 
-   def get_help_detail(self, substr, privilege_level):
+   async def get_help_detail(self, substr, privilege_level):
       if not self.is_active():
          return "The `{}` module is not active.".format(self.module_name)
-      return self._module_instance.get_help_detail(substr, privilege_level, self._module_cmd_aliases[0])
+      try:
+         return self._module_instance.get_help_detail(substr, privilege_level, self._module_cmd_aliases[0])
+      except Exception as e:
+         return await self._common_error_handler(e)
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
       if not self.is_active():
          return content
-      return await self._module_instance.msg_preprocessor(content, msg, default_cmd_prefix)
+      try:
+         return await self._module_instance.msg_preprocessor(content, msg, default_cmd_prefix)
+      except Exception as e:
+         await self._common_error_handler(e)
+         return content
 
    # PARAMETER: upper_cmd_alias is the command alias that was split off before
    #            the substring was passed into this function.
@@ -132,11 +166,14 @@ class ServerModuleWrapper:
       try:
          await self._module_instance.process_cmd(substr, msg, privilege_level)
       except Exception as e:
-         # print(traceback.format_exc())
-         raise # TODO: TEMPORARY
+         await self._common_error_handler(e, cmd_msg=msg)
       return
 
    async def on_message(self, msg):
       if not self.is_active():
          return
-      return await self._module_instance.on_message(msg)
+      try:
+         return await self._module_instance.on_message(msg)
+      except:
+         await self._common_error_handler(e)
+         return

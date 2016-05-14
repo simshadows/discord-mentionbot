@@ -186,46 +186,19 @@ def role_is_unused(server, role_obj):
 # ASYNCIO #######################################################################
 #################################################################################
 
-# Proposed but unused.
-# # This class simply runs an infinite loop that acts as a callback for futures
-# # whose callers are unable to wait.
-# # Ignores return value and causes the program to exit with code 1 on any
-# # uncaught exception (except SystemExit or KeyboardInterrupt, which are
-# # repropagated).
-# # TODO: Rename this to something more informative.
-# class FuturesCallbackLoop:
-#    _SECRET_TOKEN = SecretToken()
-
-#    @classmethod
-#    async def get_instance(cls):
-#       inst = cls(cls._SECRET_TOKEN)
-#       loop = asyncio.get_event_loop()
-
-#       inst._queue = asyncio.Queue()
-#       inst.callback_future = loop.create_task(inst._run())
-
-#       return inst
-
-#    def __init__(self, token):
-#       if not token is self._SECRET_TOKEN:
-#          raise RuntimeError("Not allowed to instantiate directly. Please use get_instance().")
-
-#    async def _run(self):
-#       while True:
-#          try:
-#             future = await self._queue.get()
-#             await future
-#          except (SystemExit, KeyboardInterrupt):
-#             # These are the only exceptions that will be accepted.
-#             raise
-#          except BaseException:
-#             # Any other exception will result in program termination, code 1.
-#             print(traceback.format_exc())
-#             sys.exit(1)
-
-#    async def enqueue(self, future):
-#       await self._queue.put(future)
+# Currently unused.
+# This function however is problematic as it lacks an error handler.
+# # Allows the starting of coroutines anywhere, even in non-async functions.
+# # This may also be useful in async functions as it schedules a callback, then
+# # returns,
+# def start_coroutine(future):
+#    loop = asyncio.get_event_loop()
+#    async def coro():
+#       await future
+#       loop.call_soon()
 #       return
+#    loop.create_task(coro())
+#    return
 
 #################################################################################
 # OTHERS ########################################################################
