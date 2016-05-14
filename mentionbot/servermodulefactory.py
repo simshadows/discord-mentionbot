@@ -5,6 +5,7 @@ from .servermodulewrapper import ServerModuleWrapper
 from .servermodules.basicinfo import BasicInfo
 from .servermodules.dynamicchannels import DynamicChannels
 from .servermodules.mentionsnotify import MentionsNotify
+from .servermodules.pmgreetings import PMGreetings
 from .servermodules.serveractivitystatistics import ServerActivityStatistics
 from .servermodules.random import Random
 from .servermodules.wolframalpha import WolframAlpha
@@ -23,6 +24,7 @@ class ServerModuleFactory:
       BasicInfo,
       DynamicChannels,
       MentionsNotify,
+      PMGreetings,
       ServerActivityStatistics,
       Random,
       WolframAlpha,

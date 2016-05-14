@@ -128,8 +128,7 @@ class MessageCache:
                ch_json_data["last message timestamp"] = ch_stored_timestamp.isoformat()
                utils.json_write(ch_json_filepath, data=ch_json_data)
 
-            # This will now fill a buffer all messages of a channel.
-            # TODO: Consider filling a file, then reading off the file.
+            # This will now fill a buffer of all messages of a channel.
             msg_buffer = []
             try:
                async for msg in self._client.logs_from(ch, limit=ARBITRARILY_LARGE_NUMBER):
