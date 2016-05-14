@@ -120,6 +120,8 @@ class ServerModule:
    async def on_message(self, msg):
       pass
 
+   async def on_member_join(self, member):
+      pass
 
-
-
+   async def on_member_remove(self, member):
+      pass

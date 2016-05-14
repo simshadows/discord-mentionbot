@@ -83,7 +83,7 @@ See `{modhelp}` for basic server/user information commands.
    @cmd.add(_cmd_dict, "rolestats")
    @cmd.top_level_alias()
    async def _cmdf_rolestats(self, substr, msg, privilege_level):
-      """`{p}{c} [user]` - Get role stats."""
+      """`{p}{c} [rolename]` - Get role stats."""
       server = msg.server
       if len(substr) == 0:
          await self._client.send_msg(msg, "Error: Must specify a role.")

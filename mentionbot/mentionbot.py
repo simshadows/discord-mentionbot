@@ -41,6 +41,8 @@ class MentionBot(clientextended.ClientExtended):
       super(MentionBot, self).__init__(**kwargs)
 
       self.on_message_lock = asyncio.Lock()
+      self.on_member_join_lock = asyncio.Lock()
+      self.on_member_remove_lock = asyncio.Lock()
 
       print("BOTOWNER_ID = '{}'".format(MentionBot.BOTOWNER_ID))
       print("INITIAL_GAME_STATUS = '{}'".format(MentionBot.INITIAL_GAME_STATUS))
@@ -72,6 +74,8 @@ class MentionBot(clientextended.ClientExtended):
          print("Bot name: " + self.user.name)
          print("")
          self.on_message_lock.release()
+         self.on_member_join_lock.release()
+         self.on_member_remove_lock.release()
          if self.NOTIFY_BOTOWNER_ON_INIT:
             try:
                await self.send_msg(self.botowner, "Initialization complete.")
@@ -178,6 +182,30 @@ class MentionBot(clientextended.ClientExtended):
          raise
       except BaseException as e:
          await handle_general_error(e, msg, close_bot=True)
+      return
+
+   async def on_member_join(self, member):
+      await self.on_member_join_lock.acquire()
+      try:
+         await self._on_member_join(member)
+      finally:
+         self.on_member_join_lock.release()
+      return
+
+   async def _on_member_join(self, member):
+      await self._bot_instances[member.server].on_member_join(member)
+      return
+
+   async def on_member_remove(self, member):
+      await self.on_member_remove_lock.acquire()
+      try:
+         await self._on_member_remove(member)
+      finally:
+         self.on_member_remove_lock.release()
+      return
+
+   async def _on_member_remove(self, member):
+      await self._bot_instances[member.server].on_member_remove(member)
       return
 
    async def on_server_join(self, server):
@@ -312,6 +340,8 @@ class MentionBot(clientextended.ClientExtended):
 
 async def _client_login(client, token):
    await client.on_message_lock.acquire() # To be released when ready.
+   await client.on_member_join_lock.acquire() # To be released when ready.
+   await client.on_member_remove_lock.acquire() # To be released when ready.
    # TODO: Acquire the lock elsewhere. It's a little out-of-place here...
    await client.login(token)
    await client.connect()

@@ -40,6 +40,16 @@ class ServerModuleGroup:
             raise errors.UnknownCommandError
       return
 
+   async def on_member_join(self, member):
+      for module in self._modules_list:
+         await module.on_member_join(member)
+      return
+
+   async def on_member_remove(self, member):
+      for module in self._modules_list:
+         await module.on_member_remove(member)
+      return
+
    # Module is referenced by its module name.
    def module_is_installed(self, module_name):
       for module in self._modules_list:

@@ -250,3 +250,21 @@ class ServerModuleWrapper:
       except:
          await self._module_method_error_handler(e)
          return
+
+   async def on_member_join(self, member):
+      if not self.is_active():
+         return
+      try:
+         return await self._module_instance.on_member_join(member)
+      except:
+         await self._module_method_error_handler(e)
+         return
+
+   async def on_member_remove(self, member):
+      if not self.is_active():
+         return
+      try:
+         return await self._module_instance.on_member_remove(member)
+      except:
+         await self._module_method_error_handler(e)
+         return

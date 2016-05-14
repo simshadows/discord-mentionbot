@@ -46,3 +46,11 @@ DEBUGGING: _HELP_SUMMARY CONTENTS.
    async def on_message(self, msg):
       print("DEBUGGING: self.on_message(): with msg.content = " + msg.content)
       return
+
+   async def on_member_join(self, member):
+      print("DEBUGGING: self.on_member_join(). New member: " + member.name)
+      return
+
+   async def on_member_remove(self, member):
+      print("DEBUGGING: self.on_member_remove(). Removed member: " + member.name)
+      return

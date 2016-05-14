@@ -162,6 +162,14 @@ class ServerBotInstance:
             await cmd_to_execute(self, right, msg, privilege_level)
       return
 
+   async def on_member_join(self, member):
+      await self._modules.on_member_join(member)
+      return
+
+   async def on_member_remove(self, member):
+      await self._modules.on_member_remove(member)
+      return
+
    ########################################################################################
    # CORE COMMANDS ########################################################################
    ########################################################################################
