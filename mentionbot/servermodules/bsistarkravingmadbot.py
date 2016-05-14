@@ -104,7 +104,7 @@ For reference, I require the following modules to be installed:
          "swole": pf + "jcfdiscord swole",
          "truth": this + " truth",
          "ud": this + " ud",
-         "whois": pf + "basicinfo user",
+         "whois": "whois" + pf, # NEEDS SPECIAL HANDLING
       }
 
       self._sleep_choices = [
@@ -113,7 +113,7 @@ For reference, I require the following modules to be installed:
          "The addiction is more satisfying while conscious",
          "(ﾉಠ_ಠ)ﾉ*:・ﾟ✧\ngit to sleep"
       ]
-      
+
       self._res.suppress_autokill(True)
       return
 
@@ -136,9 +136,18 @@ For reference, I require the following modules to be installed:
             left = self._preprocessor_replace[left.lower()]
          except KeyError:
             return content
+
          if right == "":
             return left
          else:
+            # Special case for whois command
+            if left.startswith("whois"):
+               left = left[5:] + "basicinfo " # Prefix + "basicinfo "
+               if utils.re_user_mention.match(right):
+                  left += "user"
+               else:
+                  left += "rolestats"
+            
             return left + " " + right
       return content
 
