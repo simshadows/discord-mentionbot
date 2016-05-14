@@ -7,6 +7,8 @@ import time
 import re
 import os
 import traceback
+import functools
+import textwrap
 
 import discord # pip install git+https://github.com/Rapptz/discord.py@async
 # pip install git+https://github.com/Julian/jsonschema
@@ -197,6 +199,108 @@ class MentionBot(clientextended.ClientExtended):
    ##################
    # Other Services #
    ##################
+   
+   # Common code for handling an error.
+   # Does:
+   #  - Printing stacktrace to stderr
+   #  - Logging the error report
+   #  - Sending the error report to the bot owner
+   #  - Give user feedback in the channel if a command caused the error.
+   # And for clarity, this function does NOT:
+   #  - Reraise errors
+   #  - Exit the program
+   #  - Kill bot modules
+   #
+   # PARAMETERS:
+   #    e: Error event that caused the error.
+   #    cmd_msg: If the error involved a command, this is the message object
+   #             of the command that triggered this error.
+   #             If this is supplied, a message will be automatically sent to
+   #             the channel to inform the user of the error.
+   #    extra_info: An additional message content (string) to attach to the
+   #                error report. This is useful for reporting more information
+   #                about an error.
+   #                This only appears in the error report.
+   #    final_info: A string to append to the end of the error report.
+   #                This string will appear in both the error report and
+   #                command feedback message.
+   #                For example, "THIS BOT WILL NOW RESTART."
+   #
+   # RETURNS: A string which may be sent back to a channel for user feedback.
+   async def report_exception(self, e, **kwargs):
+      traceback_str = traceback.format_exc()
+      print(traceback_str, file=sys.stderr)
+
+      # Obtain keyword arguments
+      cmd_msg = kwargs.get("cmd_msg", None) # Discord Message Object
+      extra_info = str(kwargs.get("extra_info", None)) # String
+      final_info = str(kwargs.get("final_info", None)) # String
+
+      # STEP 1: Send the error report to the bot owner (via PM) and log it.
+
+      buf = "**EXCEPTION**"
+      if not cmd_msg is None:
+         buf0 = textwrap.dedent("""
+            **The error was triggered by a command.**
+            **From:** <#{msg.channel.id}> **in** {msg.server.name}
+            **Command issued by:** <@{msg.author.id}>
+            **Full Message:**
+            {msg.content}
+            """)
+         buf0 = buf0.format(msg=cmd_msg).strip()
+         buf += "\n\n" + buf0
+
+      if not extra_info is None:
+         buf += "\n\n**Extra Info:**\n" + extra_info
+
+      buf0 = textwrap.dedent("""\
+         **Traceback:**
+         ```
+         {traceback_str}
+         ```
+         """)
+      buf0 = buf0.format(traceback_str=traceback_str, final_info=final_info).strip()
+      buf += "\n\n" + buf0
+
+      if not final_info is None:
+         buf += "\n\n" + final_info
+
+      logging.critical(buf)
+      try:
+         await self.send_msg(self.botowner, buf)
+      except:
+         buf = "FAILED TO SEND BOTOWNER STACKTRACE."
+         logging.critical(buf)
+         print(buf, file=sys.stderr)
+
+      # STEP 2: Create user feedback, and if a command message was supplied,
+      #         send this message into that channel.
+
+      buf = None
+      if e is None:
+         buf = "**AN UNKNOWN ERROR OCCURRED.**"
+      else:
+         buf = textwrap.dedent("""\
+            **AN ERROR OCCURRED.**
+            **EXCEPTION:** {e_name}
+            {e_des}
+            """)
+         buf = buf.format(e_name=type(e).__name__, e_des=str(e)).strip()
+
+      buf += "\n<@{}> Check it out, will ya?".format(MentionBot.BOTOWNER_ID)
+
+      if not final_info is None:
+         buf += "\n\n" + final_info
+
+      if not cmd_msg is None:
+         try:
+            await self.send_msg(cmd_msg, buf)
+         except:
+            buf0 = "FAILED TO MESSAGE BOT TERMINATION BACK TO THE CHANNEL."
+            logging.critical(buf0)
+            print(buf0, file=sys.stderr)
+
+      return buf
 
    def message_cache_read(self, server_id, ch_id):
       return self.message_cache.read_messages(server_id, ch_id)
