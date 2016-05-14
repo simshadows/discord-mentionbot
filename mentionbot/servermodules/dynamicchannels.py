@@ -429,7 +429,7 @@ class ChannelCloseScheduler:
    async def run(self):
       while True:
          try: 
-            print(">>>>>>>>>>>>>>>>>>> TICK!!!")
+            print(">>>>>>>>>>>>>>>>>>> DYNAMICCHANNELS TICK!!!")
             to_close = []
             for (ch_name, timeout_min) in self._scheduled.items():
                if timeout_min <= 1:

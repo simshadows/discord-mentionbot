@@ -80,6 +80,49 @@ See `{modhelp}` for basic server/user information commands.
       buf += "\n```"
       return await self._client.send_msg(msg, buf)
 
+   @cmd.add(_cmd_dict, "rolestats")
+   @cmd.top_level_alias()
+   async def _cmdf_rolestats(self, substr, msg, privilege_level):
+      """`{p}{c} [user]` - Get role stats."""
+      server = msg.server
+      if len(substr) == 0:
+         await self._client.send_msg(msg, "Error: Must specify a role.")
+         return
+      buf = None
+      n_matching_roles = 0
+      for role in server.roles:
+         if role.name == substr:
+            n_matching_roles += 1
+      if n_matching_roles == 0:
+         await self._client.send_msg(msg, "No roles match `{}`.".format(substr))
+         return
+      matching_members = []
+      for member in server.members:
+         for role in member.roles[1:]: # Skips over the @everyone role
+            if role.name == substr:
+               matching_members.append(member)
+               break
+      if n_matching_roles == 1:
+         if len(matching_members) == 0:
+            await self._client.send_msg(msg, "No users are in the role `{}`.".format(substr))
+            return
+         else:
+            buf = "**The following users are in the role `{}`:**".format(substr)
+      else:
+         buf = "{0} roles match the name `{1}`.\n".format(str(n_matching_roles), substr)
+         if len(matching_members) == 0:
+            buf += "No users are in any of these roles."
+            await self._client.send_msg(msg, buf)
+            return
+         else:
+            buf += "**The following users are in at least one of these roles:**"
+      buf += "\n```"
+      for member in matching_members:
+         buf += "\n" + utils.user_to_str(member)
+      buf += "\n```"
+      await self._client.send_msg(msg, buf)
+      return
+
    @cmd.add(_cmd_dict, "thisserver", "server")
    @cmd.top_level_alias()
    async def _cmdf_server(self, substr, msg, privilege_level):

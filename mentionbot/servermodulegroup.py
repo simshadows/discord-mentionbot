@@ -130,11 +130,3 @@ class ServerModuleGroup:
             await module.kill()
             return
       raise RuntimeError("No such server module exists.")
-
-
-
-# servermodules.mentions.notify.MentionNotifyModule(client, enabled=self.INIT_MENTIONS_NOTIFY_ENABLED),
-# servermodules.mentions.search.MentionSearchModule(client),
-# servermodules.mentions.summary.MentionSummaryModule(client)
-
-

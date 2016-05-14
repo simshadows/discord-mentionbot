@@ -57,6 +57,13 @@ def str_asciionly(text):
    return buf[2:-1]
 
 #################################################################################
+# INFORMATION REPRESENTATION ####################################################
+#################################################################################
+
+def user_to_str(user):
+   return "{0} (ID: {1})".format(str(user.name), str(user.id))
+
+#################################################################################
 # WEB HELPER FUNCTIONS ##########################################################
 #################################################################################
 
@@ -186,19 +193,17 @@ def role_is_unused(server, role_obj):
 # ASYNCIO #######################################################################
 #################################################################################
 
-# Currently unused.
-# This function however is problematic as it lacks an error handler.
-# # Allows the starting of coroutines anywhere, even in non-async functions.
-# # This may also be useful in async functions as it schedules a callback, then
-# # returns,
-# def start_coroutine(future):
-#    loop = asyncio.get_event_loop()
-#    async def coro():
-#       await future
-#       loop.call_soon()
-#       return
-#    loop.create_task(coro())
-#    return
+# Allows the starting of coroutines anywhere, even in non-async functions.
+# This may also be useful in async functions as it schedules a callback, then
+# returns,
+def start_coroutine(future):
+   loop = asyncio.get_event_loop()
+   async def coro():
+      await future
+      loop.call_soon()
+      return
+   loop.create_task(coro())
+   return
 
 #################################################################################
 # OTHERS ########################################################################
