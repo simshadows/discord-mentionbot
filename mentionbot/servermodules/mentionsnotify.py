@@ -19,7 +19,10 @@ See `{modhelp}` to manage the mentions notification system.
    """.strip()
 
    async def _initialize(self, resources):
+      self._res = resources
       self._client = resources.client
+
+      self._res.suppress_autokill(True)
       return
 
    async def process_cmd(self, substr, msg, privilege_level):

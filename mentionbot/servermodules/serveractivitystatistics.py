@@ -36,6 +36,8 @@ See `{modhelp}` for commands to generate user activity statistics.
       self._client = self._res.client
 
       self._log_in_from_file()
+      
+      self._res.suppress_autokill(True)
       return
 
    def get_help_detail(self, substr, privilege_level, module_alias):

@@ -114,9 +114,11 @@ class ServerModuleWrapper:
       if self._suppress_autokill:
          buf_ei += "\nModule autokill is suppressed."
       else:
-         await self.kill()
-         buf_ei += "\nModule has been automatically killed."
+         buf_ei += "\nModule autokill is not suppressed."
       buf_fi = "This error occurred within the module `{}`.".format(self.module_name)
+      if not self._suppress_autokill:
+         await self.kill()
+         buf_fi += "\nModule has been automatically killed for safety and must be manually reactivated."
       return await self._client.report_exception(e, cmd_msg=cmd_msg, extra_info=buf_ei, final_info=buf_fi)
 
    ########################################################################################

@@ -23,8 +23,10 @@ class SelfServeColours(ServerModule):
    _re_rgb_code = re.compile("[0-9a-fA-F]{6}")
 
    async def _initialize(self, resources):
-      self._client = resources.client
       self._res = resources
+      self._client = resources.client
+
+      self._res.suppress_autokill(True)
       return
 
    async def process_cmd(self, substr, msg, privilege_level):

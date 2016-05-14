@@ -22,6 +22,8 @@ DEBUGGING: _HELP_SUMMARY CONTENTS.
    async def _initialize(self, resources):
       self._res = resources
       self._client = self._res.client
+
+      self._res.suppress_autokill(True)
       return
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):

@@ -82,4 +82,17 @@ class ServerModuleResources:
    @property
    def me_ID(self):
       return self._sbi.client.user.id
+
+   # Flags
+
+   # Suppresses the auto-killing of the module.
+   # Default value is False.
+   #
+   # IMPORTANT: Only set this if suppressing auto-kill is safe to do so.
+   #            Depending on the operation, errors may cause irreversible
+   #            and serious damage to server or bot data. Auto-kill is a way
+   #            to minimize further damage, hence the default value of False.
+   def suppress_autokill(self, value):
+      self._module_wrapper.set_suppress_autokill(bool(value))
+      return
    

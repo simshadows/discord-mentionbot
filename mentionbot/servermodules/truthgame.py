@@ -39,6 +39,8 @@ See `{modhelp}` for truth game commands.
 
       self._enabled_channels = None
       self._load_settings()
+
+      self._res.suppress_autokill(True)
       return
 
    def _load_settings(self):

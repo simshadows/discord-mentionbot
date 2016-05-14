@@ -22,7 +22,10 @@ See `{modhelp}` for basic server/user information commands.
    # *Note: Dates are presented in ISO 8601 format.*
 
    async def _initialize(self, resources):
+      self._res = resources
       self._client = resources.client
+
+      self._res.suppress_autokill(True)
       return
 
    @cmd.add(_cmd_dict, "avatar", "dp", "avatarurl")

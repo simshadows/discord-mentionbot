@@ -113,6 +113,8 @@ For reference, I require the following modules to be installed:
          "The addiction is more satisfying while conscious",
          "(ﾉಠ_ಠ)ﾉ*:・ﾟ✧\ngit to sleep"
       ]
+      
+      self._res.suppress_autokill(True)
       return
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):

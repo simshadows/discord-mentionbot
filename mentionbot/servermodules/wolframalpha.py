@@ -45,6 +45,8 @@ See `{modhelp}` to manage the Wolfram Alpha module.
       self._wa_client = None
 
       self._load_settings()
+
+      self._res.suppress_autokill(True)
       return
 
    def _load_settings(self):

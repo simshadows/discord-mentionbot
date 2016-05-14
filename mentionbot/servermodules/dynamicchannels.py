@@ -51,6 +51,8 @@ See `{modhelp}` for managing the Dynamic Channels module.
       self._scheduler = ChannelCloseScheduler(self._client, self._server, self)
       loop = asyncio.get_event_loop()
       loop.create_task(self._scheduler.run())
+      
+      self._res.suppress_autokill(True)
       return
 
    @property

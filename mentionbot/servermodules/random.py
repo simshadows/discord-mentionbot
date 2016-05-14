@@ -36,7 +36,10 @@ class Random(ServerModule):
    _RE_DICE_NOTATION = re.compile("(\d*d)?\d+")
 
    async def _initialize(self, resources):
+      self._res = resources
       self._client = resources.client
+
+      self._res.suppress_autokill(True)
       return
 
    async def process_cmd(self, substr, msg, privilege_level):
@@ -52,6 +55,7 @@ class Random(ServerModule):
    async def _cmdf_number(self, substr, msg, privilege_level):
       """`{cmd}`"""
       # Compile a set of ranges to randomize.
+      
       args = utils.remove_whitespace(substr)
       rng_ranges = []
       rng_sets = args.split(",")
