@@ -63,6 +63,7 @@ class ServerModuleGroup:
          if module.module_name == module_name:
             module_to_remove = module
             break
+      await module_to_remove.kill()
       for cmd_name in module_to_remove.all_cmd_aliases:
          del self._modules_cmd_dict[cmd_name]
       self._modules_list.remove(module_to_remove)

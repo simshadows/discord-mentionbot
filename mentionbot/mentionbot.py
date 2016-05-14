@@ -18,12 +18,12 @@ from . import utils, errors, clientextended
 from .serverbotinstance import ServerBotInstance
 from .messagecache import MessageCache
 
-discord_logger = logging.getLogger('discord')
+discord_logger = logging.getLogger("discord")
 discord_logger.setLevel(logging.CRITICAL)
 logger = logging.getLogger()
 logger.setLevel(logging.CRITICAL)
-handler = logging.FileHandler(filename='mentionbot.log', encoding='utf-8', mode='w')
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+handler = logging.FileHandler(filename="mentionbot.log", encoding="utf-8", mode="w")
+handler.setFormatter(logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s"))
 logger.addHandler(handler)
 
 LOGIN_DETAILS_FILENAME = "bot_user_token" # This file is used to login. Only contains two lines. Line 1 is email, line 2 is password.
@@ -33,6 +33,9 @@ class MentionBot(clientextended.ClientExtended):
    INITIAL_GAME_STATUS = "bot is running"
    INITIALIZING_GAME_STATUS = "bot is initializing"
    CACHE_DIRECTORY = "cache/" # This MUST end with a forward-slash. e.g. "cache/"
+
+   NOTIFY_BOTOWNER_ON_INIT = True
+   KILL_BOT_ON_MESSAGE_EXCEPTION = True
    
    def __init__(self, **kwargs):
       super(MentionBot, self).__init__(**kwargs)
@@ -69,7 +72,12 @@ class MentionBot(clientextended.ClientExtended):
          print("Bot name: " + self.user.name)
          print("")
          self.on_message_lock.release()
-         logging.info("MentionBot initialization complete.")
+         if self.NOTIFY_BOTOWNER_ON_INIT:
+            try:
+               await self.send_msg(self.botowner, "Initialization complete.")
+            except:
+               print("FAILED TO SEND BOTOWNER INITIALIZATION NOTIFICATION.")
+         logging.info("Initialization complete.")
          print("Initialization complete.")
       except (SystemExit, KeyboardInterrupt):
          raise
@@ -165,7 +173,7 @@ class MentionBot(clientextended.ClientExtended):
       except errors.OperationAborted:
          print("Caught OperationAborted.")
       except Exception as e:
-         await handle_general_error(e, msg, close_bot=True)
+         await handle_general_error(e, msg, close_bot=self.KILL_BOT_ON_MESSAGE_EXCEPTION)
       except (SystemExit, KeyboardInterrupt):
          raise
       except BaseException as e:

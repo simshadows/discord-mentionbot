@@ -3,6 +3,7 @@ import threading
 import copy
 import re
 import traceback
+import concurrent
 
 import discord
 
@@ -50,8 +51,8 @@ See `{modhelp}` for managing the Dynamic Channels module.
 
       self._scheduler = ChannelCloseScheduler(self._client, self._server, self)
       loop = asyncio.get_event_loop()
-      loop.create_task(self._scheduler.run())
-      
+      await self._res.start_nonreturning_coro(self._scheduler.run())
+
       self._res.suppress_autokill(True)
       return
 
@@ -407,7 +408,6 @@ class ChannelCloseScheduler:
       self._server = server
       self._module = module
       self._scheduled = {} # Maps channel name -> time until closure
-      self._running = True
       return
 
    def schedule_closure(self, channel, timeout_min):
@@ -425,13 +425,9 @@ class ChannelCloseScheduler:
    def get_scheduled(self):
       return self._scheduled.items()
 
-   def terminate(self):
-      self._running = False
-      return
-
    # Run this indefinitely.
    async def run(self):
-      while self._running:
+      while True:
          try: 
             print(">>>>>>>>>>>>>>>>>>> TICK!!!")
             to_close = []
@@ -450,6 +446,6 @@ class ChannelCloseScheduler:
                except:
                   print(traceback.format_exc())
             await asyncio.sleep(60)
-         except Exception:
-            print(traceback.format_exc())
+         except concurrent.futures.CancelledError:
+            raise # Allow the coroutine to be cancelled.
 

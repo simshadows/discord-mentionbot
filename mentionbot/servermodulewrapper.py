@@ -1,8 +1,21 @@
 import asyncio
 import sys
+import concurrent
 
 from . import utils, errors, cmd
 from .servermoduleresources import ServerModuleResources
+
+def synchronized_with_state_lock(function):
+   async def wrapper_function(*args, **kwargs):
+      self = args[0]
+      await self._state_lock.acquire()
+      ret = None
+      try:
+         ret = await function(*args, **kwargs)
+      finally:
+         self._state_lock.release()
+      return ret
+   return wrapper_function
 
 class ServerModuleWrapper:
    """
@@ -41,6 +54,10 @@ class ServerModuleWrapper:
       self._module_cmd_aliases = module_cmd_aliases
       self._shortcut_cmd_aliases = None # Maps top-level command alias to module command alias.
 
+      self._state_lock = asyncio.Lock()
+
+      self._is_active = False
+      self._user_nonreturning_tasks = None # List of tasks
       self._module_instance = None
       self._suppress_autokill = self.SUPPRESS_AUTOKILL_DEFAULT
 
@@ -89,37 +106,91 @@ class ServerModuleWrapper:
       return aliases
 
    def is_active(self):
-      return not self._module_instance is None
+      return self._is_active
 
+   @synchronized_with_state_lock
    async def activate(self):
+      if self.is_active():
+         raise RuntimeError("Module is already active.")
+      self._is_active = True
+      self._user_nonreturning_tasks = []
       self._suppress_autokill = self.SUPPRESS_AUTOKILL_DEFAULT
       res = ServerModuleResources(self._module_class.MODULE_NAME, self._sbi, self)
       self._module_instance = await self._module_class.get_instance(self._module_cmd_aliases, res)
       return
 
+   @synchronized_with_state_lock
    async def kill(self):
+      if not self.is_active():
+         raise RuntimeError("Module is already inactive.")
+      self._is_active = False
+      for task in self._user_nonreturning_tasks:
+         task.cancel()
+         try:
+            task.set_result(None)
+         except:
+            pass
+      self._user_nonreturning_tasks = None
       self._module_instance = None
       return
+
+   # PRECONDITION: The function must be called within an except block.
+   # PARAMETER: e: Error event that caused the error.
+   # RETURNS: A string which may be sent back to a channel for user feedback.
+   async def _module_method_error_handler(self, e, cmd_msg=None):
+      buf_ei = None
+      if self._suppress_autokill:
+         buf_ei = "Module autokill is suppressed."
+      else:
+         buf_ei = "Module autokill is not suppressed."
+      buf_fi = "This error occurred within the module `{}`.".format(self.module_name)
+      if not self._suppress_autokill:
+         await self.kill()
+         buf_fi += "\nModule has been automatically killed for safety and must be manually reactivated."
+      kwargs = {
+         "cmd_msg": cmd_msg,
+         "handled_by": "SeverModuleWrapper, in a module-serving method.",
+         "extra_info": buf_ei,
+         "final_info": buf_fi,
+      }
+      return await self._client.report_exception(e, **kwargs)
+
+   ########################################################################################
+   # METHODS USED FOR OTHER MODULE SERVICES ###############################################
+   ########################################################################################
 
    # If setting=True, then module auto-kill will be less aggressive.
    def set_suppress_autokill(self, setting):
       self._suppress_autokill = bool(setting)
       return
 
-   # PRECONDITION: The function must be called within an except block.
-   # PARAMETER: e: Error event that caused the error.
-   # RETURNS: A string which may be sent back to a channel for user feedback.
-   async def _common_error_handler(self, e, cmd_msg=None):
-      buf_ei = "Exception caught by SeverModuleWrapper."
-      if self._suppress_autokill:
-         buf_ei += "\nModule autokill is suppressed."
-      else:
-         buf_ei += "\nModule autokill is not suppressed."
-      buf_fi = "This error occurred within the module `{}`.".format(self.module_name)
-      if not self._suppress_autokill:
+   # Non-returning coroutines are to be started here.
+   # This ensures correct error handling.
+   # TODO: Somehow synchronize this. The decorator has been commented out.
+   # @synchronized_with_state_lock
+   async def start_user_nonreturning_coro(self, coro):
+      if not self.is_active():
+         raise RuntimeError("Module is inactive.")
+      loop = asyncio.get_event_loop()
+      async def wrapping_coro():
+         try:
+            await coro
+         except concurrent.futures.CancelledError:
+            raise # Allow the coroutine to be cancelled.
+         except:
+            pass
+         # The coroutine should never return or raise an exception.
+         # If it does, this is a fatal error and MUST cause the server module to be killed.
          await self.kill()
-         buf_fi += "\nModule has been automatically killed for safety and must be manually reactivated."
-      return await self._client.report_exception(e, cmd_msg=cmd_msg, extra_info=buf_ei, final_info=buf_fi)
+         buf_hb = "SeverModuleWrapper.start_user_nonreturning_coro()"
+         buf_fi = "This error occurred within the module `{}`.".format(self.module_name)
+         buf_fi += "\nAn exception in a non-returning coroutine is fatal."
+         buf_fi += "\nThis module must now be killed."
+         await self._client.report_exception(e, handled_by=buf_hb, final_info=buf_fi)
+         loop.call_soon()
+      task = loop.create_task(wrapping_coro())
+      self._user_nonreturning_tasks.append(task)
+      return
 
    ########################################################################################
    # METHODS SERVED BY THE MODULE #########################################################
@@ -131,7 +202,7 @@ class ServerModuleWrapper:
       try:
          return self._module_instance.get_help_summary(privilege_level, self._module_cmd_aliases[0])
       except Exception as e:
-         await self._common_error_handler(e)
+         await self._module_method_error_handler(e)
          return "(Unable to obtain `{}` help.)".format(self.module_name)
 
    async def get_help_detail(self, substr, privilege_level):
@@ -140,7 +211,7 @@ class ServerModuleWrapper:
       try:
          return self._module_instance.get_help_detail(substr, privilege_level, self._module_cmd_aliases[0])
       except Exception as e:
-         return await self._common_error_handler(e)
+         return await self._module_method_error_handler(e)
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
       if not self.is_active():
@@ -148,7 +219,7 @@ class ServerModuleWrapper:
       try:
          return await self._module_instance.msg_preprocessor(content, msg, default_cmd_prefix)
       except Exception as e:
-         await self._common_error_handler(e)
+         await self._module_method_error_handler(e)
          return content
 
    # PARAMETER: upper_cmd_alias is the command alias that was split off before
@@ -158,9 +229,9 @@ class ServerModuleWrapper:
    async def process_cmd(self, substr, msg, privilege_level, upper_cmd_alias):
       if not self.is_active():
          buf = "Error: The `{}` server module is not active.".format(self.module_name)
-         buf += "\n(Automatic deactivation is usually caused by an unhandled error within"
+         buf += "\n\n*(Automatic deactivation is usually caused by an unhandled error within"
          buf += " the module. This is done as a security measure to prevent further damage,"
-         buf += " especially from exploitable bugs.)"
+         buf += " especially from exploitable bugs.)*"
          await self._client.send_msg(msg, buf)
          return
       if upper_cmd_alias in self._shortcut_cmd_aliases:
@@ -168,7 +239,7 @@ class ServerModuleWrapper:
       try:
          await self._module_instance.process_cmd(substr, msg, privilege_level)
       except Exception as e:
-         await self._common_error_handler(e, cmd_msg=msg)
+         await self._module_method_error_handler(e, cmd_msg=msg)
       return
 
    async def on_message(self, msg):
@@ -177,5 +248,5 @@ class ServerModuleWrapper:
       try:
          return await self._module_instance.on_message(msg)
       except:
-         await self._common_error_handler(e)
+         await self._module_method_error_handler(e)
          return

@@ -204,7 +204,7 @@ def role_is_unused(server, role_obj):
 # OTHERS ########################################################################
 #################################################################################
 
-_true_strings = ["true","1","t","y", "yes"]
+_true_strings = ["true","1","t","y", "yes", "ye"]
 def str_says_true(text):
    return text.lower() in _true_strings
 

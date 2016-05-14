@@ -73,7 +73,13 @@ class ServerModuleResources:
    def message_cache_read(self, server_id, ch_id):
       return self.client.message_cache_read(server_id, ch_id)
 
-   # Shortcut-methods
+   async def start_nonreturning_coro(self, coro):
+      await self._module_wrapper.start_user_nonreturning_coro(coro)
+      return
+
+   ####################
+   # Shortcut-methods #
+   ####################
 
    @property
    def botowner_ID(self):
@@ -83,7 +89,9 @@ class ServerModuleResources:
    def me_ID(self):
       return self._sbi.client.user.id
 
-   # Flags
+   #########
+   # Flags #
+   #########
 
    # Suppresses the auto-killing of the module.
    # Default value is False.

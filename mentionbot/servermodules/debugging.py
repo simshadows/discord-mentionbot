@@ -1,4 +1,5 @@
 import asyncio
+import concurrent
 
 import discord
 
@@ -22,6 +23,12 @@ DEBUGGING: _HELP_SUMMARY CONTENTS.
    async def _initialize(self, resources):
       self._res = resources
       self._client = self._res.client
+
+      async def nonreturning_coro():
+         while True:
+            print("DEBUGGING: Printing from nonreturning_coro.")
+            await asyncio.sleep(2)
+      await self._res.start_nonreturning_coro(nonreturning_coro())
 
       self._res.suppress_autokill(True)
       return
