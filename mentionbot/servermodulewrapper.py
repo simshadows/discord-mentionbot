@@ -238,6 +238,8 @@ class ServerModuleWrapper:
          substr = self._shortcut_cmd_aliases[upper_cmd_alias] + " " + substr
       try:
          await self._module_instance.process_cmd(substr, msg, privilege_level)
+      except errors.CommandHandlingSignal:
+         raise # TODO: This is so messy...
       except Exception as e:
          await self._module_method_error_handler(e, cmd_msg=msg)
       return

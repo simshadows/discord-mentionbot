@@ -56,6 +56,21 @@ def str_asciionly(text):
       print("ERROR: Failed to convert string.")
    return buf[2:-1]
 
+# # PARAMETER: original_str: The string to be operated on.
+# # PARAMETER: *args: Strings to find within original_str, and replacements.
+# #                   Must have an even number of *args (except 0, and not
+# #                   counting original_str).
+# #                   First string in each pair is the string to find.
+# #                   The second string is the string to replace it with.
+# def str_replace_safe(original_str, *args):
+#    if len(args) == 0 or len(args) % 2 == 1:
+#       raise RuntimeError("len(args) must be even and non-zero.")
+#    def recursive_op(str, replacements):
+      
+      
+#       return
+#    return recursive_op(original_str, args)
+
 #################################################################################
 # INFORMATION REPRESENTATION ####################################################
 #################################################################################

@@ -10,6 +10,10 @@ class CommandHandlingSignal(MentionbotException):
    def __init__(self):
       return
 
+# class SendModuleHelp(CommandHandlingSignal):
+#    def __init__(self):
+#       return
+
 class UnknownCommandError(CommandHandlingSignal):
    def __init__(self):
       return
@@ -30,6 +34,10 @@ class NoHelpContentExists(CommandHandlingSignal):
    def __init__(self):
       return
 
+class OperationAborted(CommandHandlingSignal):
+   def __init__(self):
+      return
+
 ##################################
 ### General-purpose exceptions ###
 ##################################
@@ -43,10 +51,6 @@ class DoesNotExist(GeneralMentionbotException):
       return
 
 class NoRecordExists(GeneralMentionbotException):
-   def __init__(self):
-      return
-
-class OperationAborted(GeneralMentionbotException):
    def __init__(self):
       return
 
