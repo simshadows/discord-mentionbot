@@ -18,6 +18,7 @@ View all installed and available modules in discord using the command `/mods`.
 
 * **Basic Information**: Presents some basic information about the server and the users in it, including user avatars and server icons. *(Installed by default.)*
 * **Mentions Notify**: PMs users of their mentions when they're offline.
+* **PM Greetings**: Greets users with a personalized private message upon joining the server. The contents of this private message can be customized.
 * **Server Activity Statistics**: Generates server statistics and graphs.
 * **Dynamic Channels**: Gives users the ability to create temporary channels that disappear after a few minutes of inactivity.
 	* "Default channels" can be specified to be ignored by the module.
@@ -28,6 +29,7 @@ View all installed and available modules in discord using the command `/mods`.
 	* `/colour 00FF00` assigns the user a flair named `00ff00` with the appropriate colour.
 * **Truth Game**: Facilities to play a game of "Truth".
 * **Wolfram Alpha**: Allows users to query Wolfram Alpha. *(Installed by default.)*
+* **Misc**: For commands that have no where else to live.
 
 Some community-specific modules:
 
