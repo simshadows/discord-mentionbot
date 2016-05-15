@@ -49,7 +49,7 @@ class BasicInfo(ServerModule):
       else:
          return await self._client.send_msg(msg, avatar)
 
-   @cmd.add(_cmd_dict, "user", "whois", "who")
+   @cmd.add(_cmd_dict, "user", "whois", "who", default=True)
    @cmd.top_level_alias()
    async def _cmdf_user(self, substr, msg, privilege_level):
       """`{p}{c} [user]` - Get user info."""

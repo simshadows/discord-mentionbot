@@ -1,5 +1,6 @@
 import asyncio
 import random
+import textwrap
 import urllib.parse as urllibparse
 
 import discord
@@ -23,39 +24,39 @@ class BsiStarkRavingMadBot(ServerModule):
 
    # STARK_PF = "$" # TODO: Consider implementing this.
 
-   STARK_HELP = """
-**I'm acting as a stand-in for StarkRavingMadBot.**
-**I have the following commands implemented:**
-- $avatar
-- $blame
-- $choose
-- $color
-- $doot
-- $flip
-- $git
-- $help
-~~- $intensify~~
-~~- $invite~~
-~~- $pengu~~
-~~- $reddit~~
-- $rip
-- $roll
-- $say
-- $serverstats
-- $sleep
-~~- $spooderman~~
-- $subreddit
-- $swole
-- $truth
-- $ud
-- $whois
+   STARK_HELP = textwrap.dedent("""
+      **I'm acting as a stand-in for StarkRavingMadBot.**
+      **I have the following commands implemented:**
+      - $avatar
+      - $blame
+      - $choose
+      - $color
+      - $doot
+      - $flip
+      - $git
+      - $help
+      ~~- $intensify~~
+      ~~- $invite~~
+      ~~- $pengu~~
+      ~~- $reddit~~
+      - $rip
+      - $roll
+      - $say
+      - $serverstats
+      - $sleep
+      ~~- $spooderman~~
+      - $subreddit
+      - $swole
+      - $truth
+      - $ud
+      - $whois
 
-*Reference commit: 89c88d92c98e7ccdf4b45092b6a139982d01acec, 6/2/16*
-*Disclaimer: Behaviour may not match up 1:1.*
-For reference, I require the following modules to be installed:
-`Basic Information`
-`Random`
-   """.strip()
+      *Reference commit: 89c88d92c98e7ccdf4b45092b6a139982d01acec, 6/2/16*
+      *Disclaimer: Behaviour may not match up 1:1.*
+      For reference, I require the following modules to be installed:
+      `Basic Information`
+      `Random`
+      """).strip()
 
    STARKRAVINGMADBOT_DEFAULTID = "121281613660160000"
 
@@ -159,7 +160,7 @@ For reference, I require the following modules to be installed:
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "help")
+   @cmd.add(_cmd_dict, "help", default=True)
    async def _cmdf_help(self, substr, msg, privilege_level):
       """`{cmd}` - Get a stand-in version of Stark's help message."""
       await self._client.send_msg(msg, self.STARK_HELP)

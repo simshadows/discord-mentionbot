@@ -44,15 +44,13 @@ class Random(ServerModule):
       return
 
    async def process_cmd(self, substr, msg, privilege_level):
-      if substr == "": # Default Case
-         substr = "number"
-      elif self._RE_INT.match(substr):
+      if self._RE_INT.match(substr):
          substr = "number " + substr
       elif (not self._RE_KW_CHOOSE.match(substr)) and (";" in substr):
          substr = "choose " + substr
       return await super(Random, self).process_cmd(substr, msg, privilege_level)
 
-   @cmd.add(_cmd_dict, "number", "num", "int", "integer")
+   @cmd.add(_cmd_dict, "number", "num", "int", "integer", default=True)
    async def _cmdf_number(self, substr, msg, privilege_level):
       """`{cmd}`"""
       # Compile a set of ranges to randomize.

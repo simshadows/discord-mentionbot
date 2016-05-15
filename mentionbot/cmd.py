@@ -128,11 +128,17 @@ def format_mod_evaluate(content_str, *, mod=None):
 # Decorator for adding commands to a dictionary.
 # PARAMETER: dict - The dictionary in which the command is to be added to.
 # PARAMETER: *cmd_names - List of names the command is to be mapped to.
-def add(cmd_dict, *cmd_names):
+def add(cmd_dict, *cmd_names, default=False):
    def function_decorator(function):
       function.cmd_names = cmd_names
       for cmd_name in cmd_names:
+         if cmd_name in cmd_dict:
+            raise RuntimeError("Command with alias '{}' already exists.".format(cmd_name))
          cmd_dict[cmd_name] = function
+      if default:
+         if "" in cmd_dict:
+            raise RuntimeError("A default command has already defined.")
+         cmd_dict[""] = function
       return function
    return function_decorator
 

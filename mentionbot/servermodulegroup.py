@@ -63,6 +63,8 @@ class ServerModuleGroup:
    async def add_server_module(self, new_module):
       self._modules_list.append(new_module)
       for cmd_name in new_module.all_cmd_aliases:
+         if cmd_name in self._modules_cmd_dict:
+            print("WARNING: Module with alias '{}' already exists.".format(cmd_name))
          self._modules_cmd_dict[cmd_name] = new_module
 
    # Installs the module referenced by its base command name.

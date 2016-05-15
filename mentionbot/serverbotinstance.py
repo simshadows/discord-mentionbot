@@ -556,7 +556,7 @@ class ServerBotInstance:
    ### OTHER GENERAL MANAGEMENT/DEBUGGING COMMANDS ###
    ###################################################
 
-   @cmd.add(_cmd_dict, "prefix", "prefix")
+   @cmd.add(_cmd_dict, "prefix", "predicate", "setprefix", "setpredicate")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_prefix(self, substr, msg, privilege_level):

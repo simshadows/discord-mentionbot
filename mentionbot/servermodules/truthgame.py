@@ -67,11 +67,6 @@ class TruthGame(ServerModule):
       self._res.save_settings(settings)
       return
 
-   async def process_cmd(self, substr, msg, privilege_level):
-      if substr == "": # Default Case
-         substr = "newgame"
-      return await super(TruthGame, self).process_cmd(substr, msg, privilege_level)
-
    @cmd.add(_cmd_dict, "rules")
    async def _cmdf_enable(self, substr, msg, privilege_level):
       """`{cmd}` - View game rules."""

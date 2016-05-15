@@ -72,7 +72,7 @@ class PMGreetings(ServerModule):
       buf += "\n" + super(PMGreetings, self).get_help_detail(substr, privilege_level, module_alias)
       return buf
 
-   @cmd.add(_cmd_dict, "view", "viewmessage", "see", "get", "getmessage")
+   @cmd.add(_cmd_dict, "view", "viewmessage", "see", "get", "getmessage", default=True)
    async def _cmdf_view(self, substr, msg, privilege_level):
       """`{cmd}` - View a copy of the server greeting message."""
       buf = "**New members are sent the following (with appropriate substitutions):**\n"

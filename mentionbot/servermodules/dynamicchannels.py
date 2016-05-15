@@ -209,7 +209,7 @@ class DynamicChannels(ServerModule):
    #    await self._client.send_msg(msg, "Scheduled closure list is cleared.")
    #    return
 
-   @cmd.add(_cmd_dict, "status", "admin", "s", "stat", "settings")
+   @cmd.add(_cmd_dict, "status", "admin", "s", "stat", "settings", default=True)
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_status(self, substr, msg, privilege_level):
       """`{cmd}`"""

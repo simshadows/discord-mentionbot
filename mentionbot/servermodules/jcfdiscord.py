@@ -122,7 +122,7 @@ class JCFDiscord(ServerModule):
       await self._client.send_msg(msg, "Assigned <@{0}> the type flair '{1}'.".format(msg.author.id, new_role_name))
       return
 
-   @cmd.add(_cmd_dict, "subreddit")
+   @cmd.add(_cmd_dict, "subreddit", default=True)
    async def _cmdf_noot(self, substr, msg, privilege_level):
       """`{cmd}`"""
       await self._client.send_msg(msg, "Our subreddit is at https://www.reddit.com/r/JCFDiscord/.")
