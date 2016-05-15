@@ -2,6 +2,7 @@ from . import utils
 from .servermodulewrapper import ServerModuleWrapper
 
 # Modules
+from .servermodules.misc import Misc
 from .servermodules.basicinfo import BasicInfo
 from .servermodules.dynamicchannels import DynamicChannels
 from .servermodules.mentionsnotify import MentionsNotify
@@ -21,6 +22,7 @@ class ServerModuleFactory:
 
    # Please hard-code every module class into this list.
    _MODULE_LIST = [
+      Misc,
       BasicInfo,
       DynamicChannels,
       MentionsNotify,

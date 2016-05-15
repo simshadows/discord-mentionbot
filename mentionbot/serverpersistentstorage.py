@@ -14,9 +14,9 @@ class ServerPersistentStorage:
    DEFAULT_SETTINGS = {
       "Server Name": "",
       "Installed Modules": [
+         "Misc",
          "Basic Information",
          "Random",
-         "Wolfram Alpha",
       ],
    }
 

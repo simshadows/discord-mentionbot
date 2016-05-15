@@ -66,8 +66,7 @@ def str_asciionly(text):
 #    if len(args) == 0 or len(args) % 2 == 1:
 #       raise RuntimeError("len(args) must be even and non-zero.")
 #    def recursive_op(str, replacements):
-      
-      
+#       # TODO
 #       return
 #    return recursive_op(original_str, args)
 
@@ -77,6 +76,16 @@ def str_asciionly(text):
 
 def user_to_str(user):
    return "{0} (ID: {1})".format(str(user.name), str(user.id))
+
+# Currently unused
+# # This can take either an ID string or a channel object.
+# def ch_to_str(obj):
+#    ch_id = None
+#    if isinstance(obj, basestring):
+#       ch_id = obj
+#    else:
+#       ch_id = obj.id # Assumed to be a channel object
+#    return "<#{0}> (ID: {0})".format(str(ch_id))
 
 #################################################################################
 # WEB HELPER FUNCTIONS ##########################################################

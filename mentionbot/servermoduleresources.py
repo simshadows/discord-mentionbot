@@ -9,6 +9,7 @@ class ServerModuleResources:
 
    def __init__(self, module_name, server_bot_instance, module_wrapper):
       self._sbi = server_bot_instance
+      self._client = server_bot_instance.client
       self._module_wrapper = module_wrapper
 
       self._server = self._sbi.server
@@ -44,7 +45,7 @@ class ServerModuleResources:
       return list(self._module_wrapper.module_cmd_aliases)
    
    # Get the server to process text again.
-   async def process_text(self, substr, msg):
+   async def server_process_text(self, substr, msg):
       return await self._sbi.process_text(substr, msg)
 
    # Get module settings.

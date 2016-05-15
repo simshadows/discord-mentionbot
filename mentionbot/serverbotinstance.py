@@ -1,13 +1,8 @@
-# TEMP
-import urllib.parse as urllibparse
-
-import os
 import sys
 import asyncio
 import random
 import re
 import datetime
-import copy
 import traceback
 
 import discord
@@ -27,8 +22,6 @@ class ServerBotInstance:
    
    DEFAULT_COMMAND_PREFIX = "/"
 
-   _RE_MENTIONSTR = re.compile("<@\d+>")
-
    INIT_MENTIONS_NOTIFY_ENABLED = False
 
    _cmd_dict = {} # Command Dictionary
@@ -43,7 +36,6 @@ class ServerBotInstance:
       inst._shared_directory = inst._client.CACHE_DIRECTORY + "shared/"
 
       inst._cmd_prefix = None
-      inst._bot_name = inst._client.user.name # TODO: Move this somewhere else.
       inst._initialization_timestamp = datetime.datetime.utcnow()
 
       botowner_ID = inst._client.BOTOWNER_ID
@@ -71,7 +63,6 @@ class ServerBotInstance:
             modules.append(new_module)
             await new_module.activate()
          except:
-            print(traceback.format_exc())
             print("Error installing module {}. Skipping.".format(module_name))
       inst._modules = ServerModuleGroup(initial_modules=modules)
 
@@ -202,41 +193,6 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "time", "gettime", "utc")
-   async def _cmdf_time(self, substr, msg, privilege_level):
-      """`{cmd}` - Get bot's system time in UTC."""
-      await self._client.send_msg(msg, datetime.datetime.utcnow().strftime("My current system time: %c UTC"))
-      return
-
-   @cmd.add(_cmd_dict, "say")
-   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
-   async def _cmdf_say(self, substr, msg, privilege_level):
-      """`{cmd} [text]` - Echo's the following text."""
-      await self._client.send_msg(msg, substr)
-      return
-
-   ##########################
-   ### TEMPORARY COMMANDS ###
-   ##########################
-
-   # Random commands go here until they find a home in a proper module.
-
-   @cmd.add(_cmd_dict, "lmgtfy", "google", "goog", "yahoo")
-   async def _cmdf_say(self, substr, msg, privilege_level):
-      """`{cmd} [text]` - Let me google that for you..."""
-      if len(substr) == 0:
-         raise errors.InvalidCommandArgumentsError
-      await self._client.send_msg(msg, "http://lmgtfy.com/?q=" + urllibparse.quote(substr))
-      return
-
-   @cmd.add(_cmd_dict, "testbell")
-   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
-   async def _cmdf_msgcachedebug(self, substr, msg, privilege_level):
-      """`{cmd}`"""
-      buf = "<@\a119384097473822727>"
-      await self._client.send_msg(msg, buf)
-      return
-
    #######################################
    ### MODULE INFO/MANAGEMENT COMMANDS ###
    #######################################
@@ -356,19 +312,6 @@ class ServerBotInstance:
    ###########################################
    ### PRIVILEGES INFO/MANAGEMENT COMMANDS ###
    ###########################################
-
-   @cmd.add(_cmd_dict, "prefix", "prefix")
-   @cmd.category("Command Privilege Info/Management")
-   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
-   async def _cmdf_prefix(self, substr, msg, privilege_level):
-      """`{cmd} [new prefix]` - Set new command prefix."""
-      if len(substr) == 0:
-         raise errors.InvalidCommandArgumentsError
-      self._cmd_prefix = substr
-      buf = "`{}` set as command prefix.".format(self._cmd_prefix)
-      buf += "\nThe help message is now invoked using `{}help`.".format(self._cmd_prefix)
-      await self._client.send_msg(msg, buf)
-      return
 
    @cmd.add(_cmd_dict, "privinfo", "allprivs", "privsinfo", "whatprivs")
    @cmd.category("Command Privilege Info/Management")
@@ -613,145 +556,16 @@ class ServerBotInstance:
    ### OTHER GENERAL MANAGEMENT/DEBUGGING COMMANDS ###
    ###################################################
 
-   @cmd.add(_cmd_dict, "iam")
+   @cmd.add(_cmd_dict, "prefix", "prefix")
    @cmd.category("Admin Commands")
-   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
-   async def _cmdf_iam(self, substr, msg, privilege_level):
-      """`{cmd} [user] [text]`"""
-      (left, right) = utils.separate_left_word(substr)
-      if self._RE_MENTIONSTR.fullmatch(left):
-         user_to_pose_as = left[2:-1]
-         replacement_msg = copy.deepcopy(msg)
-         replacement_msg.author = self._client.search_for_user(user_to_pose_as)
-         if replacement_msg.author == None:
-            return await self._client.send_msg(msg, "Unknown user.")
-         replacement_msg.content = right
-         await self._client.send_msg(msg, "Executing command as {}: {}".format(replacement_msg.author, replacement_msg.content))
-         await self._client.send_msg(msg, "**WARNING: There are no guarantees of the safety of this operation.**")
-         await self.process_text(right, replacement_msg) # TODO: Make this call on_message()
-      return
-
-   @cmd.add(_cmd_dict, "setgame", "setgamestatus")
-   @cmd.category("Admin Commands")
-   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
-   async def _cmdf_setgame(self, substr, msg, privilege_level):
-      """`{cmd} [text]`"""
-      await self._client.set_game_status(substr)
-      await self._client.send_msg(msg, "**Game set to:** " + substr)
-      return
-
-   @cmd.add(_cmd_dict, "tempgame")
-   @cmd.category("Admin Commands")
-   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
-   async def _cmdf_setgame(self, substr, msg, privilege_level):
-      """`{cmd} [text]`"""
-      await self._client.set_temp_game_status(substr)
-      await self._client.send_msg(msg, "**Game temporarily set to:** " + substr)
-      return
-
-   @cmd.add(_cmd_dict, "revertgame")
-   @cmd.category("Admin Commands")
-   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
-   async def _cmdf_setgame(self, substr, msg, privilege_level):
-      """`{cmd}`"""
-      await self._client.remove_temp_game_status()
-      await self._client.send_msg(msg, "**Reverted game.**")
-      return
-
-   @cmd.add(_cmd_dict, "setusername", "updateusername", "newusername", "setname", "newname")
-   @cmd.category("Admin Commands")
-   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
-   async def _cmdf_setusername(self, substr, msg, privilege_level):
-      """`{cmd} [text]`"""
-      await self._client.edit_profile(None, username=substr)
-      self._bot_name = substr # TODO: Consider making this a function. Or stop using bot_name...
-      await self._client.send_msg(msg, "**Username set to:** " + substr)
-      return
-
-   @cmd.add(_cmd_dict, "setavatar", "updateavatar", "setdp", "newdp")
-   @cmd.category("Admin Commands")
-   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
-   async def _cmdf_setusername(self, substr, msg, privilege_level):
-      """
-      `{cmd} [url]` - Updates avatar to the URL. (Other options are available.)
-
-      If the URL is omitted, the cache file is instead used.
-
-      This file is in cache/updateavatar.
-      """
-      if len(substr) != 0:
-         await self._client.send_msg(msg, "Setting avatar via url...")
-         try:
-            data = utils.download_from_url(substr)
-            await self._client.edit_profile(None, avatar=data)
-            await self._client.send_msg(msg, "Avatar changed successfully.")
-         except Exception as e:
-            print(traceback.format_exc())
-            buf = "Failed to set avatar. (Error: `{}`.)".format(str(type(e).__name__))
-            await self._client.send_msg(msg, buf)
-      elif len(msg.attachments) != 0:
-         await self._client.send_msg(msg, "Setting avatar via attached file...")
-         # TODO: This code is quite identical to the case above. Fix this!!!
-         try:
-            data = utils.download_from_url(msg.attachments[0]["url"])
-            await self._client.edit_profile(None, avatar=data)
-            await self._client.send_msg(msg, "Avatar changed successfully.")
-         except Exception as e:
-            print(traceback.format_exc())
-            buf = "Failed to set avatar. (Error: `{}`.)".format(str(type(e).__name__))
-            await self._client.send_msg(msg, buf)
-      else:
-         await self._client.send_msg(msg, "Setting avatar via saved file...")
-         our_dir = self._client.CACHE_DIRECTORY + "updateavatar/"
-         # TODO: Make that filename a constant
-         # TODO: Nicer cache directory name use?
-         utils.mkdir_recursive(our_dir)
-         files_list = os.listdir(our_dir)
-         if len(files_list) == 0:
-            await self._client.send_msg(msg, "Please add a file in `" + our_dir + "`.")
-         else:
-            operation_failed = False
-            try:
-               filename = files_list[0]
-               filepath = our_dir + filename
-               with open(filepath, "rb") as img_file:
-                  img_bytes = img_file.read()
-               await self._client.edit_profile(None, avatar=img_bytes)
-               buf = "Avatar changed successfully with file `" + filename + "`."
-               await self._client.send_msg(msg, buf)
-            except Exception as e:
-               print(traceback.format_exc())
-               buf = "Failed to set avatar. (Error: `{}`.)".format(str(type(e).__name__))
-               await self._client.send_msg(msg, buf)
-      return
-
-   @cmd.add(_cmd_dict, "joinserver")
-   @cmd.category("Admin Commands")
-   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
-   async def _cmdf_joinserver(self, substr, msg, privilege_level):
-      """`{cmd} [invite link]`"""
-      try:
-         await self._client.accept_invite(substr)
-         await self._client.send_msg(msg, "Successfully joined a new server.")
-      except:
-         await self._client.send_msg(msg, "Failed to join a new server.")
-      return
-
-   @cmd.add(_cmd_dict, "leaveserver")
-   @cmd.category("Admin Commands")
-   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
-   async def _cmdf_leaveserver(self, substr, msg, privilege_level):
-      """`{cmd}`"""
-      await self._client.send_msg(msg, "Bye!")
-      await self._client.leave_server(msg.channel.server)
-      return
-
-   @cmd.add(_cmd_dict, "msgcachedebug")
-   @cmd.category("Admin Commands")
-   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
-   async def _cmdf_msgcachedebug(self, substr, msg, privilege_level):
-      """`{cmd}`"""
-      buf = self._client.message_cache_debug_str()
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   async def _cmdf_prefix(self, substr, msg, privilege_level):
+      """`{cmd} [new prefix]` - Set new command prefix."""
+      if len(substr) == 0:
+         raise errors.InvalidCommandArgumentsError
+      self._cmd_prefix = substr
+      buf = "`{}` set as command prefix.".format(self._cmd_prefix)
+      buf += "\nThe help message is now invoked using `{}help`.".format(self._cmd_prefix)
       await self._client.send_msg(msg, buf)
       return
 
