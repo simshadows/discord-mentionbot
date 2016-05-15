@@ -10,9 +10,10 @@ import plotly.plotly as py
 import plotly.graph_objs as go
 
 from .. import utils, errors, cmd
-from ..servermodule import ServerModule
+from ..servermodule import ServerModule, registered
 from ..enums import PrivilegeLevel
 
+@registered
 class ServerActivityStatistics(ServerModule):
 
    MODULE_NAME = "Server Activity Statistics"

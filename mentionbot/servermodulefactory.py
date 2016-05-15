@@ -2,40 +2,14 @@ from . import utils
 from .servermodulewrapper import ServerModuleWrapper
 
 # Modules
-from .servermodules.misc import Misc
-from .servermodules.basicinfo import BasicInfo
-from .servermodules.dynamicchannels import DynamicChannels
-from .servermodules.mentionsnotify import MentionsNotify
-from .servermodules.pmgreetings import PMGreetings
-from .servermodules.serveractivitystatistics import ServerActivityStatistics
-from .servermodules.random import Random
-from .servermodules.wolframalpha import WolframAlpha
-from .servermodules.jcfdiscord import JCFDiscord
-from .servermodules.bsistarkravingmadbot import BsiStarkRavingMadBot
-from .servermodules.debugging import Debugging
-from .servermodules.selfservecolours import SelfServeColours
-from .servermodules.truthgame import TruthGame
+from .servermodule import module_list
+from .servermodules import *
 
 class ServerModuleFactory:
    
    _SECRET_TOKEN = utils.SecretToken()
 
-   # Please hard-code every module class into this list.
-   _MODULE_LIST = [
-      Misc,
-      BasicInfo,
-      DynamicChannels,
-      MentionsNotify,
-      PMGreetings,
-      ServerActivityStatistics,
-      Random,
-      WolframAlpha,
-      JCFDiscord,
-      BsiStarkRavingMadBot,
-      Debugging,
-      SelfServeColours,
-      TruthGame,
-   ]
+   _module_list = list(module_list)
 
    @classmethod
    async def get_instance(cls, client, server):
@@ -44,7 +18,7 @@ class ServerModuleFactory:
       inst._server = server
       inst._modules = {}
 
-      for module in inst._MODULE_LIST:
+      for module in inst._module_list:
          inst._modules[module.MODULE_NAME] = module
       return inst
 

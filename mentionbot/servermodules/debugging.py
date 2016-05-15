@@ -4,9 +4,10 @@ import concurrent
 import discord
 
 from .. import utils, errors, cmd
-from ..servermodule import ServerModule
+from ..servermodule import ServerModule, registered
 from ..enums import PrivilegeLevel
 
+@registered
 class Debugging(ServerModule):
 
    MODULE_NAME = "Debugging"

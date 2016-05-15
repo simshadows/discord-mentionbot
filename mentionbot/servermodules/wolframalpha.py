@@ -5,9 +5,10 @@ import wolframalpha
 import traceback
 
 from .. import utils, errors, cmd
-from ..servermodule import ServerModule
+from ..servermodule import ServerModule, registered
 from ..enums import PrivilegeLevel
 
+@registered
 class WolframAlpha(ServerModule):
 
    MODULE_NAME = "Wolfram Alpha"

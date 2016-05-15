@@ -6,9 +6,10 @@ import textwrap
 import discord
 
 from .. import utils, errors, cmd
-from ..servermodule import ServerModule
+from ..servermodule import ServerModule, registered
 from ..enums import PrivilegeLevel
 
+@registered
 class PMGreetings(ServerModule):
 
    MODULE_NAME = "PM Greetings"

@@ -7,9 +7,10 @@ import urllib.parse as urllibparse
 import discord
 
 from .. import utils, errors, cmd
-from ..servermodule import ServerModule
+from ..servermodule import ServerModule, registered
 from ..enums import PrivilegeLevel
 
+@registered
 class Misc(ServerModule):
    """
    This module basically exists to reduce the clutter in serverbotinstance.py and the base help message.

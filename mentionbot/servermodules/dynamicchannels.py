@@ -8,9 +8,10 @@ import concurrent
 import discord
 
 from .. import utils, errors, cmd
-from ..servermodule import ServerModule
+from ..servermodule import ServerModule, registered
 from ..enums import PrivilegeLevel
 
+@registered
 class DynamicChannels(ServerModule):
 
    MODULE_NAME = "Dynamic Channels"

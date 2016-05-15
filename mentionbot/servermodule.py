@@ -1,5 +1,12 @@
 from . import utils, cmd
 
+module_list = []
+
+# Class decorator for registering server modules
+def registered(cls):
+   module_list.append(cls)
+   return cls
+
 # Abstract Class (would've been an interface...)
 # All server modules are subclasses of ServerModule.
 class ServerModule:

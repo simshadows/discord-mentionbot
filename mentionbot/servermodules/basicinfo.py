@@ -3,8 +3,9 @@ import asyncio
 import discord
 
 from .. import utils, errors, cmd
-from ..servermodule import ServerModule
+from ..servermodule import ServerModule, registered
 
+@registered
 class BasicInfo(ServerModule):
 
    MODULE_NAME = "Basic Information"

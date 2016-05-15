@@ -5,8 +5,9 @@ import re
 import discord
 
 from .. import utils, errors, cmd
-from ..servermodule import ServerModule
+from ..servermodule import ServerModule, registered
 
+@registered
 class SelfServeColours(ServerModule):
 
    MODULE_NAME = "Self-Serve Colours"

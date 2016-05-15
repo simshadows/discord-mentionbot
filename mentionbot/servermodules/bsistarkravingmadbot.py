@@ -5,8 +5,9 @@ import urllib.parse as urllibparse
 import discord
 
 from .. import utils, errors, cmd
-from ..servermodule import ServerModule
+from ..servermodule import ServerModule, registered
 
+@registered
 class BsiStarkRavingMadBot(ServerModule):
 
    MODULE_NAME = "BSI StarkRavingMadBot"
