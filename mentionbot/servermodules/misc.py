@@ -24,8 +24,8 @@ class Misc(ServerModule):
    _cmd_dict = {} # Empty dict should work...
 
    _HELP_SUMMARY = """
-See `{modhelp}` for misc. commands.
-   """.strip()
+      See `{modhelp}` for misc. commands.
+      """
 
    async def _initialize(self, resources):
       self._res = resources

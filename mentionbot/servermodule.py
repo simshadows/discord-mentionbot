@@ -1,3 +1,5 @@
+import textwrap
+
 from . import utils, cmd
 
 module_list = []
@@ -69,7 +71,8 @@ class ServerModule:
    # or at least directing the user to more detailed help.
    # Returned string has no leading/trailing whitespace.
    def get_help_summary(self, privilege_level, module_alias):
-      return cmd.format_mod_evaluate(self._HELP_SUMMARY, mod=module_alias)
+      buf = textwrap.dedent(self._HELP_SUMMARY).strip()
+      return cmd.format_mod_evaluate(buf, mod=module_alias)
 
    # Get a detailed help-message string about the module.
    # String has no leading/trailing whitespace.

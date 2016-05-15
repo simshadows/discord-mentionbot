@@ -18,8 +18,8 @@ class JCFDiscord(ServerModule):
    _cmd_dict = {}
 
    _HELP_SUMMARY = """
-See `{modhelp}` for JCF Discord commands.
-   """.strip()
+      See `{modhelp}` for JCF Discord commands.
+      """
 
    _FUNCTION_STACKS = {
       "INTJ": "Ni - Te - Fi - Se",

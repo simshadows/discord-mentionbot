@@ -20,8 +20,8 @@ class PMGreetings(ServerModule):
    _cmd_dict = {} # Empty dict should work...
 
    _HELP_SUMMARY = """
-See `{modhelp}` to manage the new-member PM greeting system.
-   """.strip()
+      See `{modhelp}` to manage the new-member PM greeting system.
+      """
 
    _MEMBER_NAME_IDENTIFIER = "memname"
    _SERVER_NAME_IDENTIFIER = "servername"

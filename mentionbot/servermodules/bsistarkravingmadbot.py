@@ -18,8 +18,8 @@ class BsiStarkRavingMadBot(ServerModule):
    _cmd_dict = {}
 
    _HELP_SUMMARY = """
-See `{modhelp}` for StarkRavingMadBot standin commands.
-   """.strip()
+      See `{modhelp}` for StarkRavingMadBot standin commands.
+      """
 
    # STARK_PF = "$" # TODO: Consider implementing this.
 

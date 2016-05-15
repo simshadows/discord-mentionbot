@@ -16,8 +16,8 @@ class BasicInfo(ServerModule):
    _cmd_dict = {}
 
    _HELP_SUMMARY = """
-See `{modhelp}` for basic server/user information commands.
-   """.strip()
+      See `{modhelp}` for basic server/user information commands.
+      """
 
    # TODO: Add this to help detail in the future...
    # *Note: Dates are presented in ISO 8601 format.*

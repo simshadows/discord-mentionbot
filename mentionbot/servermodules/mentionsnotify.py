@@ -16,8 +16,8 @@ class MentionsNotify(ServerModule):
    _cmd_dict = {}
 
    _HELP_SUMMARY = """
-See `{modhelp}` to manage the mentions notification system.
-   """.strip()
+      See `{modhelp}` to manage the mentions notification system.
+      """
 
    async def _initialize(self, resources):
       self._res = resources

@@ -22,11 +22,11 @@ class DynamicChannels(ServerModule):
    _cmd_dict = {}
 
    _HELP_SUMMARY = """
-See `{modhelp}` for managing the Dynamic Channels module.
-`+` - See list of hidden channels. (Will cut off at 2000 chars.)
-`+[string]` - Search list of hidden channels.
-`++[string]` - Create/unhide channel.
-   """.strip()
+      See `{modhelp}` for managing the Dynamic Channels module.
+      `+` - See list of hidden channels. (Will cut off at 2000 chars.)
+      `+[string]` - Search list of hidden channels.
+      `++[string]` - Create/unhide channel.
+      """
 
    DEFAULT_SETTINGS = {
       "default channels": [],

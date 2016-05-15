@@ -24,8 +24,8 @@ class ServerActivityStatistics(ServerModule):
    _cmd_dict = {}
 
    _HELP_SUMMARY = """
-See `{modhelp}` for commands to generate user activity statistics.
-   """.strip()
+      See `{modhelp}` for commands to generate user activity statistics.
+      """
 
    DEFAULT_SHARED_SETTINGS = {
       "login username": "PLACEHOLDER",
@@ -37,7 +37,7 @@ See `{modhelp}` for commands to generate user activity statistics.
       self._client = self._res.client
 
       self._log_in_from_file()
-      
+
       self._res.suppress_autokill(True)
       return
 

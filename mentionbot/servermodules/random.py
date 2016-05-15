@@ -18,8 +18,8 @@ class Random(ServerModule):
    _cmd_dict = {}
 
    _HELP_SUMMARY = """
-`{p}random [integer]` - Get random int. (See `{modhelp}` for more!)
-   """.strip()
+      `{p}random [integer]` - Get random int. (See `{modhelp}` for more!)
+      """
 
    # TODO: Add this to help detail in the future...
    # **Examples**

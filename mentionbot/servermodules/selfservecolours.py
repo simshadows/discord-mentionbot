@@ -18,8 +18,8 @@ class SelfServeColours(ServerModule):
    _cmd_dict = {}
 
    _HELP_SUMMARY = """
-`{p}colour [rgb code]` - Assign yourself a colour. `{p}colour` clears.
-   """.strip()
+      `{p}colour [rgb code]` - Assign yourself a colour. `{p}colour` clears.
+      """
 
    _re_rgb_code = re.compile("[0-9a-fA-F]{6}")
 

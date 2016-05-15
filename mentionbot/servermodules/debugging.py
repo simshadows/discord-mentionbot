@@ -18,8 +18,8 @@ class Debugging(ServerModule):
    _cmd_dict = {} # Empty dict should work...
 
    _HELP_SUMMARY = """
-DEBUGGING: _HELP_SUMMARY CONTENTS.
-   """.strip()
+      DEBUGGING: _HELP_SUMMARY CONTENTS.
+      """
 
    async def _initialize(self, resources):
       self._res = resources

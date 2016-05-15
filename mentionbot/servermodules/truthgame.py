@@ -20,8 +20,8 @@ class TruthGame(ServerModule):
    _cmd_dict = {}
 
    _HELP_SUMMARY = """
-See `{modhelp}` for truth game commands.
-   """.strip()
+      See `{modhelp}` for truth game commands.
+      """
 
    DEFAULT_SETTINGS = {
       "enabled channels": []
