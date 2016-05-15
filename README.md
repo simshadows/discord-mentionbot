@@ -28,8 +28,8 @@ View all installed and available modules in discord using the command `/mods`.
 * **Self-Serve Colours**: Allows users to pick their own RGB colour.
 	* `/colour 00FF00` assigns the user a flair named `00ff00` with the appropriate colour.
 * **Truth Game**: Facilities to play a game of "Truth".
-* **Wolfram Alpha**: Allows users to query Wolfram Alpha. *(Installed by default.)*
-* **Misc**: For commands that have no where else to live.
+* **Wolfram Alpha**: Allows users to query Wolfram Alpha.
+* **Misc**: For commands that have no where else to live. *(Installed by default.)*
 
 Some community-specific modules:
 
@@ -53,16 +53,12 @@ The bot has the following dependencies:
 
 To run the bot:
 
-1. Go into `mentionbot.py` and change `BOTOWNER_ID` to your own ID.
-2. Run `mentionbot.py` once (inside the `mentionbot` directory). The bot should exit and a file named `login_details` should appear.
-3. Open `login_details` and replace `USERNAME` and `PASSWORD` with your bot's username and password. (Make sure the file only contains those two lines of text and no other lines.)
-4. Run `mentionbot.py` again. Your bot should be running now.
-
-The behaviour of the bot when joining a server *while the bot is running* is currently undefined. Please make sure your bot account is already in the servers it must manage before launching, and restart the bot on server joins. Depending on the modules, getting kicked from a server may also cause issues.
+1. Go into `mentionbot/mentionbot.py` and change `BOTOWNER_ID` to your own ID.
+2. Run `run.py` once. The bot should exit and a file named `bot_user_token` should appear.
+3. Open `login_details` and replace `TOKEN` with your bot's login token. (Make sure the file only contains one line containing this information, with no extra newlines.)
+4. Run `run.py` again. Your bot should be running now. This script is what you run from now on when you want to start the bot.
 
 Every time the bot starts running, it will take a bit of time to locally cache messages. For bigger servers (or bots running on many servers), running this the first time will take a considerable amount of time, and until caching is complete, messages are not processed as commands.
-
-This bot is configured to kill itself when it encounters an unhandled exception.
 
 Some modules will need some additional setting up in order to work.
 
@@ -78,27 +74,34 @@ Some modules will need some additional setting up in order to work.
 
 * `classdiagram.xml` is opened with [draw.io](https://www.draw.io/).
 * `design_notes.txt` is used by myself to reflect on my own design choices as this project is partly a learning exercise in object-oriented design.
-* To add a new module:
-	* Make the following edits on `servermodulefactory.py`:
-		* add an import for the module's "main class", and
-		* add the module's class to `ServerModuleFactory._MODULE_LIST`.
-	* Optionally, add them as defaultly installed modules in `serverpersistentstorage.py`. This is done by hard-coding the *module name* into `ServerPersistentStorage.DEFAULT_SETTINGS`. IMPORTANT: the module name here is `ServerModule.MODULE_NAME`, not the module's class name.
+* Creating new modules: Apologies for the lack of documentation for this. For now, you can try figuring out using current modules as examples. Notes:
+	* Modules subclass ServerModule, and to register it for use in the bot, you must decorate the class with `registered`.
+	* Services supplied to the module are from `resources` passed to the `_initialize()` method. `resources` is an instance of `ServerModuleResources` (which you can just read the source code for exposed methods). Please do not attempt to access any more than what this object allows.
+	* Modules may make new non-returning coroutine tasks using `resources.start_nonreturning_coro()`. See `dynamicchannels.py` as an example. This allows for proper error-handling, should something go wrong within that task. Additionally, it allows the bot to cleanly stop the coroutine if required (e.g. when uninstalling the module).
+		* **DO NOT** make non-returning coroutines in any other way (e.g. with `loop.create_task()`) as these cannot be cleaned up easily (unless you can figure out some other nicer way, in which case please leave a comment about it).
+		* Similarly, **DO NOT** create new threads with indefinite lifespans unless you're prepared to clean it up cleanly.
+		* For returning coroutines and temporary threads (e.g. a coroutine that waits 1 minute to send a message before a callback, or a thread that processes data for a definite amount of time before terminating), do these at your own risk. Just know that you will need to handle the errors or bad things will happen.
+	* There isn't really much I can do about you doing weird things such as just up-front terminating the asyncio event loop, using sys.exit(0), accessing my computer and letting people know what's in my internet browser history somehow, or even weirder things. Just... try not to do these things, k? ;P
 
 TODO:
 
-* (IMPORTANT) Fix start-up and shut-down issues with Dynamic Channels. It works perfectly once it's set up, but the initial setting up is such a pain.
-* (IMPORTANT) Fix weird issue in `MessageCache` where message where, while moving messages to disk, some timestamps would already be strings. They should all be `datetime` objects.
-* Implement module safe-shutdown. Modules such as `Dynamic Channels` will need a method to end threads.
+* Implement "core modules" and put privilege management, module management, help messages, the misc commands module, and more things into "core modules". These core modules:
+	* do not show when you use `/mods` (but have good help messages),
+	* are **ALWAYS** installed by default,
+	* cannot be uninstalled,
+	* would require more exposed methods in `ServerModuleResources`, and
+	* are probably easily distinguished in the source files (e.g. by putting them in a folder other than `servermodules`).
+* Cleaner way to handle persistent storage of settings. Just look at the code to load/save settings in modules such as `dynamicchannels.py`. So damn messy!
+* Consider using databases? Might be better than using lots and lots of JSON files.
+* Consider using a `.ini` file for things like login token, bot owner ID, wolfram alpha app ID, etc.
+* (IMPORTANT) Fix weird issue in `MessageCache` where message where, while moving messages to disk, some timestamps would already be strings. They should all be `datetime` objects. It's fixed, but I still don't understand the source of the problem.
 * Fix the issue in `bsistarkravingmadbot` where the command prefix is hard-coded.
 * (IMPORTANT) Implement additional utility functions to make message pre-processing faster, and with neater code.
 * Figure out a way to use dicts for faster message preprocessing. (It currently uses lots of if-else statements.)
-* Implement message caching (retrieving messages from the server is time-consuming).
 * Implement json data verification.
 	* (LOW PRIORITY) Implement json data repair.
-* Implement module enabling/disabling.
 * Reimplement abstract classes with the `abc` library.
 * Find all uses of utils.remove_blank_strings() and ensure none of them have a redundant list() around them.
-* (LOW PRIORITY) Implement better locking for `MentionBot.on_message()`.
 * (LOW PRIORITY) Implement data cache backups. The bot should also back up files if they're found to be corrupted (to allow for manual recovery in the case of a bug during runtime).
 * (LOW PRIORITY) Implement deeper module information infrastructure.
 * (LOW PRIORITY) Implement scheduling for module enable/disable, or "alternative command" enable/disable. For example, a feature may turn off if another bot is offline or not responding. I'm not too sure if this is necessary though, especially given the added complexity such a feature would bring. Modules may even be specially built for this purpose anyway...
