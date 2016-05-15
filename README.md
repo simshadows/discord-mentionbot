@@ -85,6 +85,10 @@ Some modules will need some additional setting up in order to work.
 
 TODO:
 
+* (VERY IMPORTANT) Clean up synchronization.
+* (VERY IMPORTANT) Figure out why message caching sometimes freezes. This doesn't appear to cause an exception traceback printout, and while it's frozen, it just doesn't do anything.
+* (VERY IMPORTANT) Figure out how to deal with the weird discord.py bug where sometimes, the server owner attribute is `None` and the server owner doesn't even appear in the list of users, meaning one less user than there actually are exists. The bot currently handles this error by restarting itself over and over until the bug is somehow resolved, but this can sometimes go on indefinitely.
+* (IMPORTANT): Figure out how to fix the issue with `serveractivitystatistics.py` where, on larger servers, it fails to send back the results of a query and the whole bot crashes (and thus restarts). The result of the query, however, still sit in the root of the repository and may be retrieved.
 * Implement "core modules" and put privilege management, module management, help messages, the misc commands module, and more things into "core modules". These core modules:
 	* do not show when you use `/mods` (but have good help messages),
 	* are **ALWAYS** installed by default,
