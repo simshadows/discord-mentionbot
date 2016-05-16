@@ -7,31 +7,29 @@ import urllib.parse as urllibparse
 import discord
 
 from .. import utils, errors, cmd
-from ..servermodule import ServerModule, registered
+from ..servermodule import ServerModule, core_registered
 from ..enums import PrivilegeLevel
 
-@registered
-class Misc(ServerModule):
+@core_registered
+class Core(ServerModule):
    """
    This module basically exists to reduce the clutter in serverbotinstance.py and the base help message.
    """
 
-   MODULE_NAME = "Misc"
-   MODULE_SHORT_DESCRIPTION = "Additional misc. commands not available by default."
-   RECOMMENDED_CMD_NAMES = ["misc"]
+   MODULE_NAME = "Core"
+   MODULE_SHORT_DESCRIPTION = "Regular core commands."
+   RECOMMENDED_CMD_NAMES = ["core"]
 
    _SECRET_TOKEN = utils.SecretToken()
    _cmd_dict = {} # Empty dict should work...
 
    _HELP_SUMMARY = """
-      See `{modhelp}` for misc. commands.
+      See `{modhelp}` for core commands.
       """
 
    async def _initialize(self, resources):
       self._res = resources
       self._client = self._res.client
-
-      self._res.suppress_autokill(True)
       return
 
    @cmd.add(_cmd_dict, "time", "gettime", "utc")

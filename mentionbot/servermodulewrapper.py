@@ -1,3 +1,4 @@
+import abc
 import asyncio
 import sys
 import concurrent
@@ -5,23 +6,11 @@ import concurrent
 from . import utils, errors, cmd
 from .servermoduleresources import ServerModuleResources
 
-def synchronized_with_state_lock(function):
-   async def wrapper_function(*args, **kwargs):
-      self = args[0]
-      await self._state_lock.acquire()
-      ret = None
-      try:
-         ret = await function(*args, **kwargs)
-      finally:
-         self._state_lock.release()
-      return ret
-   return wrapper_function
-
-class ServerModuleWrapper:
+class ServerModuleWrapper(abc.ABC):
    """
    Wraps the operations of a server module.
 
-   Has two states:
+   The wrapper has two states:
       Active
          The module instance is running as intended.
       Inactive
@@ -29,15 +18,35 @@ class ServerModuleWrapper:
          module. Calls to methods that would've been served by the module
          instance vary. This behaviour is found at the beginning of function
          definitions.
+   The wrapper always begins in the inactive state, and is to be activated
+   using `ServerModuleWrapper.activate()`.
+   However, the wrapper of a core module CANNOT BE DEACTIVATED.
+
+   Handling exceptions raised by module methods is handled differently between
+   regular and core module wrappers.
+      Regular module errors are caught, reported, and may automatically
+      deactivate the module.
+      Core module errors simply continue propagation, and thus have no special
+      error handling.
    """
 
-   _SECRET_TOKEN = NotImplemented
-
-   SUPPRESS_AUTOKILL_DEFAULT = False
+   _SECRET_TOKEN = utils.SecretToken()
 
    # Note that the initial state of ServerModuleWrapper is deactivated.
    @classmethod
-   async def get_instance(cls, module_class, server_bot_instance, *args):
+   async def get_instance(cls, module_class, server_bot_instance, *args, core=False):
+      wrapper_class = None
+      if core:
+         wrapper_class = CoreModuleWrapper
+      else:
+         wrapper_class = RegularModuleWrapper
+      return await wrapper_class.conc_get_instance(module_class, server_bot_instance, *args)
+
+   # This abstract method implements some basic infrastructure common to all
+   # implementations, and so must be called with super().
+   @classmethod
+   @abc.abstractmethod
+   async def conc_get_instance(cls, module_class, server_bot_instance, *args):
       self = cls(cls._SECRET_TOKEN)
 
       # Arguments
@@ -53,13 +62,6 @@ class ServerModuleWrapper:
       self._module_class = module_class
       self._module_cmd_aliases = module_cmd_aliases
       self._shortcut_cmd_aliases = None # Maps top-level command alias to module command alias.
-
-      self._state_lock = asyncio.Lock()
-
-      self._is_active = False
-      self._user_nonreturning_tasks = None # List of tasks
-      self._module_instance = None
-      self._suppress_autokill = self.SUPPRESS_AUTOKILL_DEFAULT
 
       # Initialize self._shortcut_cmd_aliases
       self._shortcut_cmd_aliases = {}
@@ -78,6 +80,7 @@ class ServerModuleWrapper:
             self._shortcut_cmd_aliases[top_level_alias] = module_cmd_alias
       return self
 
+   # NOT TO BE OVERRIDDEN
    def __init__(self, token):
       if not token is self._SECRET_TOKEN:
          raise RuntimeError("Not allowed to instantiate directly. Please use get_instance().")
@@ -104,6 +107,106 @@ class ServerModuleWrapper:
       for (alias, transformation) in self._shortcut_cmd_aliases.items():
          aliases.append(alias)
       return aliases
+
+   @abc.abstractmethod
+   def is_core(self):
+      raise NotImplementedError
+
+   @abc.abstractmethod
+   def is_active(self):
+      raise NotImplementedError
+
+   @abc.abstractmethod
+   async def activate(self):
+      raise NotImplementedError
+
+   @abc.abstractmethod
+   async def kill(self):
+      raise NotImplementedError
+
+   ########################################################################################
+   # METHODS USED FOR OTHER MODULE SERVICES ###############################################
+   ########################################################################################
+
+   # If setting=True, then module auto-kill will be less aggressive.
+   @abc.abstractmethod
+   def set_suppress_autokill(self, setting):
+      raise NotImplementedError
+
+   # Non-returning coroutines are to be started here.
+   # This ensures correct error handling.
+   # TODO: Somehow synchronize this. The decorator has been commented out.
+   # @synchronized_with_state_lock
+   @abc.abstractmethod
+   async def start_user_nonreturning_coro(self, coro):
+      raise NotImplementedError
+
+   ########################################################################################
+   # METHODS SERVED BY THE MODULE #########################################################
+   ########################################################################################
+
+   @abc.abstractmethod
+   async def get_help_summary(self, privilege_level):
+      return "!!!PLACEHOLDER!!!"
+
+   @abc.abstractmethod
+   async def get_help_detail(self, substr, privilege_level):
+      return "!!!PLACEHOLDER!!!"
+
+   @abc.abstractmethod
+   async def msg_preprocessor(self, content, msg, default_cmd_prefix):
+      return content
+
+   # PARAMETER: upper_cmd_alias is the command alias that was split off before
+   #            the substring was passed into this function.
+   #            E.g. if the full command was `/random choice A;B;C`, ServerBotInstance
+   #            would pass in substr="choice A;B;C" and upper_cmd_alias="random".
+   @abc.abstractmethod
+   async def process_cmd(self, substr, msg, privilege_level, upper_cmd_alias):
+      pass
+
+   @abc.abstractmethod
+   async def on_message(self, msg):
+      pass
+
+   @abc.abstractmethod
+   async def on_member_join(self, member):
+      pass
+
+   @abc.abstractmethod
+   async def on_member_remove(self, member):
+      pass
+
+# RegularModuleWrapper helper decorator
+def synchronized_with_state_lock(function):
+   async def wrapper_function(*args, **kwargs):
+      self = args[0]
+      await self._state_lock.acquire()
+      ret = None
+      try:
+         ret = await function(*args, **kwargs)
+      finally:
+         self._state_lock.release()
+      return ret
+   return wrapper_function
+
+class RegularModuleWrapper(ServerModuleWrapper):
+   SUPPRESS_AUTOKILL_DEFAULT = False
+
+   @classmethod
+   async def conc_get_instance(cls, module_class, server_bot_instance, *args):
+      self = await super(RegularModuleWrapper, cls).conc_get_instance(module_class, server_bot_instance, *args)
+      
+      self._state_lock = asyncio.Lock()
+
+      self._is_active = False
+      self._user_nonreturning_tasks = None # List of tasks
+      self._module_instance = None
+      self._suppress_autokill = self.SUPPRESS_AUTOKILL_DEFAULT
+      return self
+
+   def is_core(self):
+      return False
 
    def is_active(self):
       return self._is_active
@@ -149,7 +252,7 @@ class ServerModuleWrapper:
          buf_fi += "\nModule has been automatically killed for safety and must be manually reactivated."
       kwargs = {
          "cmd_msg": cmd_msg,
-         "handled_by": "SeverModuleWrapper, in a module-serving method.",
+         "handled_by": "RegularModuleWrapper, in a module-serving method.",
          "extra_info": buf_ei,
          "final_info": buf_fi,
       }
@@ -159,13 +262,10 @@ class ServerModuleWrapper:
    # METHODS USED FOR OTHER MODULE SERVICES ###############################################
    ########################################################################################
 
-   # If setting=True, then module auto-kill will be less aggressive.
    def set_suppress_autokill(self, setting):
       self._suppress_autokill = bool(setting)
       return
 
-   # Non-returning coroutines are to be started here.
-   # This ensures correct error handling.
    # TODO: Somehow synchronize this. The decorator has been commented out.
    # @synchronized_with_state_lock
    async def start_user_nonreturning_coro(self, coro):
@@ -270,3 +370,68 @@ class ServerModuleWrapper:
       except Exception as e:
          await self._module_method_error_handler(e)
          return
+
+class CoreModuleWrapper(ServerModuleWrapper):
+   @classmethod
+   async def conc_get_instance(cls, module_class, server_bot_instance, *args):
+      self = await super(CoreModuleWrapper, cls).conc_get_instance(module_class, server_bot_instance, *args)
+      self._module_instance = None
+      return self
+
+   def is_core(self):
+      return True
+
+   def is_active(self):
+      return not self._module_instance is None
+
+   async def activate(self):
+      if self.is_active():
+         raise RuntimeError("Module is already active.")
+      res = ServerModuleResources(self._module_class.MODULE_NAME, self._sbi, self)
+      self._module_instance = await self._module_class.get_instance(self._module_cmd_aliases, res)
+      return
+
+   async def kill(self):
+      raise RuntimeError("Core modules cannot be killed.")
+
+   ########################################################################################
+   # METHODS USED FOR OTHER MODULE SERVICES ###############################################
+   ########################################################################################
+
+   def set_suppress_autokill(self, setting):
+      raise RuntimeError("Not supported by core modules.")
+
+   async def start_user_nonreturning_coro(self, coro):
+      raise RuntimeError("Not supported by core modules.")
+
+   ########################################################################################
+   # METHODS SERVED BY THE MODULE #########################################################
+   ########################################################################################
+
+   async def get_help_summary(self, privilege_level):
+      return self._module_instance.get_help_summary(privilege_level, self._module_cmd_aliases[0])
+
+   async def get_help_detail(self, substr, privilege_level):
+      return self._module_instance.get_help_detail(substr, privilege_level, self._module_cmd_aliases[0])
+
+   async def msg_preprocessor(self, content, msg, default_cmd_prefix):
+      return await self._module_instance.msg_preprocessor(content, msg, default_cmd_prefix)
+
+   # PARAMETER: upper_cmd_alias is the command alias that was split off before
+   #            the substring was passed into this function.
+   #            E.g. if the full command was `/random choice A;B;C`, ServerBotInstance
+   #            would pass in substr="choice A;B;C" and upper_cmd_alias="random".
+   async def process_cmd(self, substr, msg, privilege_level, upper_cmd_alias):
+      return await self._module_instance.process_cmd(substr, msg, privilege_level)
+
+   async def on_message(self, msg):
+      return await self._module_instance.on_message(msg)
+
+   async def on_member_join(self, member):
+      return await self._module_instance.on_member_join(member)
+
+   async def on_member_remove(self, member):
+      return await self._module_instance.on_member_remove(member)
+
+ServerModuleWrapper.register(RegularModuleWrapper)
+ServerModuleWrapper.register(CoreModuleWrapper)

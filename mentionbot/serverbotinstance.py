@@ -28,52 +28,54 @@ class ServerBotInstance:
 
    @classmethod
    async def get_instance(cls, client, server):
-      inst = cls(cls._SECRET_TOKEN)
-      inst._client = client
-      inst._server = server
+      self = cls(cls._SECRET_TOKEN)
+      self._client = client
+      self._server = server
 
-      inst._data_directory = inst._client.CACHE_DIRECTORY + "serverdata/" + inst._server.id + "/"
-      inst._shared_directory = inst._client.CACHE_DIRECTORY + "shared/"
+      self._data_directory = self._client.CACHE_DIRECTORY + "serverdata/" + self._server.id + "/"
+      self._shared_directory = self._client.CACHE_DIRECTORY + "shared/"
 
-      inst._cmd_prefix = None
-      inst._initialization_timestamp = datetime.datetime.utcnow()
+      self._cmd_prefix = None
+      self._initialization_timestamp = datetime.datetime.utcnow()
 
-      botowner_ID = inst._client.BOTOWNER_ID
-      serverowner_ID = inst._server.owner.id
+      botowner_ID = self._client.BOTOWNER_ID
+      serverowner_ID = self._server.owner.id
 
-      inst._storage = ServerPersistentStorage(inst._data_directory + "settings.json", inst._server)
-      inst._privileges = PrivilegeManager(botowner_ID, serverowner_ID)
-      inst._module_factory = await ServerModuleFactory.get_instance(inst._client, inst._server)
+      self._storage = ServerPersistentStorage(self._data_directory + "settings.json", self._server)
+      self._privileges = PrivilegeManager(botowner_ID, serverowner_ID)
+      self._module_factory = await ServerModuleFactory.get_instance(self._client, self._server)
 
-      inst._modules = None # Initialize later
+      self._modules = None # Initialize later
 
       # Load and apply server settings
 
-      privileges_settings_dict = inst._storage.get_bot_command_privilege_settings()
-      inst._privileges.apply_json_settings_struct(privileges_settings_dict)
+      privileges_settings_dict = self._storage.get_bot_command_privilege_settings()
+      self._privileges.apply_json_settings_struct(privileges_settings_dict)
 
       # TODO: Make the below as neat as the above code.
 
-      data = inst._storage.get_server_settings()
+      data = self._storage.get_server_settings()
       
-      modules = []
+      modules = await self._module_factory.get_core_module_instances(self)
+      for module in modules:
+         await module.activate()
       for module_name in data["Installed Modules"]:
          try:
-            new_module = await inst._module_factory.new_module_instance(module_name, inst)
+            new_module = await self._module_factory.new_module_instance(module_name, self)
             modules.append(new_module)
             await new_module.activate()
          except:
             print("Error installing module {}. Skipping.".format(module_name))
-      inst._modules = ServerModuleGroup(initial_modules=modules)
+      self._modules = ServerModuleGroup(initial_modules=modules)
 
       try:
-         inst._cmd_prefix = data["cmd prefix"]
+         self._cmd_prefix = data["cmd prefix"]
       except KeyError:
-         inst._cmd_prefix = data["cmd prefix"] = inst.DEFAULT_COMMAND_PREFIX
+         self._cmd_prefix = data["cmd prefix"] = self.DEFAULT_COMMAND_PREFIX
          
-      inst._storage.save_server_settings(data)
+      self._storage.save_server_settings(data)
 
-      return inst
+      return self
 
    def __init__(self, token):
       if not token is self._SECRET_TOKEN:
@@ -256,7 +258,7 @@ class ServerBotInstance:
             self._storage.add_module(substr)
             await self._client.send_msg(msg, "`{}` successfully installed.".format(substr))
       else:
-         await self._client.send_msg(msg, "Error: `{}` does not exist.".format(substr))
+         await self._client.send_msg(msg, "Error: `{}` does not exist, or is a core module.".format(substr))
       return
 
    @cmd.add(_cmd_dict, "remove", "uninstall", "removemodule")

@@ -3,10 +3,18 @@ import textwrap
 from . import utils, cmd
 
 module_list = []
+core_module_list = []
 
 # Class decorator for registering server modules
 def registered(cls):
    module_list.append(cls)
+   return cls
+
+# Class decorator for registering core server modules.
+# These modules are always installed, can't be uninstalled, and bypass error
+# handling by the module wrapper.
+def core_registered(cls):
+   core_module_list.append(cls)
    return cls
 
 # Abstract Class (would've been an interface...)
