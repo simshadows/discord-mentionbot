@@ -2,18 +2,19 @@ from . import utils
 from .servermodulewrapper import ServerModuleWrapper
 
 # Modules
-from .servermodule import module_list, core_module_list
-from .servermodulescore import *
+from .servermodule import module_list
 from .servermodules import *
 
 class ServerModuleFactory:
+   """
+   Doesn't construct core modules.
+   """
    
    _SECRET_TOKEN = utils.SecretToken()
 
    _module_list = list(module_list)
-   _core_module_list = list(core_module_list)
 
-   _modules_dict = {} # No core modules are in here.
+   _modules_dict = {}
    for i in _module_list:
       _modules_dict[i.MODULE_NAME] = i
 
@@ -48,13 +49,3 @@ class ServerModuleFactory:
       module_class = self._modules_dict[module_name]
       wrapped_module = await ServerModuleWrapper.get_instance(module_class, server_bot_instance)
       return wrapped_module
-
-   # Get a list containing an instance of each core module.
-   async def get_core_module_instances(self, server_bot_instance):
-      wrapped_modules = []
-      for module_class in self._core_module_list:
-         wrapped_modules.append(await ServerModuleWrapper.get_instance(module_class, server_bot_instance, core=True))
-      return wrapped_modules
-
-
-

@@ -422,6 +422,8 @@ class CoreModuleWrapper(ServerModuleWrapper):
    #            E.g. if the full command was `/random choice A;B;C`, ServerBotInstance
    #            would pass in substr="choice A;B;C" and upper_cmd_alias="random".
    async def process_cmd(self, substr, msg, privilege_level, upper_cmd_alias):
+      if upper_cmd_alias in self._shortcut_cmd_aliases:
+         substr = self._shortcut_cmd_aliases[upper_cmd_alias] + " " + substr
       return await self._module_instance.process_cmd(substr, msg, privilege_level)
 
    async def on_message(self, msg):
@@ -432,6 +434,3 @@ class CoreModuleWrapper(ServerModuleWrapper):
 
    async def on_member_remove(self, member):
       return await self._module_instance.on_member_remove(member)
-
-ServerModuleWrapper.register(RegularModuleWrapper)
-ServerModuleWrapper.register(CoreModuleWrapper)
