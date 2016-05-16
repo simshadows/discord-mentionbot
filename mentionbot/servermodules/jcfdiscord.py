@@ -80,7 +80,7 @@ class JCFDiscord(ServerModule):
          new_content = content[len(default_cmd_prefix):]
          (left, right) = utils.separate_left_word(new_content)
          if left.upper() in self._MBTI_TYPES_SET:
-            return default_cmd_prefix + self.cmd_names[0] + " typeflair " + left
+            return default_cmd_prefix + self._res.module_cmd_aliases[0] + " typeflair " + left
       return await super(JCFDiscord, self).msg_preprocessor(content, msg, default_cmd_prefix)
 
    @cmd.add(_cmd_dict, "functions", "fn", "stack")
