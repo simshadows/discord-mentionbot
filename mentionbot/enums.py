@@ -31,6 +31,10 @@ class PrivilegeLevel(enum.IntEnum):
          all_values.append((enum_type, int(enum_type), enum_str))
       return all_values
 
+   @classmethod
+   def get_lowest_privilege(cls):
+      return PrivilegeLevel.NO_PRIVILEGE
+
    # Converts a PrivilegeLevel to a corresponding name.
    def get_commonname(self):
       try:
@@ -94,6 +98,11 @@ _privilegelevel_enumtocommonname = {
 # It would be nice if we can have bi-directional maps instead of this...
 _privilegelevel_commonnametoenum = {v: k for (k, v) in _privilegelevel_enumtocommonname.items()}
 
-
+# Proposed
+# class ErrorHandlingLevel(enum.IntEnum):
+#    NOTHING = 0
+#    MINIMUM = 1
+#    KILL_MODULE = 2
+#    KILL_BOT = 3
 
 

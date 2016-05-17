@@ -1,5 +1,6 @@
 import inspect
 import enum
+import abc
 
 from . import utils, errors
 from .enums import PrivilegeLevel
@@ -32,8 +33,7 @@ from .enums import PrivilegeLevel
 def get(cmd_dict, cmd_name, privilege_level):
    try:
       cmd_to_execute = cmd_dict[cmd_name]
-      if hasattr(cmd_to_execute, "minimum_privilege"):
-         if privilege_level < cmd_to_execute.minimum_privilege:
+      if privilege_level < cmd_to_execute.cmd_meta.get_min_priv():
             raise errors.CommandPrivilegeError
       return cmd_to_execute
    except KeyError:
@@ -45,21 +45,18 @@ def compose_help_summary(cmd_dict, privilege_level):
    cats_dict = {} # FORMAT: category name string -> help content string
    for (cmd_name, cmd_obj) in cmd_dict.items():
       if not cmd_obj in seen_set:
-         if hasattr(cmd_obj, "minimum_privilege"):
-            if privilege_level < cmd_obj.minimum_privilege:
-               continue
+         if privilege_level < cmd_obj.cmd_meta.get_min_priv():
+            continue
          seen_set.add(cmd_obj)
          help_str = get_help_summary(cmd_obj)
          if len(help_str) != 0:
-            cat_name = None
-            if hasattr(cmd_obj, "help_category"):
-               cat_name = cmd_obj.help_category
-            else:
+            cat_name = cmd_obj.cmd_meta.get_help_category()
+            if cat_name is None:
                cat_name = ""
             cat_buf = None
-            try:
+            if cat_name in cats_dict:
                cat_buf = cats_dict[cat_name]
-            except KeyError:
+            else:
                cat_buf = ""
             cats_dict[cat_name] = cat_buf + help_str + "\n"
 
@@ -94,24 +91,17 @@ def compose_help_summary(cmd_dict, privilege_level):
 # This method also processes "{cmd}" -> "{bc}{c}" and substitutes in the
 # value of "{c}".
 def get_help_summary(cmd_obj):
-   docstr = inspect.getdoc(cmd_obj)
-   if docstr is None or len(docstr) == 0:
-      return ""
    kwargs = {
-      "cmd": "{p}{b}" + cmd_obj.cmd_names[0],
+      "cmd": "{p}{b}" + cmd_obj.cmd_meta.get_aliases()[0],
       "bc": "{p}{b}",
       "p": "{p}",
       "b": "{b}",
-      "c": cmd_obj.cmd_names[0],
+      "c": cmd_obj.cmd_meta.get_aliases()[0],
    }
-   return docstr.split("\n", 1)[0].format(**kwargs)
+   return cmd_obj.cmd_meta.get_help_summary().format(**kwargs)
 
 def get_help_detail(cmd_obj):
-   docstr = inspect.getdoc(cmd_obj)
-   if docstr is None or len(docstr) == 0:
-      return ""
-   else:
-      return docstr
+   return cmd_obj.cmd_meta.get_help_detail()
 
 # Carries out "{modhelp}" -> "{p}help {mod}" evaluation, while also
 # substituting "{mod}".
@@ -130,7 +120,10 @@ def format_mod_evaluate(content_str, *, mod=None):
 # PARAMETER: *cmd_names - List of names the command is to be mapped to.
 def add(cmd_dict, *cmd_names, default=False):
    def function_decorator(function):
-      function.cmd_names = cmd_names
+      _ensure_cmd_obj(function)
+      function.cmd_meta.set_aliases(cmd_names)
+
+      # Add the function to cmd_dict
       for cmd_name in cmd_names:
          if cmd_name in cmd_dict:
             raise RuntimeError("Command with alias '{}' already exists.".format(cmd_name))
@@ -145,8 +138,10 @@ def add(cmd_dict, *cmd_names, default=False):
 # Decorator adds an attribute named "privilege_gate" to a function object.
 # This attribute is simply checked before execution.
 def minimum_privilege(minimum_privilege_level):
+   assert type(minimum_privilege_level) is PrivilegeLevel
    def function_decorator(function):
-      function.minimum_privilege = minimum_privilege_level
+      _ensure_cmd_obj(function)
+      function.cmd_meta.set_min_priv(minimum_privilege_level)
       return function
    return function_decorator
 
@@ -156,24 +151,192 @@ def minimum_privilege(minimum_privilege_level):
 # the composed help message will group the command along with all the
 # other ungrouped commands.
 def category(text):
+   assert type(text) is str
    def function_decorator(function):
-      function.help_category = text
+      _ensure_cmd_obj(function)
+      function.cmd_meta.set_help_category(text)
       return function
    return function_decorator
 
 # Defines top-level aliases of the command.
 def top_level_alias(*aliases):
    def function_decorator(function):
+      _ensure_cmd_obj(function)
       if len(aliases) == 0:
-         # Instructs other components to use the existing aliases as top-level aliases.
-         function.top_level_alias_type = TopLevelAliasAction.USE_EXISTING_ALIASES
-         function.top_level_aliases = None
+         function.cmd_meta.set_top_aliases_existing()
       else:
-         function.top_level_alias_type = TopLevelAliasAction.USE_NEW_ALIASES
-         function.top_level_aliases = list(aliases)
+         function.cmd_meta.set_top_aliases_explicitly(aliases)
       return function
    return function_decorator
 
-class TopLevelAliasAction(enum.Enum):
-   USE_EXISTING_ALIASES = 0
-   USE_NEW_ALIASES = 1
+###########################################################################################
+###########################################################################################
+###########################################################################################
+
+def _ensure_cmd_obj(function):
+   if not hasattr(function, "cmd_meta"):
+      function.cmd_meta = CommandMeta(function)
+   return
+
+class HelpNode(abc.ABC):
+   """
+   This defines an object that can be referenced as a node in a directed graph
+   of help node objects.
+
+   HelpNode implementors:
+      - ServerModuleGroup (as this is an entrypoint)
+      - ServerModuleWrapper
+      - CommandMeta
+   """
+
+   # Get help content specified by the locator string.
+   # RETURNS: Either a string containing help content, or None if no help
+   #          content exists.
+   def get_node(self, locator_string):
+      path = locator_string.split()
+      curr = self
+      for location in path:
+         curr = curr.get_next_node(location)
+         if curr is None:
+            break
+      return curr
+
+   # Get the node's detail help content as a string.
+   # POSTCONDITION: Will always produce help content.
+   #                This implies no NoneTypes or empty strings.
+   @abc.abstractmethod
+   def get_help_detail(self):
+      raise NotImplementedError
+
+   # Get the node's summary help content as a string.
+   # POSTCONDITION: Will always produce help content.
+   #                This implies no NoneTypes or empty strings.
+   @abc.abstractmethod
+   def get_help_summary(self):
+      raise NotImplementedError
+
+   # Get the next IHelpNode object, given a locator string specifying this next
+   # object. If no such object exists, returns None.
+   # PRECONDITION: The locator string only specifies a "single traversal" to
+   #               the next node, i.e. no spaces.
+   @abc.abstractmethod
+   def get_next_node(self, locator_string):
+      # Please insert this assert in implementations.
+      assert not " " in locator_string
+      raise NotImplementedError
+
+
+class CommandMeta(HelpNode):
+   """
+   Stores information about a command.
+
+   MOTIVATION
+
+   The original implementation of command functions involved "duct taping" new
+   attributes to command functions, with no clear organization of this. Not
+   only is data neatness an issue, but the code to handle these command
+   function objects has to explicitly check for the existence of these
+   attributes, so data access is also an issue.
+
+   CommandSpecification is designed to tidy all of this up.
+   """
+
+   DEFAULT_HELP_STR = "`{cmd}`"
+
+   class TopLevelAliasAction(enum.Enum):
+      NO_TOP_LEVEL_ALIASES = 0
+      USE_EXISTING_ALIASES = 1
+      USE_NEW_ALIASES = 2
+
+   def __init__(self, cmd_fn):
+      self._cmd_fn = cmd_fn
+
+      # Attributes for aliases
+      self._aliases = None
+      self._top_level_alias_action = self.TopLevelAliasAction.NO_TOP_LEVEL_ALIASES
+      self._top_level_aliases = None
+
+      # Attributes for privilege levels
+      self._minimum_privilege = PrivilegeLevel.get_lowest_privilege()
+
+      # Attributes for leaf help content
+      self._help_detail = None
+
+      # Attributes for module help content
+      self._help_category = None
+      self._help_summary = None
+
+      # Parsing the docstring to get _help_detail and _help_summary
+      docstr = inspect.getdoc(cmd_fn)
+      if docstr is None or len(docstr) == 0:
+         # Give the default value.
+         self._help_detail = self._help_summary = self.DEFAULT_HELP_STR
+      else:
+         docstr = docstr.strip()
+         self._help_detail = docstr # TODO: Is it necessary?
+         # Summaries include the first few lines of the string up until the first
+         # empty line.
+         lines = []
+         for line in docstr.splitlines():
+            if len(line) == 0:
+               break
+            lines.append(line)
+         assert len(lines) > 0
+         assert len(lines[0].strip()) > 0
+         self._help_summary = "\n".join(lines)
+      return
+
+   def set_aliases(self, string_list):
+      self._aliases = list(string_list)
+      return
+
+   def set_min_priv(self, privilege_level):
+      self._minimum_privilege = privilege_level
+      return
+
+   def set_help_category(self, string):
+      assert type(string) is str and len(string) > 0
+      self._help_category = string
+      return
+
+   # Make top-level aliases match the existing aliases.
+   def set_top_aliases_existing(self):
+      self._top_level_alias_action = self.TopLevelAliasAction.USE_EXISTING_ALIASES
+      return
+
+   # Sets top-level aliases explicitly.
+   def set_top_aliases_explicitly(self, str_list):
+      self._top_level_alias_action = self.TopLevelAliasAction.USE_NEW_ALIASES
+      self._top_level_aliases = list(str_list)
+      return
+
+   def get_aliases(self):
+      return list(self._aliases)
+
+   def get_min_priv(self):
+      return self._minimum_privilege
+
+   # Returns None if no category.
+   def get_help_category(self):
+      ret = self._help_category
+      assert (type(ret) is str and len(ret) > 0) or ret is None
+      return ret
+
+   def get_help_summary(self):
+      return self._help_summary
+
+   def get_help_detail(self):
+      return self._help_detail
+
+   def get_top_aliases(self):
+      if self._top_level_alias_action is self.TopLevelAliasAction.USE_EXISTING_ALIASES:
+         return list(self._aliases)
+      elif self._top_level_alias_action is self.TopLevelAliasAction.USE_NEW_ALIASES:
+         return list(self._top_level_aliases)
+      else:
+         return None
+
+   def get_next_node(self, locator_string):
+      assert not " " in locator_string
+      return None # This is a leaf node.
+   
