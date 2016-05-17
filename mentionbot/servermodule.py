@@ -31,7 +31,7 @@ class ServerModule:
    #     get_help_summary()
    #     get_help_detail()
    #     process_cmd()
-   _cmd_dict = NotImplemented
+   _cmdd = NotImplemented
    
    # A string, potentially multi-line, giving a brief summary of the module.
    # Formatting arguments "modhelp", "mod", and "p" are used here, evaluated
@@ -55,10 +55,10 @@ class ServerModule:
 
    @classmethod
    def get_cmd_functions(self):
-      if self._cmd_dict is NotImplemented:
+      if self._cmdd is NotImplemented:
          raise NotImplementedError
       seen_set = set()
-      for (alias, function) in self._cmd_dict.items():
+      for (alias, function) in self._cmdd.items():
          if function not in seen_set:
             seen_set.add(function)
             yield function
@@ -77,11 +77,11 @@ class ServerModule:
    # Get a detailed help-message string about the module.
    # String has no leading/trailing whitespace.
    def get_help_detail(self, substr, privilege_level, module_alias):
-      buf = cmd.compose_help_summary(self._cmd_dict, privilege_level)
+      buf = cmd.compose_help_summary(self._cmdd, privilege_level)
       return buf.format(b=module_alias + " ", p="{p}")
 
    # This method is called if a command is to be handled by the module.
-   # By default, it processes a command in _cmd_dict.
+   # By default, it processes a command in _cmdd.
    # Overriding to add further pre-processing and other things would
    # usually involve calling this with super() rather than rewriting
    # it completely.
@@ -89,7 +89,7 @@ class ServerModule:
    # bot command processing system.
    async def process_cmd(self, substr, msg, privilege_level):
       (left, right) = utils.separate_left_word(substr)
-      cmd_to_execute = cmd.get(self._cmd_dict, left, privilege_level)
+      cmd_to_execute = cmd.get(self._cmdd, left, privilege_level)
       await cmd_to_execute(self, right, msg, privilege_level)
       return
 

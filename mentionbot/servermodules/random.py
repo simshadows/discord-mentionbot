@@ -15,7 +15,7 @@ class Random(ServerModule):
    RECOMMENDED_CMD_NAMES = ["random", "rng", "rnd", "rand"]
    
    _SECRET_TOKEN = utils.SecretToken()
-   _cmd_dict = {}
+   _cmdd = {}
 
    _HELP_SUMMARY = """
       `{p}random [integer]` - Get random int. (See `{modhelp}` for more!)
@@ -50,7 +50,7 @@ class Random(ServerModule):
          substr = "choose " + substr
       return await super(Random, self).process_cmd(substr, msg, privilege_level)
 
-   @cmd.add(_cmd_dict, "number", "num", "int", "integer", default=True)
+   @cmd.add(_cmdd, "number", "num", "int", "integer", default=True)
    async def _cmdf_number(self, substr, msg, privilege_level):
       """`{cmd}`"""
       # Compile a set of ranges to randomize.
@@ -104,7 +104,7 @@ class Random(ServerModule):
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "choose", "ch", "choice", "choices")
+   @cmd.add(_cmdd, "choose", "ch", "choice", "choices")
    @cmd.top_level_alias("choose")
    async def _cmdf_choose(self, substr, msg, privilege_level):
       """`{cmd}`"""
@@ -120,7 +120,7 @@ class Random(ServerModule):
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "coin", "flip")
+   @cmd.add(_cmdd, "coin", "flip")
    async def _cmdf_coin(self, substr, msg, privilege_level):
       """`{cmd}`"""
       if random.randint(0,1) == 1:
@@ -138,7 +138,7 @@ class Random(ServerModule):
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "colour", "color", "rgb")
+   @cmd.add(_cmdd, "colour", "color", "rgb")
    async def _cmdf_colour(self, substr, msg, privilege_level):
       """`{cmd}`"""
       rand_int = random.randint(0,(16**6)-1)
@@ -149,7 +149,7 @@ class Random(ServerModule):
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "dice", "roll")
+   @cmd.add(_cmdd, "dice", "roll")
    async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):
       """`{cmd}`"""
       if substr == "":
@@ -188,7 +188,7 @@ class Random(ServerModule):
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "user", "member", "u", "mem")
+   @cmd.add(_cmdd, "user", "member", "u", "mem")
    async def _cmdf_colour(self, substr, msg, privilege_level):
       """`{cmd}` - Chooses a random member from this server."""
       random_member = random.choice(list(msg.server.members))

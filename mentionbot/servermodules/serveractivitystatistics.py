@@ -21,7 +21,7 @@ class ServerActivityStatistics(ServerModule):
    RECOMMENDED_CMD_NAMES = ["stats", "serverstats"]
 
    _SECRET_TOKEN = utils.SecretToken()
-   _cmd_dict = {}
+   _cmdd = {}
 
    _HELP_SUMMARY = """
       See `{modhelp}` for commands to generate user activity statistics.
@@ -48,7 +48,7 @@ class ServerActivityStatistics(ServerModule):
       (left, right) = utils.separate_left_word(substr)
       execute_regular_cmd = False
       try:
-         cmd_to_execute = cmd.get(self._cmd_dict, left, privilege_level)
+         cmd_to_execute = cmd.get(self._cmdd, left, privilege_level)
          execute_regular_cmd = True
       except (errors.InvalidCommandArgumentsError, errors.CommandPrivilegeError):
          pass
@@ -129,7 +129,7 @@ class ServerActivityStatistics(ServerModule):
 
       return
 
-   @cmd.add(_cmd_dict, "login")
+   @cmd.add(_cmdd, "login")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_login(self, substr, msg, privilege_level):
       self._log_in_from_file()

@@ -15,7 +15,7 @@ class SelfServeColours(ServerModule):
    RECOMMENDED_CMD_NAMES = ["colour", "color", "rgb"]
    
    _SECRET_TOKEN = utils.SecretToken()
-   _cmd_dict = {}
+   _cmdd = {}
 
    _HELP_SUMMARY = """
       `{p}colour [rgb code]` - Assign yourself a colour. `{p}colour` clears.

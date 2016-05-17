@@ -17,7 +17,7 @@ class PMGreetings(ServerModule):
    RECOMMENDED_CMD_NAMES = ["pmgreetings", "pmgreeting"]
 
    _SECRET_TOKEN = utils.SecretToken()
-   _cmd_dict = {} # Empty dict should work...
+   _cmdd = {} # Empty dict should work...
 
    _HELP_SUMMARY = """
       See `{modhelp}` to manage the new-member PM greeting system.
@@ -72,7 +72,7 @@ class PMGreetings(ServerModule):
       buf += "\n" + super(PMGreetings, self).get_help_detail(substr, privilege_level, module_alias)
       return buf
 
-   @cmd.add(_cmd_dict, "view", "viewmessage", "see", "get", "getmessage", default=True)
+   @cmd.add(_cmdd, "view", "viewmessage", "see", "get", "getmessage", default=True)
    async def _cmdf_view(self, substr, msg, privilege_level):
       """`{cmd}` - View a copy of the server greeting message."""
       buf = "**New members are sent the following (with appropriate substitutions):**\n"
@@ -80,7 +80,7 @@ class PMGreetings(ServerModule):
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "viewmono", "mono", "viewmessagemono", "seemono", "getmono", "getmessagemono")
+   @cmd.add(_cmdd, "viewmono", "mono", "viewmessagemono", "seemono", "getmono", "getmessagemono")
    async def _cmdf_viewmono(self, substr, msg, privilege_level):
       """`{cmd}` - View a monospace copy of the server greeting message."""
       buf = "**Monospace copy of the server greeting message:**\n```\n"
@@ -88,14 +88,14 @@ class PMGreetings(ServerModule):
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "pm", "pmme", "send", "sendme")
+   @cmd.add(_cmdd, "pm", "pmme", "send", "sendme")
    async def _cmdf_view(self, substr, msg, privilege_level):
       """`{cmd}` - Get a personalized version of the greeting message via PM."""
       await self.on_member_join(msg.author)
       await self._client.send_msg(msg, "<@{}>, check your inbox!".format(msg.author.id))
       return
 
-   @cmd.add(_cmd_dict, "set", "setmessage")
+   @cmd.add(_cmdd, "set", "setmessage")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_setmessage(self, substr, msg, privilege_level):
       """

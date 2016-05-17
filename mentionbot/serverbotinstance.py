@@ -31,7 +31,7 @@ class ServerBotInstance:
 
    INIT_MENTIONS_NOTIFY_ENABLED = False
 
-   _cmd_dict = {} # Command Dictionary
+   _cmdd = {} # Command Dictionary
 
    @classmethod
    async def get_instance(cls, client, server):
@@ -144,7 +144,7 @@ class ServerBotInstance:
          cmd_to_execute = None
          (left, right) = utils.separate_left_word(substr)
          try:
-            cmd_to_execute = self._cmd_dict[left]
+            cmd_to_execute = self._cmdd[left]
          except KeyError:
             pass
 
@@ -177,7 +177,7 @@ class ServerBotInstance:
    ### GENERAL COMMANDS ###
    ########################
 
-   @cmd.add(_cmd_dict, "help")
+   @cmd.add(_cmdd, "help")
    async def _cmdf_help(self, substr, msg, privilege_level):
       """
       `{cmd} [command name]` - More help.
@@ -188,26 +188,26 @@ class ServerBotInstance:
       await self._client.send_msg(msg, help_content)
       return
 
-   @cmd.add(_cmd_dict, "source", "src")
+   @cmd.add(_cmdd, "source", "src")
    async def _cmdf_source(self, substr, msg, privilege_level):
       """`{cmd}` - Where to get my source code."""
       await self._client.send_msg(msg, "https://github.com/simshadows/discord-mentionbot")
       return
 
-   @cmd.add(_cmd_dict, "uptime")
+   @cmd.add(_cmdd, "uptime")
    async def _cmdf_uptime(self, substr, msg, privilege_level):
       """`{cmd}` - Get time since initialization."""
       buf = "**Bot current uptime:** {}. ".format(utils.timedelta_to_string(self.get_presence_timedelta()))
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "time", "gettime", "utc")
+   @cmd.add(_cmdd, "time", "gettime", "utc")
    async def _cmdf_time(self, substr, msg, privilege_level):
       """`{cmd}` - Get bot's system time in UTC."""
       await self._client.send_msg(msg, datetime.datetime.utcnow().strftime("My current system time: %c UTC"))
       return
 
-   @cmd.add(_cmd_dict, "say")
+   @cmd.add(_cmdd, "say")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_say(self, substr, msg, privilege_level):
       """`{cmd} [text]` - Echo's the following text."""
@@ -220,7 +220,7 @@ class ServerBotInstance:
 
    # Random commands go here until they find a home in a proper module.
 
-   @cmd.add(_cmd_dict, "lmgtfy", "google", "goog", "yahoo")
+   @cmd.add(_cmdd, "lmgtfy", "google", "goog", "yahoo")
    async def _cmdf_say(self, substr, msg, privilege_level):
       """`{cmd} [text]` - Let me google that for you..."""
       if len(substr) == 0:
@@ -228,7 +228,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, "http://lmgtfy.com/?q=" + urllibparse.quote(substr))
       return
 
-   @cmd.add(_cmd_dict, "testbell")
+   @cmd.add(_cmdd, "testbell")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_msgcachedebug(self, substr, msg, privilege_level):
       """`{cmd}`"""
@@ -240,7 +240,7 @@ class ServerBotInstance:
    ### MODULE INFO/MANAGEMENT COMMANDS ###
    #######################################
 
-   @cmd.add(_cmd_dict, "mods", "modules")
+   @cmd.add(_cmdd, "mods", "modules")
    @cmd.category("Module Info/Management")
    async def _cmdf_mods(self, substr, msg, privilege_level):
       """`{cmd}` - View installed and available modules."""
@@ -284,7 +284,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "add", "install", "addmodule")
+   @cmd.add(_cmdd, "add", "install", "addmodule")
    @cmd.category("Module Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_add(self, substr, msg, privilege_level):
@@ -302,7 +302,7 @@ class ServerBotInstance:
          await self._client.send_msg(msg, "Error: `{}` does not exist.".format(substr))
       return
 
-   @cmd.add(_cmd_dict, "remove", "uninstall", "removemodule")
+   @cmd.add(_cmdd, "remove", "uninstall", "removemodule")
    @cmd.category("Module Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_remove(self, substr, msg, privilege_level):
@@ -315,7 +315,7 @@ class ServerBotInstance:
          await self._client.send_msg(msg, "Error: `{}` is not installed.".format(substr))
       return
 
-   @cmd.add(_cmd_dict, "activate", "reactivate", "activatemodule", "reactivatemodule")
+   @cmd.add(_cmdd, "activate", "reactivate", "activatemodule", "reactivatemodule")
    @cmd.category("Module Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_activate(self, substr, msg, privilege_level):
@@ -335,7 +335,7 @@ class ServerBotInstance:
          await self._client.send_msg(msg, "Error: `{}` is not installed.".format(substr))
       return
 
-   @cmd.add(_cmd_dict, "deactivate", "kill", "deactivatemodule", "killmodule")
+   @cmd.add(_cmdd, "deactivate", "kill", "deactivatemodule", "killmodule")
    @cmd.category("Module Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_activate(self, substr, msg, privilege_level):
@@ -356,7 +356,7 @@ class ServerBotInstance:
    ### PRIVILEGES INFO/MANAGEMENT COMMANDS ###
    ###########################################
 
-   @cmd.add(_cmd_dict, "prefix", "predicate", "setprefix", "setpredicate")
+   @cmd.add(_cmdd, "prefix", "predicate", "setprefix", "setpredicate")
    @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_prefix(self, substr, msg, privilege_level):
@@ -369,7 +369,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "privinfo", "allprivs", "privsinfo", "whatprivs")
+   @cmd.add(_cmdd, "privinfo", "allprivs", "privsinfo", "whatprivs")
    @cmd.category("Command Privilege Info/Management")
    async def _cmdf_privinfo(self, substr, msg, privilege_level):
       """`{cmd}` - Get information on the bot's command privilege system."""
@@ -387,7 +387,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "priv", "privilege", "mypriv")
+   @cmd.add(_cmdd, "priv", "privilege", "mypriv")
    @cmd.category("Command Privilege Info/Management")
    async def _cmdf_priv(self, substr, msg, privilege_level):
       """`{cmd}` - Check your command privilege level."""
@@ -396,7 +396,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "privof", "privilegeof")
+   @cmd.add(_cmdd, "privof", "privilegeof")
    @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_privof(self, substr, msg, privilege_level):
@@ -405,7 +405,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "userprivsresolved", "userprivilegesresolved")
+   @cmd.add(_cmdd, "userprivsresolved", "userprivilegesresolved")
    @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_userprivsresolved(self, substr, msg, privilege_level):
@@ -429,7 +429,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "userprivs", "userprivileges")
+   @cmd.add(_cmdd, "userprivs", "userprivileges")
    @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_userprivs(self, substr, msg, privilege_level):
@@ -455,7 +455,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "roleprivs", "roleprivileges", "flairprivs", "flairprivileges", "tagprivs", "tagprivileges")
+   @cmd.add(_cmdd, "roleprivs", "roleprivileges", "flairprivs", "flairprivileges", "tagprivs", "tagprivileges")
    @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_roleprivs(self, substr, msg, privilege_level):
@@ -474,7 +474,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "adduserpriv", "adduserprivilege")
+   @cmd.add(_cmdd, "adduserpriv", "adduserprivilege")
    @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_adduserpriv(self, substr, msg, privilege_level):
@@ -509,7 +509,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "addrolepriv", "addroleprivilege")
+   @cmd.add(_cmdd, "addrolepriv", "addroleprivilege")
    @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_addrolepriv(self, substr, msg, privilege_level):
@@ -545,7 +545,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "removeuserpriv", "removeuserprivilege")
+   @cmd.add(_cmdd, "removeuserpriv", "removeuserprivilege")
    @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_removeuserpriv(self, substr, msg, privilege_level):
@@ -570,7 +570,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "removerolepriv", "removeroleprivilege", "removeflairpriv", "removeflairprivilege", "removetagpriv", "removetagprivilege")
+   @cmd.add(_cmdd, "removerolepriv", "removeroleprivilege", "removeflairpriv", "removeflairprivilege", "removetagpriv", "removetagprivilege")
    @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_removerolepriv(self, substr, msg, privilege_level):
@@ -612,7 +612,7 @@ class ServerBotInstance:
    ### OTHER GENERAL MANAGEMENT/DEBUGGING COMMANDS ###
    ###################################################
 
-   @cmd.add(_cmd_dict, "iam")
+   @cmd.add(_cmdd, "iam")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_iam(self, substr, msg, privilege_level):
@@ -630,7 +630,7 @@ class ServerBotInstance:
          await self.process_text(right, replacement_msg) # TODO: Make this call on_message()
       return
 
-   @cmd.add(_cmd_dict, "setgame", "setgamestatus")
+   @cmd.add(_cmdd, "setgame", "setgamestatus")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setgame(self, substr, msg, privilege_level):
@@ -639,7 +639,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, "**Game set to:** " + substr)
       return
 
-   @cmd.add(_cmd_dict, "tempgame")
+   @cmd.add(_cmdd, "tempgame")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setgame(self, substr, msg, privilege_level):
@@ -648,7 +648,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, "**Game temporarily set to:** " + substr)
       return
 
-   @cmd.add(_cmd_dict, "revertgame")
+   @cmd.add(_cmdd, "revertgame")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setgame(self, substr, msg, privilege_level):
@@ -657,7 +657,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, "**Reverted game.**")
       return
 
-   @cmd.add(_cmd_dict, "setusername", "updateusername", "newusername", "setname", "newname")
+   @cmd.add(_cmdd, "setusername", "updateusername", "newusername", "setname", "newname")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setusername(self, substr, msg, privilege_level):
@@ -667,7 +667,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, "**Username set to:** " + substr)
       return
 
-   @cmd.add(_cmd_dict, "setavatar", "updateavatar", "setdp", "newdp")
+   @cmd.add(_cmdd, "setavatar", "updateavatar", "setdp", "newdp")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setusername(self, substr, msg, privilege_level):
@@ -724,7 +724,7 @@ class ServerBotInstance:
                await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "joinserver")
+   @cmd.add(_cmdd, "joinserver")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_joinserver(self, substr, msg, privilege_level):
@@ -736,7 +736,7 @@ class ServerBotInstance:
          await self._client.send_msg(msg, "Failed to join a new server.")
       return
 
-   @cmd.add(_cmd_dict, "leaveserver")
+   @cmd.add(_cmdd, "leaveserver")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_leaveserver(self, substr, msg, privilege_level):
@@ -745,7 +745,7 @@ class ServerBotInstance:
       await self._client.leave_server(msg.channel.server)
       return
 
-   @cmd.add(_cmd_dict, "msgcachedebug")
+   @cmd.add(_cmdd, "msgcachedebug")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_msgcachedebug(self, substr, msg, privilege_level):
@@ -754,7 +754,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "closebot", "quit", "exit")
+   @cmd.add(_cmdd, "closebot", "quit", "exit")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_closebot(self, substr, msg, privilege_level):
@@ -762,14 +762,14 @@ class ServerBotInstance:
       await self._client.send_msg(msg, "brb killing self")
       sys.exit(0)
 
-   @cmd.add(_cmd_dict, "throwexception", "exception")
+   @cmd.add(_cmdd, "throwexception", "exception")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_throwexception(self, substr, msg, privilege_level):
       """`{cmd}`"""
       raise Exception
 
-   @cmd.add(_cmd_dict, "throwexception2")
+   @cmd.add(_cmdd, "throwexception2")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_throwexception2(self, substr, msg, privilege_level):
@@ -778,7 +778,7 @@ class ServerBotInstance:
       await self._client.send_message(msg, "If you're reading this, it failed to throw...")
       return
 
-   @cmd.add(_cmd_dict, "throwbaseexception", "baseexception")
+   @cmd.add(_cmdd, "throwbaseexception", "baseexception")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_throwexception(self, substr, msg, privilege_level):
@@ -788,7 +788,7 @@ class ServerBotInstance:
    async def _get_help_content(self, substr, msg, cmd_prefix, privilege_level):
       buf = None
       if substr == "":
-         buf = cmd.compose_help_summary(self._cmd_dict, privilege_level) + "\n\n"
+         buf = cmd.compose_help_summary(self._cmdd, privilege_level) + "\n\n"
          buf = buf.format(p="{p}", b="")
          buf2 = await self._modules.get_help_content("", privilege_level)
          buf2 = "\n".join(sorted(buf2.splitlines(), key=lambda e: e.lower()))

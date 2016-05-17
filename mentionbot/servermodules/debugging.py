@@ -15,7 +15,7 @@ class Debugging(ServerModule):
    RECOMMENDED_CMD_NAMES = ["debugging", "debug", "db"]
 
    _SECRET_TOKEN = utils.SecretToken()
-   _cmd_dict = {} # Empty dict should work...
+   _cmdd = {} # Empty dict should work...
 
    _HELP_SUMMARY = """
       DEBUGGING: _HELP_SUMMARY CONTENTS.

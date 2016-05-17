@@ -19,7 +19,7 @@ class DynamicChannels(ServerModule):
    RECOMMENDED_CMD_NAMES = ["dchannel"]
    
    _SECRET_TOKEN = utils.SecretToken()
-   _cmd_dict = {}
+   _cmdd = {}
 
    _HELP_SUMMARY = """
       See `{modhelp}` for managing the Dynamic Channels module.
@@ -152,7 +152,7 @@ class DynamicChannels(ServerModule):
          self._scheduler.schedule_closure(msg.channel, self._channel_timeout)
       return
 
-   @cmd.add(_cmd_dict, "search")
+   @cmd.add(_cmdd, "search")
    async def _cmdf_search(self, substr, msg, privilege_level):
       """`{cmd}`"""
       ch_name = utils.convert_to_legal_channel_name(substr)
@@ -173,7 +173,7 @@ class DynamicChannels(ServerModule):
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "open", "create")
+   @cmd.add(_cmdd, "open", "create")
    async def _cmdf_open(self, substr, msg, privilege_level):
       """`{cmd}`"""
       if len(self._scheduler.get_scheduled()) >= self._max_active_temp_channels >= 0:
@@ -200,7 +200,7 @@ class DynamicChannels(ServerModule):
       await self._client.send_msg(msg, "Channel <#{}> successfully opened.".format(ch.id))
       return
 
-   # @cmd.add(_cmd_dict, "forceopen")
+   # @cmd.add(_cmdd, "forceopen")
    # @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    # async def _cmdf_forceopen(self, substr, msg, privilege_level):
    #    ch_name = substr.strip().replace(" ", "-")
@@ -209,7 +209,7 @@ class DynamicChannels(ServerModule):
    #    await self._client.send_msg(msg, "Scheduled closure list is cleared.")
    #    return
 
-   @cmd.add(_cmd_dict, "status", "admin", "s", "stat", "settings", default=True)
+   @cmd.add(_cmdd, "status", "admin", "s", "stat", "settings", default=True)
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_status(self, substr, msg, privilege_level):
       """`{cmd}`"""
@@ -247,7 +247,7 @@ class DynamicChannels(ServerModule):
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "scheduled")
+   @cmd.add(_cmdd, "scheduled")
    async def _cmdf_debug(self, substr, msg, privilege_level):
       """`{cmd}`"""
       scheduled = self._scheduler.get_scheduled()
@@ -260,7 +260,7 @@ class DynamicChannels(ServerModule):
          await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "clearscheduled")
+   @cmd.add(_cmdd, "clearscheduled")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_debug(self, substr, msg, privilege_level):
       """`{cmd}`"""
@@ -268,7 +268,7 @@ class DynamicChannels(ServerModule):
       await self._client.send_msg(msg, "Scheduled closure list is cleared.")
       return
 
-   @cmd.add(_cmd_dict, "addbotflair")
+   @cmd.add(_cmdd, "addbotflair")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_addbotflair(self, substr, msg, privilege_level):
       """`{cmd}`"""
@@ -286,7 +286,7 @@ class DynamicChannels(ServerModule):
       self._save_settings()
       return
 
-   @cmd.add(_cmd_dict, "removebotflair")
+   @cmd.add(_cmdd, "removebotflair")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_addbotflair(self, substr, msg, privilege_level):
       """`{cmd}`"""
@@ -298,7 +298,7 @@ class DynamicChannels(ServerModule):
       self._save_settings()
       return
 
-   @cmd.add(_cmd_dict, "adddefault")
+   @cmd.add(_cmdd, "adddefault")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_adddefault(self, substr, msg, privilege_level):
       """`{cmd}`"""
@@ -323,7 +323,7 @@ class DynamicChannels(ServerModule):
          await self._client.send_msg(msg, "<#{}> successfully added to default list.".format(new_default.id))
       return
 
-   @cmd.add(_cmd_dict, "removedefault")
+   @cmd.add(_cmdd, "removedefault")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_removedefault(self, substr, msg, privilege_level):
       """`{cmd}`"""
@@ -343,7 +343,7 @@ class DynamicChannels(ServerModule):
          await self._client.send_msg(msg, "Error: Channel is not default.")
       return
 
-   @cmd.add(_cmd_dict, "settimeout")
+   @cmd.add(_cmdd, "settimeout")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_settimeout(self, substr, msg, privilege_level):
       """`{cmd}`"""
@@ -359,7 +359,7 @@ class DynamicChannels(ServerModule):
          await self._client.send_msg(msg, "Error: Must enter an integer.")
       return
 
-   @cmd.add(_cmd_dict, "setmaxactive")
+   @cmd.add(_cmdd, "setmaxactive")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_setmaxactive(self, substr, msg, privilege_level):
       """`{cmd}`"""

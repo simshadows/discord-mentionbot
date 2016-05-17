@@ -15,7 +15,7 @@ class JCFDiscord(ServerModule):
    RECOMMENDED_CMD_NAMES = ["jcfdiscord"]
    
    _SECRET_TOKEN = utils.SecretToken()
-   _cmd_dict = {}
+   _cmdd = {}
 
    _HELP_SUMMARY = """
       See `{modhelp}` for JCF Discord commands.
@@ -83,7 +83,7 @@ class JCFDiscord(ServerModule):
             return default_cmd_prefix + self._res.module_cmd_aliases[0] + " typeflair " + left
       return await super(JCFDiscord, self).msg_preprocessor(content, msg, default_cmd_prefix)
 
-   @cmd.add(_cmd_dict, "functions", "fn", "stack")
+   @cmd.add(_cmdd, "functions", "fn", "stack")
    @cmd.top_level_alias("functions")
    async def _cmdf_functions(self, substr, msg, privilege_level):
       """`{cmd}`"""
@@ -107,7 +107,7 @@ class JCFDiscord(ServerModule):
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "typeflair")
+   @cmd.add(_cmdd, "typeflair")
    async def _cmdf_typeflair(self, substr, msg, privilege_level):
       (left, right) = utils.separate_left_word(substr)
       new_role_name = left.upper()
@@ -122,13 +122,13 @@ class JCFDiscord(ServerModule):
       await self._client.send_msg(msg, "Assigned <@{0}> the type flair '{1}'.".format(msg.author.id, new_role_name))
       return
 
-   @cmd.add(_cmd_dict, "subreddit", default=True)
+   @cmd.add(_cmdd, "subreddit", default=True)
    async def _cmdf_noot(self, substr, msg, privilege_level):
       """`{cmd}`"""
       await self._client.send_msg(msg, "Our subreddit is at https://www.reddit.com/r/JCFDiscord/.")
       return
 
-   @cmd.add(_cmd_dict, "swole")
+   @cmd.add(_cmdd, "swole")
    @cmd.top_level_alias()
    async def _cmdf_swole(self, substr, msg, privilege_level):
       """`{cmd}`"""
@@ -140,7 +140,7 @@ class JCFDiscord(ServerModule):
          await self._client.send_msg(msg, "Too bad you're not as swole as swolebro <@{}>.".format(msg.author.id))
       return
 
-   @cmd.add(_cmd_dict, "noot")
+   @cmd.add(_cmdd, "noot")
    @cmd.top_level_alias()
    async def _cmdf_noot(self, substr, msg, privilege_level):
       """`{cmd}`"""

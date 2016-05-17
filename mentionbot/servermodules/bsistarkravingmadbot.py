@@ -16,7 +16,7 @@ class BsiStarkRavingMadBot(ServerModule):
    RECOMMENDED_CMD_NAMES = ["bsistarkravingmadbot", "stark"]
    
    _SECRET_TOKEN = utils.SecretToken()
-   _cmd_dict = {}
+   _cmdd = {}
 
    _HELP_SUMMARY = """
       See `{modhelp}` for StarkRavingMadBot standin commands.
@@ -153,20 +153,20 @@ class BsiStarkRavingMadBot(ServerModule):
             return left + " " + right
       return content
 
-   @cmd.add(_cmd_dict, "cmdnotimplemented")
+   @cmd.add(_cmdd, "cmdnotimplemented")
    async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):
       """`{cmd}` - (Please don't use this command.)"""
       buf = "Sorry, I haven't implemented my own version of that command yet."
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "help", default=True)
+   @cmd.add(_cmdd, "help", default=True)
    async def _cmdf_help(self, substr, msg, privilege_level):
       """`{cmd}` - Get a stand-in version of Stark's help message."""
       await self._client.send_msg(msg, self.STARK_HELP)
       return
 
-   @cmd.add(_cmd_dict, "blame")
+   @cmd.add(_cmdd, "blame")
    @cmd.top_level_alias()
    async def _cmdf_blame(self, substr, msg, privilege_level):
       """`{p}{c}`"""
@@ -183,7 +183,7 @@ class BsiStarkRavingMadBot(ServerModule):
          await self._client.send_msg(msg, buf.format(substr))
       return
 
-   @cmd.add(_cmd_dict, "doot")
+   @cmd.add(_cmdd, "doot")
    @cmd.top_level_alias()
    async def _cmdf_doot(self, substr, msg, privilege_level):
       """`{p}{c}`"""
@@ -193,7 +193,7 @@ class BsiStarkRavingMadBot(ServerModule):
       await self._client.send_msg(msg, "doot doot (thank mr skeltal)")
       return
 
-   @cmd.add(_cmd_dict, "git")
+   @cmd.add(_cmdd, "git")
    async def _cmdf_git(self, substr, msg, privilege_level):
       """`{cmd}` - Get a stand-in version of Stark's source command."""
       buf = "*Now, I'm not StarkRavingMadBot, but here's a copy-paste of what it would've said:*"
@@ -201,20 +201,20 @@ class BsiStarkRavingMadBot(ServerModule):
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "rip")
+   @cmd.add(_cmdd, "rip")
    @cmd.top_level_alias()
    async def _cmdf_rip(self, substr, msg, privilege_level):
       """`{p}{c}`"""
       await self._client.send_msg(msg, "doesnt even deserve a funeral")
       return
 
-   @cmd.add(_cmd_dict, "say")
+   @cmd.add(_cmdd, "say")
    async def _cmdf_say(self, substr, msg, privilege_level):
       """`{cmd}`"""
       await self._client.send_msg(msg, "m8")
       return
 
-   @cmd.add(_cmd_dict, "sleep")
+   @cmd.add(_cmdd, "sleep")
    @cmd.top_level_alias()
    async def _cmdf_sleep(self, substr, msg, privilege_level):
       """`{p}{c}`"""
@@ -225,7 +225,7 @@ class BsiStarkRavingMadBot(ServerModule):
       await self._client.send_msg(msg, random.choice(self._sleep_choices))
       return
 
-   @cmd.add(_cmd_dict, "truth")
+   @cmd.add(_cmdd, "truth")
    async def _cmdf_truth(self, substr, msg, privilege_level):
       """`{cmd}`"""
       buf = None
@@ -252,7 +252,7 @@ class BsiStarkRavingMadBot(ServerModule):
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "ud", "urbandictionary", "urban")
+   @cmd.add(_cmdd, "ud", "urbandictionary", "urban")
    @cmd.top_level_alias()
    async def _cmdf_ud(self, substr, msg, privilege_level):
       """`{p}{c}`"""

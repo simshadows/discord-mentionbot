@@ -13,7 +13,7 @@ class MentionsNotify(ServerModule):
    RECOMMENDED_CMD_NAMES = ["mnotify", "mentionsnotify", "mn"]
    
    _SECRET_TOKEN = utils.SecretToken()
-   _cmd_dict = {}
+   _cmdd = {}
 
    _HELP_SUMMARY = """
       See `{modhelp}` to manage the mentions notification system.

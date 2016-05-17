@@ -16,7 +16,7 @@ class WolframAlpha(ServerModule):
    RECOMMENDED_CMD_NAMES = ["wamanage"]
    
    _SECRET_TOKEN = utils.SecretToken()
-   _cmd_dict = {}
+   _cmdd = {}
 
    _HELP_SUMMARY = """
       See `{modhelp}` to manage the Wolfram Alpha module.
@@ -80,7 +80,7 @@ class WolframAlpha(ServerModule):
             self._res.save_settings(settings)
       return
 
-   @cmd.add(_cmd_dict, "query", "q")
+   @cmd.add(_cmdd, "query", "q")
    @cmd.top_level_alias("wa")
    async def _cmdf_query(self, substr, msg, privilege_level):
       """`{p}wa [query]` - Make a Wolfram Alpha query."""
@@ -118,7 +118,7 @@ class WolframAlpha(ServerModule):
          await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "define", "def")
+   @cmd.add(_cmdd, "define", "def")
    @cmd.top_level_alias("define")
    async def _cmdf_define(self, substr, msg, privilege_level):
       """`{p}define [word]` - Get word definition from WA."""
@@ -138,13 +138,13 @@ class WolframAlpha(ServerModule):
          await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "maxpods")
+   @cmd.add(_cmdd, "maxpods")
    async def _cmdf_maxpods(self, substr, msg, privilege_level):
       """`{cmd}` - Get the max number of pods shown."""
       await self._client.send_msg(msg, "Max pods: " + str(self._max_pods))
       return
 
-   @cmd.add(_cmd_dict, "setmaxpods")
+   @cmd.add(_cmdd, "setmaxpods")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_setmaxpods(self, substr, msg, privilege_level):
       """`{cmd} [integer]` - Get the max number of pods shown."""
@@ -160,7 +160,7 @@ class WolframAlpha(ServerModule):
       await self._client.send_msg(msg, "New max pods set to " + str(self._max_pods) + ".")
       return
 
-   @cmd.add(_cmd_dict, "showtext")
+   @cmd.add(_cmdd, "showtext")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_showtext(self, substr, msg, privilege_level):
       """`{cmd} [true|false]` - Set whether or not queries show text results."""
@@ -175,7 +175,7 @@ class WolframAlpha(ServerModule):
             await self._client.send_msg(msg, "Error: Must show at least text or images.")
       return
 
-   @cmd.add(_cmd_dict, "showimg")
+   @cmd.add(_cmdd, "showimg")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_showimg(self, substr, msg, privilege_level):
       """`{cmd} [true|false]` - Set whether or not queries show image results"""
@@ -190,7 +190,7 @@ class WolframAlpha(ServerModule):
             await self._client.send_msg(msg, "Error: Must show at least text or images.")
       return
 
-   @cmd.add(_cmd_dict, "reloadsettings")
+   @cmd.add(_cmdd, "reloadsettings")
    async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):
       """`{cmd}`"""
       self._load_settings()

@@ -13,7 +13,7 @@ class BasicInfo(ServerModule):
    RECOMMENDED_CMD_NAMES = ["basicinfo"]
    
    _SECRET_TOKEN = utils.SecretToken()
-   _cmd_dict = {}
+   _cmdd = {}
 
    _HELP_SUMMARY = """
       See `{modhelp}` for basic server/user information commands.
@@ -29,7 +29,7 @@ class BasicInfo(ServerModule):
       self._res.suppress_autokill(True)
       return
 
-   @cmd.add(_cmd_dict, "avatar", "dp", "avatarurl")
+   @cmd.add(_cmdd, "avatar", "dp", "avatarurl")
    @cmd.top_level_alias()
    async def _cmdf_avatar(self, substr, msg, privilege_level):
       """`{p}{c} [user]` - Get a user's avatar."""
@@ -49,7 +49,7 @@ class BasicInfo(ServerModule):
       else:
          return await self._client.send_msg(msg, avatar)
 
-   @cmd.add(_cmd_dict, "user", "whois", "who", default=True)
+   @cmd.add(_cmdd, "user", "whois", "who", default=True)
    @cmd.top_level_alias()
    async def _cmdf_user(self, substr, msg, privilege_level):
       """`{p}{c} [user]` - Get user info."""
@@ -81,7 +81,7 @@ class BasicInfo(ServerModule):
       buf += "\n```"
       return await self._client.send_msg(msg, buf)
 
-   @cmd.add(_cmd_dict, "rolestats")
+   @cmd.add(_cmdd, "rolestats")
    @cmd.top_level_alias()
    async def _cmdf_rolestats(self, substr, msg, privilege_level):
       """`{p}{c} [rolename]` - Get role stats."""
@@ -124,7 +124,7 @@ class BasicInfo(ServerModule):
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmd_dict, "thisserver", "server")
+   @cmd.add(_cmdd, "thisserver", "server")
    @cmd.top_level_alias()
    async def _cmdf_server(self, substr, msg, privilege_level):
       """`{p}{c}` - Get some simple server info and statistics."""
@@ -155,7 +155,7 @@ class BasicInfo(ServerModule):
       buf += "\n```"
       return await self._client.send_msg(msg, buf)
 
-   @cmd.add(_cmd_dict, "servericon")
+   @cmd.add(_cmdd, "servericon")
    @cmd.top_level_alias()
    async def _cmdf_servericon(self, substr, msg, privilege_level):
       """`{p}{c}` - Get server icon."""

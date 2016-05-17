@@ -17,7 +17,7 @@ class TruthGame(ServerModule):
    RECOMMENDED_CMD_NAMES = ["truth", "troof", "trufe"]
    
    _SECRET_TOKEN = utils.SecretToken()
-   _cmd_dict = {}
+   _cmdd = {}
 
    _HELP_SUMMARY = """
       See `{modhelp}` for truth game commands.
@@ -67,13 +67,13 @@ class TruthGame(ServerModule):
       self._res.save_settings(settings)
       return
 
-   @cmd.add(_cmd_dict, "rules")
+   @cmd.add(_cmdd, "rules")
    async def _cmdf_enable(self, substr, msg, privilege_level):
       """`{cmd}` - View game rules."""
       await self._client.send_msg(msg, self._RULES_STRING)
       return
 
-   @cmd.add(_cmd_dict, "newgame")
+   @cmd.add(_cmdd, "newgame")
    @cmd.top_level_alias() # This might clash with future game modules...
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_newgame(self, substr, msg, privilege_level):
@@ -84,7 +84,7 @@ class TruthGame(ServerModule):
       await self._client.send_msg(channel, "Truth game cleared.")
       return
 
-   @cmd.add(_cmd_dict, "in")
+   @cmd.add(_cmdd, "in")
    @cmd.top_level_alias() # This might clash with future game modules...
    async def _cmdf_in(self, substr, msg, privilege_level):
       """
@@ -110,7 +110,7 @@ class TruthGame(ServerModule):
          await self._client.send_msg(channel, "Added {} to the game.".format(new_participant))
       return
 
-   @cmd.add(_cmd_dict, "out")
+   @cmd.add(_cmdd, "out")
    @cmd.top_level_alias() # This might clash with future game modules...
    async def _cmdf_out(self, substr, msg, privilege_level):
       """
@@ -133,7 +133,7 @@ class TruthGame(ServerModule):
          await self._client.send_msg(channel, "Error: {} is not already a participant.".format(participant))
       return
 
-   @cmd.add(_cmd_dict, "enablechannel")
+   @cmd.add(_cmdd, "enablechannel")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_enable(self, substr, msg, privilege_level):
       """`{cmd}` - Enable Truth in this channel."""
@@ -146,7 +146,7 @@ class TruthGame(ServerModule):
          await self._client.send_msg(channel, "This channel is now a Truth game channel.")
       return
 
-   @cmd.add(_cmd_dict, "disablechannel")
+   @cmd.add(_cmdd, "disablechannel")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_disable(self, substr, msg, privilege_level):
       """`{cmd}` - Disable Truth in this channel."""
@@ -159,7 +159,7 @@ class TruthGame(ServerModule):
          await self._client.send_msg(channel, "This channel is not a Truth game channel.")
       return
 
-   @cmd.add(_cmd_dict, "viewenabled")
+   @cmd.add(_cmdd, "viewenabled")
    async def _cmdf_viewenabled(self, substr, msg, privilege_level):
       """`{cmd}` - View all channels that are enabled as Truth channels."""
       buf = None
@@ -174,7 +174,7 @@ class TruthGame(ServerModule):
 
    # TODO: Edit this to use the topic string abstraction methods.
    #       Currently, it only consideres user mentions to be participants!
-   @cmd.add(_cmd_dict, "choose", "random", "rand")
+   @cmd.add(_cmdd, "choose", "random", "rand")
    async def _cmdf_choosetruth(self, substr, msg, privilege_level):
       """`{cmd}` - Pick a random participant other than yourself."""
       topic = msg.channel.topic
