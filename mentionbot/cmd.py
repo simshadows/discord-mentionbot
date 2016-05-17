@@ -50,7 +50,7 @@ def compose_help_summary(cmd_dict, privilege_level):
          seen_set.add(cmd_obj)
          help_str = get_help_summary(cmd_obj)
          if len(help_str) != 0:
-            cat_name = cmd_obj.cmd_meta.get_help_category()
+            cat_name = cmd_obj.cmd_meta.get_help_summary()[1] # TODO: Messy...
             if cat_name is None:
                cat_name = ""
             cat_buf = None
@@ -98,7 +98,7 @@ def get_help_summary(cmd_obj):
       "b": "{b}",
       "c": cmd_obj.cmd_meta.get_aliases()[0],
    }
-   return cmd_obj.cmd_meta.get_help_summary().format(**kwargs)
+   return cmd_obj.cmd_meta.get_help_summary()[0].format(**kwargs)
 
 def get_help_detail(cmd_obj):
    return cmd_obj.cmd_meta.get_help_detail()
@@ -211,6 +211,11 @@ class HelpNode(abc.ABC):
    # Get the node's summary help content as a string.
    # POSTCONDITION: Will always produce help content.
    #                This implies no NoneTypes or empty strings.
+   # RETURNS: Tuple with two items:
+   #              [0]: The help summary content. Guaranteed to 
+   #              [1]: A "category" string that may help nodes aggregating
+   #                   other help nodes to organize their help content.
+   #                   Value is None if there is no catgory.
    @abc.abstractmethod
    def get_help_summary(self):
       raise NotImplementedError
@@ -316,18 +321,6 @@ class CommandMeta(HelpNode):
    def get_min_priv(self):
       return self._minimum_privilege
 
-   # Returns None if no category.
-   def get_help_category(self):
-      ret = self._help_category
-      assert (type(ret) is str and len(ret) > 0) or ret is None
-      return ret
-
-   def get_help_summary(self):
-      return self._help_summary
-
-   def get_help_detail(self):
-      return self._help_detail
-
    def get_top_aliases(self):
       if self._top_level_alias_action is self.TopLevelAliasAction.USE_EXISTING_ALIASES:
          return list(self._aliases)
@@ -336,7 +329,18 @@ class CommandMeta(HelpNode):
       else:
          return None
 
+   ################################
+   ### HelpNode Implementations ###
+   ################################
+   
+   def get_help_detail(self):
+      return self._help_detail
+
+   def get_help_summary(self):
+      cat = self._help_category
+      assert (type(cat) is str and len(cat) > 0) or cat is None
+      return (self._help_summary, cat)
+
    def get_next_node(self, locator_string):
       assert not " " in locator_string
       return None # This is a leaf node.
-   
