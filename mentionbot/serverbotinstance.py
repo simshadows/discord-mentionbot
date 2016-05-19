@@ -188,7 +188,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, help_content)
       return
 
-   @cmd.add(_cmdd, "source", "src")
+   @cmd.add(_cmdd, "source", "src", "github", "git")
    async def _cmdf_source(self, substr, msg, privilege_level):
       """`{cmd}` - Where to get my source code."""
       await self._client.send_msg(msg, "https://github.com/simshadows/discord-mentionbot")

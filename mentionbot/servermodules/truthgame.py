@@ -73,8 +73,7 @@ class TruthGame(ServerModule):
       await self._client.send_msg(msg, self._RULES_STRING)
       return
 
-   @cmd.add(_cmdd, "newgame")
-   @cmd.top_level_alias() # This might clash with future game modules...
+   @cmd.add(_cmdd, "newgame", top=True)
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_newgame(self, substr, msg, privilege_level):
       """`{p}{c}` - New game."""
@@ -84,8 +83,7 @@ class TruthGame(ServerModule):
       await self._client.send_msg(channel, "Truth game cleared.")
       return
 
-   @cmd.add(_cmdd, "in")
-   @cmd.top_level_alias() # This might clash with future game modules...
+   @cmd.add(_cmdd, "in", top=True)
    async def _cmdf_in(self, substr, msg, privilege_level):
       """
       `{p}{c}` - Adds you to the game.
@@ -110,8 +108,7 @@ class TruthGame(ServerModule):
          await self._client.send_msg(channel, "Added {} to the game.".format(new_participant))
       return
 
-   @cmd.add(_cmdd, "out")
-   @cmd.top_level_alias() # This might clash with future game modules...
+   @cmd.add(_cmdd, "out", top=True)
    async def _cmdf_out(self, substr, msg, privilege_level):
       """
       `{p}{c}` - Removes you from the game.

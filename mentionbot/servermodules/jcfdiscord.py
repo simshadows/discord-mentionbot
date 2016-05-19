@@ -83,8 +83,7 @@ class JCFDiscord(ServerModule):
             return default_cmd_prefix + self._res.module_cmd_aliases[0] + " typeflair " + left
       return await super(JCFDiscord, self).msg_preprocessor(content, msg, default_cmd_prefix)
 
-   @cmd.add(_cmdd, "functions", "fn", "stack")
-   @cmd.top_level_alias("functions")
+   @cmd.add(_cmdd, "functions", "fn", "stack", top="functions")
    async def _cmdf_functions(self, substr, msg, privilege_level):
       """`{cmd}`"""
       args = substr.split()
@@ -128,8 +127,7 @@ class JCFDiscord(ServerModule):
       await self._client.send_msg(msg, "Our subreddit is at https://www.reddit.com/r/JCFDiscord/.")
       return
 
-   @cmd.add(_cmdd, "swole")
-   @cmd.top_level_alias()
+   @cmd.add(_cmdd, "swole", top=True)
    async def _cmdf_swole(self, substr, msg, privilege_level):
       """`{cmd}`"""
       if msg.author.id == self._SWOLEBRO_ID:
@@ -140,8 +138,7 @@ class JCFDiscord(ServerModule):
          await self._client.send_msg(msg, "Too bad you're not as swole as swolebro <@{}>.".format(msg.author.id))
       return
 
-   @cmd.add(_cmdd, "noot")
-   @cmd.top_level_alias()
+   @cmd.add(_cmdd, "noot", top=True)
    async def _cmdf_noot(self, substr, msg, privilege_level):
       """`{cmd}`"""
       # var m = await Client.SendMessage(e.Channel, "Penguins will rule the earth!");

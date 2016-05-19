@@ -80,8 +80,7 @@ class WolframAlpha(ServerModule):
             self._res.save_settings(settings)
       return
 
-   @cmd.add(_cmdd, "query", "q")
-   @cmd.top_level_alias("wa")
+   @cmd.add(_cmdd, "query", "q", top="wa")
    async def _cmdf_query(self, substr, msg, privilege_level):
       """`{p}wa [query]` - Make a Wolfram Alpha query."""
       if substr == "":
@@ -118,8 +117,7 @@ class WolframAlpha(ServerModule):
          await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmdd, "define", "def")
-   @cmd.top_level_alias("define")
+   @cmd.add(_cmdd, "define", "def", top="define")
    async def _cmdf_define(self, substr, msg, privilege_level):
       """`{p}define [word]` - Get word definition from WA."""
       if substr == "":

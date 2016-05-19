@@ -104,8 +104,7 @@ class Random(ServerModule):
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmdd, "choose", "ch", "choice", "choices")
-   @cmd.top_level_alias("choose")
+   @cmd.add(_cmdd, "choose", "ch", "choice", "choices", top="choose")
    async def _cmdf_choose(self, substr, msg, privilege_level):
       """`{cmd}`"""
       choices = substr.split(";")

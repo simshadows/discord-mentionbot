@@ -166,8 +166,7 @@ class BsiStarkRavingMadBot(ServerModule):
       await self._client.send_msg(msg, self.STARK_HELP)
       return
 
-   @cmd.add(_cmdd, "blame")
-   @cmd.top_level_alias()
+   @cmd.add(_cmdd, "blame", top=True)
    async def _cmdf_blame(self, substr, msg, privilege_level):
       """`{p}{c}`"""
       if (substr == "<@{}>".format(self._res.botowner_ID)) or (substr == "<@{}>".format(self._res.me_ID)):
@@ -183,8 +182,7 @@ class BsiStarkRavingMadBot(ServerModule):
          await self._client.send_msg(msg, buf.format(substr))
       return
 
-   @cmd.add(_cmdd, "doot")
-   @cmd.top_level_alias()
+   @cmd.add(_cmdd, "doot", top=True)
    async def _cmdf_doot(self, substr, msg, privilege_level):
       """`{p}{c}`"""
       # var m = await Client.SendMessage(e.Channel, "doot doot");
@@ -201,8 +199,7 @@ class BsiStarkRavingMadBot(ServerModule):
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmdd, "rip")
-   @cmd.top_level_alias()
+   @cmd.add(_cmdd, "rip", top=True)
    async def _cmdf_rip(self, substr, msg, privilege_level):
       """`{p}{c}`"""
       await self._client.send_msg(msg, "doesnt even deserve a funeral")
@@ -214,8 +211,7 @@ class BsiStarkRavingMadBot(ServerModule):
       await self._client.send_msg(msg, "m8")
       return
 
-   @cmd.add(_cmdd, "sleep")
-   @cmd.top_level_alias()
+   @cmd.add(_cmdd, "sleep", top=True)
    async def _cmdf_sleep(self, substr, msg, privilege_level):
       """`{p}{c}`"""
       # The original command takes a user mention from substr and appends it to the end.
@@ -252,8 +248,7 @@ class BsiStarkRavingMadBot(ServerModule):
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmdd, "ud", "urbandictionary", "urban")
-   @cmd.top_level_alias()
+   @cmd.add(_cmdd, "ud", "urbandictionary", "urban", top=True)
    async def _cmdf_ud(self, substr, msg, privilege_level):
       """`{p}{c}`"""
       await self._client.send_msg(msg, "http://www.urbandictionary.com/define.php?term=" + urllibparse.quote(substr))

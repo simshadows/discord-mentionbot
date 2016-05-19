@@ -29,8 +29,7 @@ class BasicInfo(ServerModule):
       self._res.suppress_autokill(True)
       return
 
-   @cmd.add(_cmdd, "avatar", "dp", "avatarurl")
-   @cmd.top_level_alias()
+   @cmd.add(_cmdd, "avatar", "dp", "avatarurl", top=True)
    async def _cmdf_avatar(self, substr, msg, privilege_level):
       """`{p}{c} [user]` - Get a user's avatar."""
       substr = substr.strip()
@@ -49,8 +48,7 @@ class BasicInfo(ServerModule):
       else:
          return await self._client.send_msg(msg, avatar)
 
-   @cmd.add(_cmdd, "user", "whois", "who", default=True)
-   @cmd.top_level_alias()
+   @cmd.add(_cmdd, "user", "whois", "who", default=True, top=True)
    async def _cmdf_user(self, substr, msg, privilege_level):
       """`{p}{c} [user]` - Get user info."""
       # Get user. Copied from _cmd_avatar()...
@@ -81,8 +79,7 @@ class BasicInfo(ServerModule):
       buf += "\n```"
       return await self._client.send_msg(msg, buf)
 
-   @cmd.add(_cmdd, "rolestats")
-   @cmd.top_level_alias()
+   @cmd.add(_cmdd, "role", "rolelist", top=True)
    async def _cmdf_rolestats(self, substr, msg, privilege_level):
       """`{p}{c} [rolename]` - Get role stats."""
       server = msg.server
@@ -124,8 +121,7 @@ class BasicInfo(ServerModule):
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmdd, "thisserver", "server")
-   @cmd.top_level_alias()
+   @cmd.add(_cmdd, "thisserver", "server", top=True)
    async def _cmdf_server(self, substr, msg, privilege_level):
       """`{p}{c}` - Get some simple server info and statistics."""
       s = msg.server
@@ -155,8 +151,7 @@ class BasicInfo(ServerModule):
       buf += "\n```"
       return await self._client.send_msg(msg, buf)
 
-   @cmd.add(_cmdd, "servericon")
-   @cmd.top_level_alias()
+   @cmd.add(_cmdd, "servericon", top=True)
    async def _cmdf_servericon(self, substr, msg, privilege_level):
       """`{p}{c}` - Get server icon."""
       if msg.server.icon_url == "":

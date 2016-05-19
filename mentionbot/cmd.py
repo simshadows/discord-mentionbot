@@ -103,15 +103,52 @@ def format_mod_evaluate(content_str, *, mod=None):
 #            Wrapping functions may hide other decorated attributes.
 
 # Decorator for adding commands to a dictionary.
-# PARAMETER: dict - The dictionary in which the command is to be added to.
+# PARAMETER: cmd_dict - The dictionary in which the command is to be added to.
 # PARAMETER: *cmd_names - List of names the command is to be mapped to.
-def add(cmd_dict, *cmd_names, default=False):
+# PARAMETER: default - (bool) If true, list the command as a default command.
+# PARAMETER: top - (bool or list<str>) For defining top-level aliases.
+#                  If False, command does not have any top-level aliases.
+#                  If True, all of the aliases are also top-level aliases.
+#                  If it's a string or a non-empty list of strings, then those
+#                  strings are used as top-level aliases.
+# PARAMETER: category - (str or None) For defining a category name, useful by
+#                       certain HelpNode aggregators for organizing lines.
+#                       If None, then no category.
+#                       If a string, then that string is used as the category
+#                       name.
+# PARAMETER: minimum_privilege - A minimum privilege level normally required
+#                                to use the command.
+#                                (Implementation note: If minimum_privilege
+#                                is None, then the default value in the
+#                                CommandMeta object is kept.)
+# Note: minimum_privilege is still used as 
+def add(cmd_dict, *cmd_names, **kwargs):
+   assert isinstance(cmd_dict, dict)
+
+   # Get kwargs
+   default = bool(kwargs.get("default", False))
+   top = kwargs.get("top", False)
+   category = kwargs.get("category", None)
+   minimum_privilege = kwargs.get("minimum_privilege", None)
+
    def function_decorator(function):
       _ensure_cmd_obj(function)
       function.cmd_meta.set_aliases(cmd_names)
+      if isinstance(top, bool):
+         if top:
+            function.cmd_meta.set_top_aliases_existing()
+      else:
+         function.cmd_meta.set_top_aliases_explicitly(list(top))
+      if not category is None:
+         assert isinstance(category, basestring)
+         function.cmd_meta.set_help_category(category)
+      if not minimum_privilege is None:
+         assert isinstance(minimum_privilege, PrivilegeLevel)
+         function.cmd_meta.set_min_priv(minimum_privilege_level)
 
       # Add the function to cmd_dict
       for cmd_name in cmd_names:
+         assert isinstance(cmd_name, basestring)
          if cmd_name in cmd_dict:
             raise RuntimeError("Command with alias '{}' already exists.".format(cmd_name))
          cmd_dict[cmd_name] = function
@@ -125,7 +162,7 @@ def add(cmd_dict, *cmd_names, default=False):
 # Decorator adds an attribute named "privilege_gate" to a function object.
 # This attribute is simply checked before execution.
 def minimum_privilege(minimum_privilege_level):
-   assert type(minimum_privilege_level) is PrivilegeLevel
+   assert isinstance(minimum_privilege_level, PrivilegeLevel)
    def function_decorator(function):
       _ensure_cmd_obj(function)
       function.cmd_meta.set_min_priv(minimum_privilege_level)
@@ -138,21 +175,10 @@ def minimum_privilege(minimum_privilege_level):
 # the composed help message will group the command along with all the
 # other ungrouped commands.
 def category(text):
-   assert type(text) is str
+   assert isinstance(text, str)
    def function_decorator(function):
       _ensure_cmd_obj(function)
       function.cmd_meta.set_help_category(text)
-      return function
-   return function_decorator
-
-# Defines top-level aliases of the command.
-def top_level_alias(*aliases):
-   def function_decorator(function):
-      _ensure_cmd_obj(function)
-      if len(aliases) == 0:
-         function.cmd_meta.set_top_aliases_existing()
-      else:
-         function.cmd_meta.set_top_aliases_explicitly(aliases)
       return function
    return function_decorator
 
@@ -217,7 +243,7 @@ class HelpNode(abc.ABC):
    # RETURNS: Either a string containing help content, or None if no help
    #          content exists.
    async def get_node(self, locator_string):
-      assert type(locator_str) is str
+      assert isinstance(locator_str, str)
       path = locator_string.split()
       curr = self
       for location in path:
@@ -325,7 +351,7 @@ class CommandMeta(HelpNode):
       return
 
    def set_help_category(self, string):
-      assert type(string) is str and len(string) > 0
+      assert isinstance(string, str) and len(string) > 0
       self._help_category = string
       return
 
@@ -373,7 +399,7 @@ class CommandMeta(HelpNode):
    # PARAMETER: privilege_level - This argument doesn't actually do anything.
    async def get_help_summary(self, privilege_level=None):
       cat = self._help_category
-      assert (type(cat) is str and len(cat) > 0) or cat is None
+      assert (isinstance(cat, str) and len(cat) > 0) or cat is None
       return (self._help_summary, cat)
 
    async def get_next_node(self, locator_string):
