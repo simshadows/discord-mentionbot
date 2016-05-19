@@ -5,18 +5,6 @@ import concurrent
 from . import utils, errors, cmd
 from .servermoduleresources import ServerModuleResources
 
-def synchronized_with_state_lock(function):
-   async def wrapper_function(*args, **kwargs):
-      self = args[0]
-      await self._state_lock.acquire()
-      ret = None
-      try:
-         ret = await function(*args, **kwargs)
-      finally:
-         self._state_lock.release()
-      return ret
-   return wrapper_function
-
 class ServerModuleWrapper:
    """
    Wraps the operations of a server module.
@@ -108,7 +96,7 @@ class ServerModuleWrapper:
    def is_active(self):
       return self._is_active
 
-   @synchronized_with_state_lock
+   @utils.synchronized("_state_lock")
    async def activate(self):
       if self.is_active():
          raise RuntimeError("Module is already active.")
@@ -119,7 +107,7 @@ class ServerModuleWrapper:
       self._module_instance = await self._module_class.get_instance(self._module_cmd_aliases, res)
       return
 
-   @synchronized_with_state_lock
+   @utils.synchronized("_state_lock")
    async def kill(self):
       if not self.is_active():
          raise RuntimeError("Module is already inactive.")

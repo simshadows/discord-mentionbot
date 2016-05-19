@@ -23,6 +23,24 @@ class SecretToken:
       return
 
 #################################################################################
+# SYNCHRONIZATION ###############################################################
+#################################################################################
+
+def synchronized(lock_attr_name):
+   def function_decorator(function):
+      async def wrapper_function(self, *args, **kwargs):
+         lock = getattr(self, lock_attr_name)
+         await lock.acquire()
+         ret = None
+         try:
+            ret = await function(self, *args, **kwargs)
+         finally:
+            lock.release()
+         return ret
+      return wrapper_function
+   return function_decorator
+
+#################################################################################
 # BASIC STRING OPERATIONS #######################################################
 #################################################################################
 

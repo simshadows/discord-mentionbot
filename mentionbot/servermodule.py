@@ -1,3 +1,4 @@
+import abc
 import textwrap
 
 from . import utils, cmd
@@ -11,7 +12,7 @@ def registered(cls):
 
 # Abstract Class (would've been an interface...)
 # All server modules are subclasses of ServerModule.
-class ServerModule:
+class ServerModule(abc.ABC):
    """
    The base class of all server modules.
 

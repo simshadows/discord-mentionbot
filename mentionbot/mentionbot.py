@@ -58,11 +58,11 @@ class MentionBot(clientextended.ClientExtended):
          await self.set_game_status(MentionBot.INITIALIZING_GAME_STATUS)
          self.botowner = self.search_for_user(MentionBot.BOTOWNER_ID)
 
+         self.message_cache = await MessageCache.get_instance(self, self.CACHE_DIRECTORY)
+
          self._bot_instances = {}
          for server in self.servers:
             self._bot_instances[server] = await ServerBotInstance.get_instance(self, server)
-
-         self.message_cache = await MessageCache.get_instance(self, self.CACHE_DIRECTORY)
 
          await self.set_game_status(MentionBot.INITIAL_GAME_STATUS)
          try:

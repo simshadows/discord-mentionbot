@@ -5,19 +5,6 @@ import abc
 from . import utils, errors
 from .enums import PrivilegeLevel
 
-# Help message string formatting arguments:
-#     Everywhere:
-#        "{cmd}" -> "{bc}{c}" -> "{p}{b}{c}"
-#           "{cmd}", "{c}", and "{bc}"->"{p}{b}" are evaluated in get_help_summary().
-#           "{b}" is evaluated where the help summary is composed from the command
-#              objects themselves.
-#           "{p}" is evaluated last, before sending off the final string.
-#     In modules:
-#        "{modhelp}" -> "{p}help {mod}"
-#           "{modhelp}" and "{mod}" are evaluated where the help summary is composed
-#              from the command objects themselves, in a module method.
-#           "{p}" is evaluated last, before sending off the final string.
-
 ###########################################################################################
 # UTILITY FUNCTIONS #######################################################################
 ###########################################################################################
@@ -187,6 +174,43 @@ class HelpNode(abc.ABC):
       - ServerModuleGroup (as this is an entrypoint)
       - ServerModuleWrapper
       - CommandMeta
+
+   SUBSTITUTION:
+
+      PROPOSED SCHEME
+         Commands are always "{cmd}".
+         STEP 1 (leaves) for CommandMeta:
+            IF it's marked as a top-level command:
+               "{cmd}" becomes "{p}[top_level_alias]"
+            ELSE:
+               "{cmd}" becomes "{p}{grp}[cmd_alias]" # cmd_alias is the primary
+                                                     # alias used by the
+                                                     # aggregator underneath.
+         STEP 2 (aggregators) for ServerModuleWrapper:
+            "{p}" remains untouched.
+            "{grp}" becomes "{grp}[module_alias] " # module_alias is the primary
+                                                   # alias used by the
+                                                   # aggregator.
+         STEP 3 (requester) for ServerBotInstance:
+            "{p}" becomes the new prefix
+            "{grp}" disappears.
+
+
+      
+      CURRENT SCHEME (for reference until I've completely replaced it)
+         Help message string formatting arguments:
+             Everywhere:
+                "{cmd}" -> "{bc}{c}" -> "{p}{b}{c}"
+                   "{cmd}", "{c}", and "{bc}"->"{p}{b}" are evaluated in get_help_summary().
+                   "{b}" is evaluated where the help summary is composed from the command
+                      objects themselves.
+                   "{p}" is evaluated last, before sending off the final string.
+             In modules:
+                "{modhelp}" -> "{p}help {mod}"
+                   "{modhelp}" and "{mod}" are evaluated where the help summary is composed
+                      from the command objects themselves, in a module method.
+                   "{p}" is evaluated last, before sending off the final string.
+
    """
 
    # Get help content specified by the locator string.
@@ -205,7 +229,7 @@ class HelpNode(abc.ABC):
    # POSTCONDITION: Will always produce help content.
    #                This implies no NoneTypes or empty strings.
    @abc.abstractmethod
-   def get_help_detail(self):
+   def get_help_detail(self, privilege_level=None):
       raise NotImplementedError
 
    # Get the node's summary help content as a string.
@@ -217,7 +241,7 @@ class HelpNode(abc.ABC):
    #                   other help nodes to organize their help content.
    #                   Value is None if there is no catgory.
    @abc.abstractmethod
-   def get_help_summary(self):
+   def get_help_summary(self, privilege_level=None):
       raise NotImplementedError
 
    # Get the next IHelpNode object, given a locator string specifying this next
@@ -333,10 +357,20 @@ class CommandMeta(HelpNode):
    ### HelpNode Implementations ###
    ################################
    
-   def get_help_detail(self):
-      return self._help_detail
+   def get_help_detail(self, privilege_level=None):
+      buf = self._help_detail + "\n\n"
+      buf0 = "**Required privilege level:** "
+      buf0 += self._minimum_privilege.get_commonname()
+      if (not privilege_level is None) and (privilege_level < self._minimum_privilege):
+         buf += "**(Sorry, you do not have the correct privilege level.)**\n"
+         buf += buf0 + "\n**Your privilege level:** "
+         buf += privilege_level.get_commonname()
+      else:
+         buf += buf0
+      return buf
 
-   def get_help_summary(self):
+   # PARAMETER: privilege_level - This argument doesn't actually do anything.
+   def get_help_summary(self, privilege_level=None):
       cat = self._help_category
       assert (type(cat) is str and len(cat) > 0) or cat is None
       return (self._help_summary, cat)
