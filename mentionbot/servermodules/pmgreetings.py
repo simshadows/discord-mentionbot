@@ -64,12 +64,12 @@ class PMGreetings(ServerModule):
       self._res.save_settings(settings)
       return
 
-   def get_help_detail(self, substr, privilege_level, module_alias):
+   async def get_help_detail(self, substr, privilege_level, module_alias):
       buf = "This module sends personalized greeting messages to new members via PM.\n\n"
       buf += self._SUBSTITUTION_INFO
       buf += "\n\n**Available Commands:**\n"
       buf = buf.format(self._MEMBER_NAME_IDENTIFIER, self._SERVER_NAME_IDENTIFIER).strip()
-      buf += "\n" + super(PMGreetings, self).get_help_detail(substr, privilege_level, module_alias)
+      buf += "\n" + await super(PMGreetings, self).get_help_detail(substr, privilege_level, module_alias)
       return buf
 
    @cmd.add(_cmdd, "view", "viewmessage", "see", "get", "getmessage", default=True)

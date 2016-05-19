@@ -1,8 +1,8 @@
 import re
 
-from . import utils, errors
+from . import utils, errors, cmd
 
-class ServerModuleGroup:
+class ServerModuleGroup: # (cmd.HelpNode) TODO
 
    # TODO: Implement more efficient data structures. Too much linear searching is going on.
 
@@ -142,3 +142,18 @@ class ServerModuleGroup:
             await module.kill()
             return
       raise RuntimeError("No such server module exists.")
+
+   ################################
+   ### HelpNode Implementations ###
+   ################################
+
+   # def get_help_detail(self):
+   #    raise NotImplementedError
+
+   # def get_help_summary(self):
+   #    raise NotImplementedError
+
+   # def get_next_node(self, locator_string):
+   #    # Please insert this assert in implementations.
+   #    assert not " " in locator_string
+   #    raise NotImplementedError

@@ -26,7 +26,7 @@ def get(cmd_dict, cmd_name, privilege_level):
    except KeyError:
       raise errors.InvalidCommandArgumentsError
 
-def compose_help_summary(cmd_dict, privilege_level):
+async def compose_help_summary(cmd_dict, privilege_level):
    # Make separate help strings for each group.
    seen_set = set()
    cats_dict = {} # FORMAT: category name string -> help content string
@@ -35,9 +35,9 @@ def compose_help_summary(cmd_dict, privilege_level):
          if privilege_level < cmd_obj.cmd_meta.get_min_priv():
             continue
          seen_set.add(cmd_obj)
-         help_str = get_help_summary(cmd_obj)
+         help_str = await get_help_summary(cmd_obj)
          if len(help_str) != 0:
-            cat_name = cmd_obj.cmd_meta.get_help_summary()[1] # TODO: Messy...
+            cat_name = (await cmd_obj.cmd_meta.get_help_summary())[1] # TODO: Messy...
             if cat_name is None:
                cat_name = ""
             cat_buf = None
@@ -77,7 +77,7 @@ def compose_help_summary(cmd_dict, privilege_level):
 # This method is not normally used anywhere other than compose_help_summary().
 # This method also processes "{cmd}" -> "{bc}{c}" and substitutes in the
 # value of "{c}".
-def get_help_summary(cmd_obj):
+async def get_help_summary(cmd_obj):
    kwargs = {
       "cmd": "{p}{b}" + cmd_obj.cmd_meta.get_aliases()[0],
       "bc": "{p}{b}",
@@ -85,10 +85,10 @@ def get_help_summary(cmd_obj):
       "b": "{b}",
       "c": cmd_obj.cmd_meta.get_aliases()[0],
    }
-   return cmd_obj.cmd_meta.get_help_summary()[0].format(**kwargs)
+   return (await cmd_obj.cmd_meta.get_help_summary())[0].format(**kwargs)
 
-def get_help_detail(cmd_obj):
-   return cmd_obj.cmd_meta.get_help_detail()
+async def get_help_detail(cmd_obj):
+   return await cmd_obj.cmd_meta.get_help_detail()
 
 # Carries out "{modhelp}" -> "{p}help {mod}" evaluation, while also
 # substituting "{mod}".
@@ -216,11 +216,12 @@ class HelpNode(abc.ABC):
    # Get help content specified by the locator string.
    # RETURNS: Either a string containing help content, or None if no help
    #          content exists.
-   def get_node(self, locator_string):
+   async def get_node(self, locator_string):
+      assert type(locator_str) is str
       path = locator_string.split()
       curr = self
       for location in path:
-         curr = curr.get_next_node(location)
+         curr = await curr.get_next_node(location)
          if curr is None:
             break
       return curr
@@ -229,7 +230,7 @@ class HelpNode(abc.ABC):
    # POSTCONDITION: Will always produce help content.
    #                This implies no NoneTypes or empty strings.
    @abc.abstractmethod
-   def get_help_detail(self, privilege_level=None):
+   async def get_help_detail(self, privilege_level=None):
       raise NotImplementedError
 
    # Get the node's summary help content as a string.
@@ -241,7 +242,7 @@ class HelpNode(abc.ABC):
    #                   other help nodes to organize their help content.
    #                   Value is None if there is no catgory.
    @abc.abstractmethod
-   def get_help_summary(self, privilege_level=None):
+   async def get_help_summary(self, privilege_level=None):
       raise NotImplementedError
 
    # Get the next IHelpNode object, given a locator string specifying this next
@@ -249,7 +250,7 @@ class HelpNode(abc.ABC):
    # PRECONDITION: The locator string only specifies a "single traversal" to
    #               the next node, i.e. no spaces.
    @abc.abstractmethod
-   def get_next_node(self, locator_string):
+   async def get_next_node(self, locator_string):
       # Please insert this assert in implementations.
       assert not " " in locator_string
       raise NotImplementedError
@@ -357,7 +358,7 @@ class CommandMeta(HelpNode):
    ### HelpNode Implementations ###
    ################################
    
-   def get_help_detail(self, privilege_level=None):
+   async def get_help_detail(self, privilege_level=None):
       buf = self._help_detail + "\n\n"
       buf0 = "**Required privilege level:** "
       buf0 += self._minimum_privilege.get_commonname()
@@ -370,11 +371,11 @@ class CommandMeta(HelpNode):
       return buf
 
    # PARAMETER: privilege_level - This argument doesn't actually do anything.
-   def get_help_summary(self, privilege_level=None):
+   async def get_help_summary(self, privilege_level=None):
       cat = self._help_category
       assert (type(cat) is str and len(cat) > 0) or cat is None
       return (self._help_summary, cat)
 
-   def get_next_node(self, locator_string):
+   async def get_next_node(self, locator_string):
       assert not " " in locator_string
       return None # This is a leaf node.

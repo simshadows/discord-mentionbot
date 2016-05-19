@@ -188,7 +188,7 @@ class ServerModuleWrapper:
       if not self.is_active():
          return "(The `{}` module is not active.)".format(self.module_name)
       try:
-         return self._module_instance.get_help_summary(privilege_level, self._module_cmd_aliases[0])
+         return await self._module_instance.get_help_summary(privilege_level, self._module_cmd_aliases[0])
       except Exception as e:
          await self._module_method_error_handler(e)
          return "(Unable to obtain `{}` help.)".format(self.module_name)
@@ -197,7 +197,7 @@ class ServerModuleWrapper:
       if not self.is_active():
          return "The `{}` module is not active.".format(self.module_name)
       try:
-         return self._module_instance.get_help_detail(substr, privilege_level, self._module_cmd_aliases[0])
+         return await self._module_instance.get_help_detail(substr, privilege_level, self._module_cmd_aliases[0])
       except Exception as e:
          return await self._module_method_error_handler(e)
 

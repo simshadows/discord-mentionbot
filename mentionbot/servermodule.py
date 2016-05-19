@@ -71,14 +71,14 @@ class ServerModule(abc.ABC):
    # Get a help-message string summarising the module functionality,
    # or at least directing the user to more detailed help.
    # Returned string has no leading/trailing whitespace.
-   def get_help_summary(self, privilege_level, module_alias):
+   async def get_help_summary(self, privilege_level, module_alias):
       buf = textwrap.dedent(self._HELP_SUMMARY).strip()
       return cmd.format_mod_evaluate(buf, mod=module_alias)
 
    # Get a detailed help-message string about the module.
    # String has no leading/trailing whitespace.
-   def get_help_detail(self, substr, privilege_level, module_alias):
-      buf = cmd.compose_help_summary(self._cmdd, privilege_level)
+   async def get_help_detail(self, substr, privilege_level, module_alias):
+      buf = await cmd.compose_help_summary(self._cmdd, privilege_level)
       return buf.format(b=module_alias + " ", p="{p}")
 
    # This method is called if a command is to be handled by the module.

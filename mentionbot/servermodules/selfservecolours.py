@@ -30,8 +30,8 @@ class SelfServeColours(ServerModule):
       self._res.suppress_autokill(True)
       return
 
-   def get_help_detail(self, substr, privilege_level, module_alias):
-      return self.get_help_summary(privilege_level, module_alias)
+   async def get_help_detail(self, substr, privilege_level, module_alias):
+      return await self.get_help_summary(privilege_level, module_alias)
 
    async def process_cmd(self, substr, msg, privilege_level):
       # First process the input.

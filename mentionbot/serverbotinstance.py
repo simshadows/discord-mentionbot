@@ -788,7 +788,7 @@ class ServerBotInstance:
    async def _get_help_content(self, substr, msg, cmd_prefix, privilege_level):
       buf = None
       if substr == "":
-         buf = cmd.compose_help_summary(self._cmdd, privilege_level) + "\n\n"
+         buf = await cmd.compose_help_summary(self._cmdd, privilege_level) + "\n\n"
          buf = buf.format(p="{p}", b="")
          buf2 = await self._modules.get_help_content("", privilege_level)
          buf2 = "\n".join(sorted(buf2.splitlines(), key=lambda e: e.lower()))

@@ -41,7 +41,7 @@ class ServerActivityStatistics(ServerModule):
       self._res.suppress_autokill(True)
       return
 
-   def get_help_detail(self, substr, privilege_level, module_alias):
+   async def get_help_detail(self, substr, privilege_level, module_alias):
       return self._get_usage_info()
 
    async def process_cmd(self, substr, msg, privilege_level):
