@@ -121,6 +121,9 @@ def format_mod_evaluate(content_str, *, mod=None):
 #                                (Implementation note: If minimum_privilege
 #                                is None, then the default value in the
 #                                CommandMeta object is kept.)
+#     # THE FOLLOWING PARAMETER IS CURRENTLY STILL PLANNED AND THUS UNUSED.
+#     # PARAMETER: help_pages - A CommandHelpPage object (or list of) in which the
+#     #                         command is to be added to.
 # Note: minimum_privilege is still used as 
 def add(cmd_dict, *cmd_names, **kwargs):
    assert isinstance(cmd_dict, dict)
@@ -140,7 +143,7 @@ def add(cmd_dict, *cmd_names, **kwargs):
       else:
          function.cmd_meta.set_top_aliases_explicitly(list(top))
       if not category is None:
-         assert isinstance(category, basestring)
+         assert isinstance(category, str)
          function.cmd_meta.set_help_category(category)
       if not minimum_privilege is None:
          assert isinstance(minimum_privilege, PrivilegeLevel)
@@ -148,7 +151,7 @@ def add(cmd_dict, *cmd_names, **kwargs):
 
       # Add the function to cmd_dict
       for cmd_name in cmd_names:
-         assert isinstance(cmd_name, basestring)
+         assert isinstance(cmd_name, str)
          if cmd_name in cmd_dict:
             raise RuntimeError("Command with alias '{}' already exists.".format(cmd_name))
          cmd_dict[cmd_name] = function
@@ -199,6 +202,7 @@ class HelpNode(abc.ABC):
    HelpNode implementors:
       - ServerModuleGroup (as this is an entrypoint)
       - ServerModuleWrapper
+      - CommandHelpPage
       - CommandMeta
 
    SUBSTITUTION:
@@ -245,11 +249,13 @@ class HelpNode(abc.ABC):
    async def get_node(self, locator_string):
       assert isinstance(locator_str, str)
       path = locator_string.split()
+      prev = None
       curr = self
       for location in path:
-         curr = await curr.get_next_node(location)
+         curr = await curr.get_next_node(location, prev)
          if curr is None:
             break
+         prev = location
       return curr
 
    # Get the node's detail help content as a string.
@@ -273,13 +279,87 @@ class HelpNode(abc.ABC):
 
    # Get the next IHelpNode object, given a locator string specifying this next
    # object. If no such object exists, returns None.
-   # PRECONDITION: The locator string only specifies a "single traversal" to
-   #               the next node, i.e. no spaces.
+   # PARAMETER: locator_string - A locator string to specify a "single
+   #                             traversal" to the next node.
+   # PARAMETER: entry_string - The "single traversal" locator string used
+   #                           previously. If no locator string was used, pass
+   #                           in None.
+   # PRECONDITION: The locator_string only specifies a "single traversal" to
+   #               the next node, i.e. no spaces, and non-empty.
+   # PRECONDITION: The entry string shares the same precondition as
+   #               locator_string, but entry_string may also be None.
    @abc.abstractmethod
-   async def get_next_node(self, locator_string):
-      # Please insert this assert in implementations.
-      assert not " " in locator_string
+   async def get_next_node(self, locator_string, entry_string):
+      # A few asserts that may be used.
+      assert type(locator_string) is str
+      assert (not " " in locator_string) and (not locator_string is "")
+      assert entry_string is None or type(entry_string) is str
+      assert (not " " in entry_string) and (not entry_string is "")
       raise NotImplementedError
+
+# STILL IN DEVELOPMENT
+# class CommandHelpPage(HelpNode):
+#    """
+#    A general-use node collection of CommandMeta nodes.
+#    """
+#    def __init__(self):
+#       self._cmd_list = []
+#       self._cmd_dict = {}
+#       self._help_summary = None
+#       self._above_text = None # This is text that will be added before the
+#                               # command listing. This must be pre-stripped
+#                               # then a newline appended to the end.
+#       return
+
+#    # PARAMETER: cmd_obj - A command object to add to the collection.
+#    #                      Also supports a list of command objects (appends each
+#    #                      one individually).
+#    def add_command(self, cmd_obj):
+#       if not isinstance(cmd_obj, list):
+#          cmd_obj = list(cmd_obj)
+#       for x in cmd_obj:
+#          assert callable(x) and hasattr(x.cmd_meta, CommandMeta)
+#          for cmd_alias in x.cmd_meta.get_aliases():
+#             assert isinstance(cmd_alias, str)
+#             assert not cmd_alias in self._cmd_dict
+#             self._cmd_dict[cmd_alias] = cmd_obj
+#       self._cmd_list += cmd_obj
+#       return
+
+#    # PARAMETER: text - Either a string containing text to set as the help
+#    #                   summary, or None.
+#    def set_help_summary(self, text):
+#       if text is None:
+#          self._help_summary = None
+#       else:
+#          assert isinstance(text, str)
+#          self._help_summary = text.strip()
+#       return
+
+#    # PARAMETER: text - Either a string containing text to append to the top
+#    #                   in get_help_detail(), or None.
+#    def set_above_text(self, text):
+#       if text is None:
+#          self._above_text = None
+#       else:
+#          assert isinstance(text, str)
+#          self._above_text = text.strip() + "\n"
+#       return
+
+#    ################################
+#    ### HelpNode Implementations ###
+#    ################################
+
+#    async def get_help_detail(self, privilege_level=None):
+#       raise NotImplementedError
+
+#    async def get_help_summary(self, privilege_level=None):
+#       raise NotImplementedError
+
+#    async def get_next_node(self, locator_string):
+#       assert not " " in locator_string
+#       assert not locator_string is ""
+#       raise NotImplementedError
 
 
 class CommandMeta(HelpNode):
@@ -294,7 +374,7 @@ class CommandMeta(HelpNode):
    function objects has to explicitly check for the existence of these
    attributes, so data access is also an issue.
 
-   CommandSpecification is designed to tidy all of this up.
+   CommandMeta is designed to tidy all of this up.
    """
 
    DEFAULT_HELP_STR = "`{cmd}`"
@@ -402,6 +482,9 @@ class CommandMeta(HelpNode):
       assert (isinstance(cat, str) and len(cat) > 0) or cat is None
       return (self._help_summary, cat)
 
-   async def get_next_node(self, locator_string):
-      assert not " " in locator_string
+   async def get_next_node(self, locator_string, entry_string):
+      assert type(locator_string) is str
+      assert (not " " in locator_string) and (not locator_string is "")
+      assert entry_string is None or type(entry_string) is str
+      assert (not " " in entry_string) and (not entry_string is "")
       return None # This is a leaf node.
