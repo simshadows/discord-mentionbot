@@ -103,7 +103,7 @@ class ServerModule(HelpNode):
    async def get_help_summary(self, privilege_level):
       assert isinstance(privilege_level, PrivilegeLevel)
       buf = textwrap.dedent(self._HELP_SUMMARY).strip()
-      return buf.format(p="{p}", modhelp="{p}help {grp}")
+      return buf.format(p="{p}", grp="{grp}", modhelp="{p}help {grp}")
 
    # This method is called if a command is to be handled by the module.
    # By default, it processes a command in _cmdd.

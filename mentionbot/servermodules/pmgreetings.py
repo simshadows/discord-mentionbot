@@ -20,7 +20,7 @@ class PMGreetings(ServerModule):
    _cmdd = {} # Empty dict should work...
 
    _HELP_SUMMARY = """
-      See `{modhelp}` to manage the new-member PM greeting system.
+      `{modhelp}` - PM greeting system.
       """
 
    _MEMBER_NAME_IDENTIFIER = "memname"
@@ -81,7 +81,11 @@ class PMGreetings(ServerModule):
 
    @cmd.add(_cmdd, "viewmono", "mono", "viewmessagemono", "seemono", "getmono", "getmessagemono")
    async def _cmdf_viewmono(self, substr, msg, privilege_level):
-      """`{cmd}` - View a monospace copy of the server greeting message."""
+      """
+      `{cmd}` - View a monospace copy of the server greeting message.
+
+      This command is useful for saving a copy of the server greeting message in plaintext with markdown formatting.
+      """
       buf = "**Monospace copy of the server greeting message:**\n```\n"
       buf += self._greeting_template + "\n```"
       await self._client.send_msg(msg, buf)
@@ -100,7 +104,9 @@ class PMGreetings(ServerModule):
       """
       `{cmd} [message contents]` - Set the server greeting message.
 
-      For information on what tokens are used, see `<<PLACEHOLDER>>`.
+      Messages are personalized using substitution tokens. This allows you to insert the user's name, the server's name, etc.
+
+      For information on what these tokens are, see `{p}help {grp}`.
       """
       if len(substr) == 0:
          await self._client.send_msg(msg, self._SUBSTITUTION_INFO)

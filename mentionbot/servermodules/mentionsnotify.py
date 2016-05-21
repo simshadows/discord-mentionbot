@@ -16,7 +16,7 @@ class MentionsNotify(ServerModule):
    _cmdd = {}
 
    _HELP_SUMMARY = """
-      See `{modhelp}` to manage the mentions notification system.
+      `{modhelp}` - Mentions notification system.
       """
 
    async def _initialize(self, resources):

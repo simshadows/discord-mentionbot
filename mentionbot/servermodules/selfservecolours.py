@@ -1,10 +1,12 @@
 import asyncio
 import random
 import re
+import textwrap
 
 import discord
 
 from .. import utils, errors, cmd
+from ..enums import PrivilegeLevel
 from ..servermodule import ServerModule, registered
 
 @registered
@@ -18,8 +20,10 @@ class SelfServeColours(ServerModule):
    _cmdd = {}
 
    _HELP_SUMMARY = """
-      `[p]colour [rgb code]` - Assign yourself a colour. `[p]colour` clears.
+      `{modhelp}` - Personal colour roles. <<PLACEHOLDER>>
       """
+   # `{p}{grp}[rgb code]` - Assign yourself a colour.
+   # `{p}{grp}colour` - Removes your current colour flair.
 
    _re_rgb_code = re.compile("[0-9a-fA-F]{6}")
 
@@ -30,7 +34,9 @@ class SelfServeColours(ServerModule):
       self._res.suppress_autokill(True)
       return
 
-   async def _get_help_header_text(self, privilege_level):
+   async def get_help_detail(self, locator_string, entry_string, privilege_level):
+      assert isinstance(locator_string, str) and isinstance(entry_string, str)
+      assert isinstance(privilege_level, PrivilegeLevel)
       return await self.get_help_summary(privilege_level)
 
    async def process_cmd(self, substr, msg, privilege_level):

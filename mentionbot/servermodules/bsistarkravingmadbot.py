@@ -13,13 +13,13 @@ class BsiStarkRavingMadBot(ServerModule):
 
    MODULE_NAME = "BSI StarkRavingMadBot"
    MODULE_SHORT_DESCRIPTION = "Allows this bot to stand-in for the bot *StarkRavingMadBot*."
-   RECOMMENDED_CMD_NAMES = ["bsistarkravingmadbot", "stark"]
+   RECOMMENDED_CMD_NAMES = ["stark", "bsistarkravingmadbot"]
    
    _SECRET_TOKEN = utils.SecretToken()
    _cmdd = {}
 
    _HELP_SUMMARY = """
-      See `{modhelp}` for StarkRavingMadBot standin commands.
+      `{modhelp}` for StarkRavingMadBot standin commands.
       """
 
    # STARK_PF = "$" # TODO: Consider implementing this.
@@ -138,18 +138,19 @@ class BsiStarkRavingMadBot(ServerModule):
             left = self._preprocessor_replace[left.lower()]
          except KeyError:
             return content
+         print(left)
+
+         # Special case for whois command
+         if left.startswith("whois"):
+            left = left[5:] # Prefix
+            if len(right) == 0 or utils.re_user_mention.match(right):
+               left += "user"
+            else:
+               left += "role"
 
          if right == "":
             return left
-         else:
-            # Special case for whois command
-            if left.startswith("whois"):
-               left = left[5:] + "basicinfo " # Prefix + "basicinfo "
-               if utils.re_user_mention.match(right):
-                  left += "user"
-               else:
-                  left += "rolestats"
-            
+         else: 
             return left + " " + right
       return content
 
@@ -201,7 +202,7 @@ class BsiStarkRavingMadBot(ServerModule):
 
    @cmd.add(_cmdd, "rip", top=True)
    async def _cmdf_rip(self, substr, msg, privilege_level):
-      """`{cmd}`"""
+      """`{cmd}` - rip in peperonis"""
       await self._client.send_msg(msg, "doesnt even deserve a funeral")
       return
 
@@ -250,7 +251,7 @@ class BsiStarkRavingMadBot(ServerModule):
 
    @cmd.add(_cmdd, "ud", "urbandictionary", "urban", top=True)
    async def _cmdf_ud(self, substr, msg, privilege_level):
-      """`{cmd}`"""
+      """`{cmd}` - Query urban dictionary."""
       await self._client.send_msg(msg, "http://www.urbandictionary.com/define.php?term=" + urllibparse.quote(substr))
       return
 

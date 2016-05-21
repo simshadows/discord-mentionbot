@@ -24,7 +24,7 @@ class ServerActivityStatistics(ServerModule):
    _cmdd = {}
 
    _HELP_SUMMARY = """
-      See `{modhelp}` for commands to generate user activity statistics.
+      `{modhelp}` Generates user activity statistics.
       """
 
    DEFAULT_SHARED_SETTINGS = {

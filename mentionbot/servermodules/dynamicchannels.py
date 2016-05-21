@@ -16,16 +16,13 @@ class DynamicChannels(ServerModule):
 
    MODULE_NAME = "Dynamic Channels"
    MODULE_SHORT_DESCRIPTION = "Allows users to create temporary channels. (NOT YET FUNCTIONAL.)"
-   RECOMMENDED_CMD_NAMES = ["dchannel"]
+   RECOMMENDED_CMD_NAMES = ["dchannel", "dchannels", "dynamicchannels"]
    
    _SECRET_TOKEN = utils.SecretToken()
    _cmdd = {}
 
    _HELP_SUMMARY = """
-      See `{modhelp}` for managing the Dynamic Channels module.
-      `+` - See list of hidden channels. (Will cut off at 2000 chars.)
-      `+[string]` - Search list of hidden channels.
-      `++[string]` - Create/unhide channel.
+      `{modhelp}` - Temporary channels.
       """
 
    DEFAULT_SETTINGS = {
@@ -154,7 +151,10 @@ class DynamicChannels(ServerModule):
 
    @cmd.add(_cmdd, "search")
    async def _cmdf_search(self, substr, msg, privilege_level):
-      """`{cmd}`"""
+      """
+      `+` - See list of hidden channels. (Will cut off at 2000 chars.)
+      `+[string]` - Search list of hidden channels.
+      """
       ch_name = utils.convert_to_legal_channel_name(substr)
       available_channels = []
       restrict = (len(ch_name) != 0)
@@ -175,7 +175,7 @@ class DynamicChannels(ServerModule):
 
    @cmd.add(_cmdd, "open", "create")
    async def _cmdf_open(self, substr, msg, privilege_level):
-      """`{cmd}`"""
+      """`++[string]` - Create/unhide channel."""
       if len(self._scheduler.get_scheduled()) >= self._max_active_temp_channels >= 0:
          buf = "No more than {}".format(str(self._max_active_temp_channels))
          buf += " active temporary channels are allowed."
@@ -200,19 +200,11 @@ class DynamicChannels(ServerModule):
       await self._client.send_msg(msg, "Channel <#{}> successfully opened.".format(ch.id))
       return
 
-   # @cmd.add(_cmdd, "forceopen")
-   # @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
-   # async def _cmdf_forceopen(self, substr, msg, privilege_level):
-   #    ch_name = substr.strip().replace(" ", "-")
-   #    self._chopen_name_check(msg, ch_name)
-
-   #    await self._client.send_msg(msg, "Scheduled closure list is cleared.")
-   #    return
-
    @cmd.add(_cmdd, "status", "admin", "s", "stat", "settings", default=True)
+   @cmd.category("Status")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_status(self, substr, msg, privilege_level):
-      """`{cmd}`"""
+      """`{cmd}` - A summary of the module's settings."""
       buf = "**Timeout**: " + str(self._channel_timeout) + " minutes"
       if self._max_active_temp_channels < 0:
          buf += "\n**Max Active**: unlimited channels"
@@ -231,25 +223,17 @@ class DynamicChannels(ServerModule):
       else:
          for ch in self._default_channels:
             buf += "\n<#{0}> (ID: {0})".format(ch.id)
-      if privilege_level >= PrivilegeLevel.ADMIN:
-         pf = self._res.cmd_prefix
-         base = pf + self._res.module_cmd_aliases[0]
-         buf += "\n\n`{} scheduled` to view what's scheduled for closure.".format(base)
-         buf += "\n\nOther management commands:"
-         buf += "\n`{} adddefault [channel]`".format(base)
-         buf += "\n`{} removedefault [channel]`".format(base)
-         buf += "\n`{} addbotflair [flair name]`".format(base)
-         buf += "\n`{} removebotflair [flair name]`".format(base)
-         buf += "\n`{} settimeout [int]`".format(base)
-         buf += "\n`{} setmaxactive [int]`".format(base)
-         buf += " (for unlimited max active, enter `-1`.)"
-         buf += "\n`{} clearscheduled`".format(base)
       await self._client.send_msg(msg, buf)
       return
 
    @cmd.add(_cmdd, "scheduled")
+   @cmd.category("Status")
    async def _cmdf_debug(self, substr, msg, privilege_level):
-      """`{cmd}`"""
+      """
+      `{cmd}` - View what's scheduled for closure.
+
+      This command gives you the time for closure for each channel, rounded UP to the nearest minute. (i.e. 20 minutes and 1 second will round up to 21 minutes.)
+      """
       scheduled = self._scheduler.get_scheduled()
       if len(scheduled) == 0:
          await self._client.send_msg(msg, "No channels are scheduled.")
@@ -261,17 +245,27 @@ class DynamicChannels(ServerModule):
       return
 
    @cmd.add(_cmdd, "clearscheduled")
+   @cmd.category("Admin - Misc")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_debug(self, substr, msg, privilege_level):
-      """`{cmd}`"""
+      """
+      `{cmd}` - Reset the scheduled-for-closure list.
+
+      Each temporary channel has an associated countdown timer which is reset every time a message is sent into the channel.
+
+      This command will clear all currently scheduled temporary channels AND stop their countdown timers temporarily.
+
+      Sending a message into the channel again, however, will start the channel's countdown timer again.
+      """
       self._scheduler.unschedule_all()
       await self._client.send_msg(msg, "Scheduled closure list is cleared.")
       return
 
    @cmd.add(_cmdd, "addbotflair")
+   @cmd.category("Admin - Designated Bot Flairs")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_addbotflair(self, substr, msg, privilege_level):
-      """`{cmd}`"""
+      """`{cmd} [flair name]` - Add a bot flair, identified by name."""
       if len(substr) == 0:
          raise errors.InvalidCommandArgumentsError
       elif len(utils.flair_names_to_object(self._server, [substr])) == 0:
@@ -287,9 +281,10 @@ class DynamicChannels(ServerModule):
       return
 
    @cmd.add(_cmdd, "removebotflair")
+   @cmd.category("Admin - Designated Bot Flairs")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_addbotflair(self, substr, msg, privilege_level):
-      """`{cmd}`"""
+      """`{cmd} [flair name]` - Remove a bot flair, identified by name."""
       try:
          self._bot_flairs.remove(substr)
          await self._client.send_msg(msg, "`{}` removed as a bot flair.".format(substr))
@@ -299,9 +294,10 @@ class DynamicChannels(ServerModule):
       return
 
    @cmd.add(_cmdd, "adddefault")
+   @cmd.category("Admin - Adding/Removing default channels")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_adddefault(self, substr, msg, privilege_level):
-      """`{cmd}`"""
+      """`{cmd} [channel]` - Add a default channel."""
       new_default = None
       if len(substr) == 0:
          new_default = msg.channel
@@ -324,9 +320,10 @@ class DynamicChannels(ServerModule):
       return
 
    @cmd.add(_cmdd, "removedefault")
+   @cmd.category("Admin - Adding/Removing default channels")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_removedefault(self, substr, msg, privilege_level):
-      """`{cmd}`"""
+      """`{cmd} [channel]` - Remove a default channel."""
       to_remove = None
       if len(substr) == 0:
          to_remove = msg.channel
@@ -344,9 +341,14 @@ class DynamicChannels(ServerModule):
       return
 
    @cmd.add(_cmdd, "settimeout")
+   @cmd.category("Admin - Misc")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_settimeout(self, substr, msg, privilege_level):
-      """`{cmd}`"""
+      """
+      `{cmd} [int]` - Set the channel closure timeout, in minutes.
+
+      More specifically, this is the time it takes for a channel to close after the last message that was sent into it.
+      """
       try:
          new_timeout = int(substr)
          if new_timeout < 1:
@@ -360,9 +362,13 @@ class DynamicChannels(ServerModule):
       return
 
    @cmd.add(_cmdd, "setmaxactive")
+   @cmd.category("Admin - Misc")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_setmaxactive(self, substr, msg, privilege_level):
-      """`{cmd}`"""
+      """
+      `{cmd} [int]` - Set the maximum active channels.
+      `{cmd} -1` - Set maximum active channels to unlimited.
+      """
       try:
          self._max_active_temp_channels = int(substr)
          self._save_settings()

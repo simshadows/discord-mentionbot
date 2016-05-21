@@ -36,6 +36,7 @@ class CoreCommandsHelpPage(HelpNode):
    def __init__(self):
       self._page_aliases = []
       self._cmd_list = []
+      self._cmd_aliases = []
       self._cmd_dict = {}
       self._help_summary = "<<PLACEHOLDER>>"
       self._above_text = "" # This is text that will be added before the
@@ -48,6 +49,8 @@ class CoreCommandsHelpPage(HelpNode):
       assert hasattr(cmd_obj, "cmd_meta")
       self._cmd_list.append(cmd_obj)
       for alias in cmd_obj.cmd_meta.get_aliases():
+         assert not alias in self._cmd_aliases
+         self._cmd_aliases.append(alias)
          self._cmd_dict[alias] = cmd_obj
       return
 
@@ -73,8 +76,8 @@ class CoreCommandsHelpPage(HelpNode):
          self._above_text = text.strip() + "\n\n"
       return
 
-   def get_page_aliases(self):
-      return list(self._page_aliases)
+   def get_all_aliases(self):
+      return self._cmd_aliases + self._page_aliases
 
    ################################
    ### HelpNode Implementations ###
@@ -84,6 +87,9 @@ class CoreCommandsHelpPage(HelpNode):
       assert isinstance(locator_string, str) and isinstance(entry_string, str)
       assert isinstance(privilege_level, PrivilegeLevel)
       buf = None
+      if entry_string in self._cmd_dict:
+         locator_string = entry_string + (" " + locator_string).strip()
+      print("LOC: " + locator_string)
       if locator_string is "":
          # Serve the page's help content.
          buf = await cmd.summarise_commands(self._cmd_dict, privilege_level=privilege_level)
@@ -131,11 +137,15 @@ class ServerBotInstance:
          These are your core commands.
 
          Use them wisely, young Padawan.
+         """,
+      "admin": """
+         Modulezz
          """
    }
 
    _help_page_summaries = {
-      "core": "omg a summary"
+      "core": "`{p}help core` - Core commands.",
+      "admin": "`{p}help admin` - For managing the bot.",
    }
 
    @classmethod
@@ -278,17 +288,34 @@ class ServerBotInstance:
    # CORE COMMANDS ########################################################################
    ########################################################################################
 
-   ########################
-   ### GENERAL COMMANDS ###
-   ########################
+   #############################
+   ### GENERAL CORE COMMANDS ###
+   #############################
 
    @cmd.add(_cmdd, "help")
    @_core_command(_helpd, "core")
    async def _cmdf_help(self, substr, msg, privilege_level):
       """
-      `{cmd} [command name]` - More help.
+      `{cmd} [...]` - Retrieve more information about how to use the bot.
 
-      This text should only show when obtaining additional help.
+      Able to retrieve information on modules and commands.
+
+      **Examples:**
+
+      `{cmd}`
+      A summary of where to find more information.
+
+      `{cmd} core`
+      More info on all the core commands.
+
+      `{cmd} help uptime`
+      More info on the `{p}uptime` command.
+
+      `{cmd} random`
+      More info on the `Random` module.
+
+      `{cmd} random dice`
+      More info on the `{p}random dice` command from the `Random` module.
       """
       help_content = await self._get_help_content(substr, msg, self.cmd_prefix, privilege_level)
       await self._client.send_msg(msg, help_content)
@@ -299,6 +326,13 @@ class ServerBotInstance:
    async def _cmdf_source(self, substr, msg, privilege_level):
       """`{cmd}` - Where to get my source code."""
       await self._client.send_msg(msg, "https://github.com/simshadows/discord-mentionbot")
+      return
+
+   @cmd.add(_cmdd, "wiki")
+   @_core_command(_helpd, "core")
+   async def _cmdf_wiki(self, substr, msg, privilege_level):
+      """`{cmd}` - A guide on how to use me!"""
+      await self._client.send_msg(msg, "I don't have a wiki yet :c")
       return
 
    @cmd.add(_cmdd, "uptime")
@@ -316,45 +350,17 @@ class ServerBotInstance:
       await self._client.send_msg(msg, datetime.datetime.utcnow().strftime("My current system time: %c UTC"))
       return
 
-   @cmd.add(_cmdd, "say")
+   @cmd.add(_cmdd, "priv", "privilege", "mypriv")
    @_core_command(_helpd, "core")
-   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
-   async def _cmdf_say(self, substr, msg, privilege_level):
-      """`{cmd} [text]` - Echo's the following text."""
-      await self._client.send_msg(msg, substr)
-      return
-
-   ##########################
-   ### TEMPORARY COMMANDS ###
-   ##########################
-
-   # Random commands go here until they find a home in a proper module.
-
-   @cmd.add(_cmdd, "lmgtfy", "google", "goog", "yahoo")
-   @_core_command(_helpd, "core")
-   async def _cmdf_say(self, substr, msg, privilege_level):
-      """`{cmd} [text]` - Let me google that for you..."""
-      if len(substr) == 0:
-         raise errors.InvalidCommandArgumentsError
-      await self._client.send_msg(msg, "http://lmgtfy.com/?q=" + urllibparse.quote(substr))
-      return
-
-   @cmd.add(_cmdd, "testbell")
-   @_core_command(_helpd, "core")
-   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
-   async def _cmdf_msgcachedebug(self, substr, msg, privilege_level):
-      """`{cmd}`"""
-      buf = "<@\a119384097473822727>"
+   async def _cmdf_priv(self, substr, msg, privilege_level):
+      """`{cmd}` - Check your command privilege level."""
+      buf = await self._get_user_priv_process("", msg)
+      buf += "\nFor info on privilege levels, use the command `{}privinfo`.".format(self._cmd_prefix)
       await self._client.send_msg(msg, buf)
       return
 
-   #######################################
-   ### MODULE INFO/MANAGEMENT COMMANDS ###
-   #######################################
-
    @cmd.add(_cmdd, "mods", "modules")
    @_core_command(_helpd, "core")
-   @cmd.category("Module Info/Management")
    async def _cmdf_mods(self, substr, msg, privilege_level):
       """`{cmd}` - View installed and available modules."""
       installed_mods = list(self._modules.gen_module_info())
@@ -397,9 +403,169 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmdd, "add", "install", "addmodule")
+   @cmd.add(_cmdd, "avatar", "dp", "avatarurl")
    @_core_command(_helpd, "core")
-   @cmd.category("Module Info/Management")
+   @cmd.category("Commands for retrieving simple information")
+   async def _cmdf_avatar(self, substr, msg, privilege_level):
+      """`{cmd} [user]` - Get a user's avatar."""
+      substr = substr.strip()
+      user = None
+      if len(substr) == 0:
+         user = msg.author
+      else:
+         user = self._client.search_for_user(substr, enablenamesearch=True, serverrestriction=msg.server)
+         if user is None:
+            return await self._client.send_msg(msg, substr + " doesn't even exist m8")
+
+      # Guaranteed to have a user.
+      avatar = user.avatar_url
+      if avatar == "":
+         return await self._client.send_msg(msg, substr + " m8 get an avatar")
+      else:
+         return await self._client.send_msg(msg, avatar)
+
+   @cmd.add(_cmdd, "user", "whois", "who")
+   @_core_command(_helpd, "core")
+   @cmd.category("Commands for retrieving simple information")
+   async def _cmdf_user(self, substr, msg, privilege_level):
+      """`{cmd} [user]` - Get user info."""
+      # Get user. Copied from _cmd_avatar()...
+      substr = substr.strip()
+      user = None
+      if len(substr) == 0:
+         user = msg.author
+      else:
+         user = self._client.search_for_user(substr, enablenamesearch=True, serverrestriction=msg.server)
+         if user is None:
+            return await self._client.send_msg(msg, substr + " doesn't even exist m8")
+      
+      # Guaranteed to have a user.
+      buf = "```"
+      buf += "\nID: " + user.id
+      buf += "\nName: " + user.name
+      buf += "\nAvatar hash: "
+      if user.avatar is None:
+         buf += "[no avatar]"
+      else:
+         buf += str(user.avatar)
+      buf += "\nJoin date: " + user.joined_at.isoformat() + " UTC"
+      buf += "\nServer Deafened: " + str(user.deaf)
+      buf += "\nServer Mute: " + str(user.mute)
+      buf += "\nServer Roles:"
+      for role in user.roles:
+         buf += "\n   {0} (ID: {1})".format(role.name.replace("@","@ "), role.id)
+      buf += "\n```"
+      return await self._client.send_msg(msg, buf)
+
+   @cmd.add(_cmdd, "role", "rolelist")
+   @_core_command(_helpd, "core")
+   @cmd.category("Commands for retrieving simple information")
+   async def _cmdf_rolestats(self, substr, msg, privilege_level):
+      """`{cmd} [rolename]` - Get role stats."""
+      server = msg.server
+      if len(substr) == 0:
+         await self._client.send_msg(msg, "Error: Must specify a role.")
+         return
+      buf = None
+      n_matching_roles = 0
+      for role in server.roles:
+         if role.name == substr:
+            n_matching_roles += 1
+      if n_matching_roles == 0:
+         await self._client.send_msg(msg, "No roles match `{}`.".format(substr))
+         return
+      matching_members = []
+      for member in server.members:
+         for role in member.roles[1:]: # Skips over the @everyone role
+            if role.name == substr:
+               matching_members.append(member)
+               break
+      if n_matching_roles == 1:
+         if len(matching_members) == 0:
+            await self._client.send_msg(msg, "No users are in the role `{}`.".format(substr))
+            return
+         else:
+            buf = "**The following users are in the role `{}`:**".format(substr)
+      else:
+         buf = "{0} roles match the name `{1}`.\n".format(str(n_matching_roles), substr)
+         if len(matching_members) == 0:
+            buf += "No users are in any of these roles."
+            await self._client.send_msg(msg, buf)
+            return
+         else:
+            buf += "**The following users are in at least one of these roles:**"
+      buf += "\n```"
+      for member in matching_members:
+         buf += "\n" + utils.user_to_str(member)
+      buf += "\n```"
+      await self._client.send_msg(msg, buf)
+      return
+
+   @cmd.add(_cmdd, "thisserver", "server")
+   @_core_command(_helpd, "core")
+   @cmd.category("Commands for retrieving simple information")
+   async def _cmdf_server(self, substr, msg, privilege_level):
+      """`{cmd}` - Get some simple server info and statistics."""
+      s = msg.server
+      # Count voice and text channels
+      text_ch_total = 0
+      voice_ch_total = 0
+      for channel in s.channels:
+         if channel.type == discord.ChannelType.text:
+            text_ch_total += 1
+         else:
+            voice_ch_total += 1
+
+      buf = "```"
+      buf += "\nID: " + s.id
+      buf += "\nName: " + s.name
+      buf += "\nIcon hash: "
+      if s.icon is None:
+         buf += "[no icon]"
+      else:
+         buf += str(s.icon)
+      buf += "\nRegion: " + str(s.region)
+      buf += "\nOwner: {0} (ID: {1})".format(s.owner.name, s.owner.id)
+      buf += "\nNumber of roles: " + str(len(s.roles))
+      buf += "\nNumber of members: " + str(len(s.members))
+      buf += "\nNumber of text channels: " + str(text_ch_total)
+      buf += "\nNumber of voice channels: " + str(voice_ch_total)
+      buf += "\n```"
+      return await self._client.send_msg(msg, buf)
+
+   @cmd.add(_cmdd, "servericon")
+   @_core_command(_helpd, "core")
+   @cmd.category("Commands for retrieving simple information")
+   async def _cmdf_servericon(self, substr, msg, privilege_level):
+      """`{cmd}` - Get server icon."""
+      if msg.server.icon_url == "":
+         return await self._client.send_msg(msg, "This server has no icon.")
+      else:
+         return await self._client.send_msg(msg, str(msg.server.icon_url))
+
+   ##########################
+   ### TEMPORARY COMMANDS ###
+   ##########################
+
+   # Random commands go here until they find a home in a proper module.
+
+   @cmd.add(_cmdd, "lmgtfy", "google", "goog", "yahoo")
+   @_core_command(_helpd, "core")
+   @cmd.category("Other Commands")
+   async def _cmdf_say(self, substr, msg, privilege_level):
+      """`{cmd} [text]` - Let me google that for you..."""
+      if len(substr) == 0:
+         raise errors.InvalidCommandArgumentsError
+      await self._client.send_msg(msg, "http://lmgtfy.com/?q=" + urllibparse.quote(substr))
+      return
+
+   #######################################
+   ### MODULE INFO/MANAGEMENT COMMANDS ###
+   #######################################
+
+   @cmd.add(_cmdd, "add", "install", "addmodule")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Module Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_add(self, substr, msg, privilege_level):
       """`{cmd} [module name]` - Add a module."""
@@ -417,8 +583,8 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "remove", "uninstall", "removemodule")
-   @_core_command(_helpd, "core")
-   @cmd.category("Module Info/Management")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Module Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_remove(self, substr, msg, privilege_level):
       """`{cmd} [module name]` - Remove a module."""
@@ -431,8 +597,8 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "activate", "reactivate", "activatemodule", "reactivatemodule")
-   @_core_command(_helpd, "core")
-   @cmd.category("Module Info/Management")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Module Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_activate(self, substr, msg, privilege_level):
       """
@@ -452,8 +618,8 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "deactivate", "kill", "deactivatemodule", "killmodule")
-   @_core_command(_helpd, "core")
-   @cmd.category("Module Info/Management")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Module Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_activate(self, substr, msg, privilege_level):
       """
@@ -473,23 +639,17 @@ class ServerBotInstance:
    ### PRIVILEGES INFO/MANAGEMENT COMMANDS ###
    ###########################################
 
-   @cmd.add(_cmdd, "prefix", "predicate", "setprefix", "setpredicate")
-   @_core_command(_helpd, "core")
-   @cmd.category("Command Privilege Info/Management")
+   @cmd.add(_cmdd, "say")
+   @_core_command(_helpd, "admin")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
-   async def _cmdf_prefix(self, substr, msg, privilege_level):
-      """`{cmd} [new prefix]` - Set new command prefix."""
-      if len(substr) == 0:
-         raise errors.InvalidCommandArgumentsError
-      self._cmd_prefix = substr
-      buf = "`{}` set as command prefix.".format(self._cmd_prefix)
-      buf += "\nThe help message is now invoked using `{}help`.".format(self._cmd_prefix)
-      await self._client.send_msg(msg, buf)
+   async def _cmdf_say(self, substr, msg, privilege_level):
+      """`{cmd} [text]` - Echo's the following text."""
+      await self._client.send_msg(msg, substr)
       return
 
    @cmd.add(_cmdd, "privinfo", "allprivs", "privsinfo", "whatprivs")
-   @_core_command(_helpd, "core")
-   @cmd.category("Command Privilege Info/Management")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Bot Command Privileges")
    async def _cmdf_privinfo(self, substr, msg, privilege_level):
       """`{cmd}` - Get information on the bot's command privilege system."""
       buf = "This bot has internal command privilege levels to determine what"
@@ -506,19 +666,9 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmdd, "priv", "privilege", "mypriv")
-   @_core_command(_helpd, "core")
-   @cmd.category("Command Privilege Info/Management")
-   async def _cmdf_priv(self, substr, msg, privilege_level):
-      """`{cmd}` - Check your command privilege level."""
-      buf = await self._get_user_priv_process("", msg)
-      buf += "\nFor info on privilege levels, use the command `{}privinfo`.".format(self._cmd_prefix)
-      await self._client.send_msg(msg, buf)
-      return
-
    @cmd.add(_cmdd, "privof", "privilegeof")
-   @_core_command(_helpd, "core")
-   @cmd.category("Command Privilege Info/Management")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Bot Command Privileges")
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_privof(self, substr, msg, privilege_level):
       """`{cmd} [user]` - Check someone's command privilege level."""
@@ -527,8 +677,8 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "userprivsresolved", "userprivilegesresolved")
-   @_core_command(_helpd, "core")
-   @cmd.category("Command Privilege Info/Management")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Bot Command Privileges")
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_userprivsresolved(self, substr, msg, privilege_level):
       """`{cmd}` - Get list of everyone with command privilege levels resolved."""
@@ -552,8 +702,8 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "userprivs", "userprivileges")
-   @_core_command(_helpd, "core")
-   @cmd.category("Command Privilege Info/Management")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Bot Command Privileges")
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_userprivs(self, substr, msg, privilege_level):
       """`{cmd}` - View user-assigned command privileges."""
@@ -579,8 +729,8 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "roleprivs", "roleprivileges", "flairprivs", "flairprivileges", "tagprivs", "tagprivileges")
-   @_core_command(_helpd, "core")
-   @cmd.category("Command Privilege Info/Management")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Bot Command Privileges")
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_roleprivs(self, substr, msg, privilege_level):
       """`{cmd}` - View role-assigned command privileges."""
@@ -599,8 +749,8 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "adduserpriv", "adduserprivilege")
-   @_core_command(_helpd, "core")
-   @cmd.category("Command Privilege Info/Management")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Bot Command Privileges")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_adduserpriv(self, substr, msg, privilege_level):
       """`{cmd} [user] [privilege level]` - Add a user command privilege."""
@@ -635,8 +785,8 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "addrolepriv", "addroleprivilege")
-   @_core_command(_helpd, "core")
-   @cmd.category("Command Privilege Info/Management")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Bot Command Privileges")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_addrolepriv(self, substr, msg, privilege_level):
       """`{cmd} [role name] [privilege level]` - Add a role command privilege."""
@@ -672,8 +822,8 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "removeuserpriv", "removeuserprivilege")
-   @_core_command(_helpd, "core")
-   @cmd.category("Command Privilege Info/Management")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Bot Command Privileges")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_removeuserpriv(self, substr, msg, privilege_level):
       """`{cmd} [user]` - Remove a user command privilege."""
@@ -698,8 +848,8 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "removerolepriv", "removeroleprivilege", "removeflairpriv", "removeflairprivilege", "removetagpriv", "removetagprivilege")
-   @_core_command(_helpd, "core")
-   @cmd.category("Command Privilege Info/Management")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Bot Command Privileges")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_removerolepriv(self, substr, msg, privilege_level):
       """`{cmd} [role name]` - Remove a role command privilege."""
@@ -740,9 +890,22 @@ class ServerBotInstance:
    ### OTHER GENERAL MANAGEMENT/DEBUGGING COMMANDS ###
    ###################################################
 
+   @cmd.add(_cmdd, "prefix", "predicate", "setprefix", "setpredicate")
+   @_core_command(_helpd, "admin")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   async def _cmdf_prefix(self, substr, msg, privilege_level):
+      """`{cmd} [new prefix]` - Set new command prefix."""
+      if len(substr) == 0:
+         raise errors.InvalidCommandArgumentsError
+      self._cmd_prefix = substr
+      buf = "`{}` set as command prefix.".format(self._cmd_prefix)
+      buf += "\nThe help message is now invoked using `{}help`.".format(self._cmd_prefix)
+      await self._client.send_msg(msg, buf)
+      return
+
    @cmd.add(_cmdd, "iam")
-   @_core_command(_helpd, "core")
-   @cmd.category("Admin Commands")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Bot Owner Only")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_iam(self, substr, msg, privilege_level):
       """`{cmd} [user] [text]`"""
@@ -760,8 +923,8 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "setgame", "setgamestatus")
-   @_core_command(_helpd, "core")
-   @cmd.category("Admin Commands")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Bot Owner Only")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setgame(self, substr, msg, privilege_level):
       """`{cmd} [text]`"""
@@ -770,8 +933,8 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "tempgame")
-   @_core_command(_helpd, "core")
-   @cmd.category("Admin Commands")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Bot Owner Only")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setgame(self, substr, msg, privilege_level):
       """`{cmd} [text]`"""
@@ -780,8 +943,8 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "revertgame")
-   @_core_command(_helpd, "core")
-   @cmd.category("Admin Commands")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Bot Owner Only")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setgame(self, substr, msg, privilege_level):
       """`{cmd}`"""
@@ -790,8 +953,8 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "setusername", "updateusername", "newusername", "setname", "newname")
-   @_core_command(_helpd, "core")
-   @cmd.category("Admin Commands")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Bot Owner Only")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setusername(self, substr, msg, privilege_level):
       """`{cmd} [text]`"""
@@ -801,8 +964,8 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "setavatar", "updateavatar", "setdp", "newdp")
-   @_core_command(_helpd, "core")
-   @cmd.category("Admin Commands")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Bot Owner Only")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setusername(self, substr, msg, privilege_level):
       """
@@ -859,8 +1022,8 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "joinserver")
-   @_core_command(_helpd, "core")
-   @cmd.category("Admin Commands")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Bot Owner Only")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_joinserver(self, substr, msg, privilege_level):
       """`{cmd} [invite link]`"""
@@ -872,8 +1035,8 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "leaveserver")
-   @_core_command(_helpd, "core")
-   @cmd.category("Admin Commands")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Bot Owner Only")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_leaveserver(self, substr, msg, privilege_level):
       """`{cmd}`"""
@@ -882,8 +1045,8 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "msgcachedebug")
-   @_core_command(_helpd, "core")
-   @cmd.category("Admin Commands")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Bot Owner Only")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_msgcachedebug(self, substr, msg, privilege_level):
       """`{cmd}`"""
@@ -892,8 +1055,8 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "closebot", "quit", "exit")
-   @_core_command(_helpd, "core")
-   @cmd.category("Admin Commands")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Bot Owner Only")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_closebot(self, substr, msg, privilege_level):
       """`{cmd}`"""
@@ -901,16 +1064,16 @@ class ServerBotInstance:
       sys.exit(0)
 
    @cmd.add(_cmdd, "throwexception", "exception")
-   @_core_command(_helpd, "core")
-   @cmd.category("Admin Commands")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Bot Owner Only")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_throwexception(self, substr, msg, privilege_level):
       """`{cmd}`"""
       raise Exception
 
    @cmd.add(_cmdd, "throwexception2")
-   @_core_command(_helpd, "core")
-   @cmd.category("Admin Commands")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Bot Owner Only")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_throwexception2(self, substr, msg, privilege_level):
       """`{cmd}`"""
@@ -919,17 +1082,32 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "throwbaseexception", "baseexception")
-   @_core_command(_helpd, "core")
-   @cmd.category("Admin Commands")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Bot Owner Only")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_throwexception(self, substr, msg, privilege_level):
       """`{cmd}`"""
       raise BaseException
 
+   @cmd.add(_cmdd, "testbell")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Bot Owner Only")
+   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
+   async def _cmdf_msgcachedebug(self, substr, msg, privilege_level):
+      """`{cmd}`"""
+      buf = "<@\a119384097473822727>"
+      await self._client.send_msg(msg, buf)
+      return
+
    async def _get_help_content(self, substr, msg, cmd_prefix, privilege_level):
       buf = await self._modules.get_help_detail(substr, "", privilege_level)
       if buf is None:
          return "No help content found for `{}`.".format(substr)
+      if substr is "":
+         buf = textwrap.dedent("""
+            To read more about other bot commands/functions:
+            **`{p}help [...]`**
+            """).strip() + "\n\n" + buf
       return buf.format(p=cmd_prefix, grp="")
    
    def get_presence_timedelta(self):

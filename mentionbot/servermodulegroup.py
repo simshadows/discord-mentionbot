@@ -22,7 +22,7 @@ class ServerModuleGroup(HelpNode):
       self._core_pages_dict = {}
       self._core_pages_list = list(core_help_pages)
       for help_page in self._core_pages_list:
-         for alias in help_page.get_page_aliases():
+         for alias in help_page.get_all_aliases():
             self._core_pages_dict[alias] = help_page
       return
 
@@ -125,13 +125,12 @@ class ServerModuleGroup(HelpNode):
       assert isinstance(locator_string, str) and isinstance(entry_string, str)
       assert isinstance(privilege_level, PrivilegeLevel)
       buf = None
-      print("DEBUGGING: loc = " + locator_string)
       if locator_string is "":
          # Serve module help content.
          buf = ""
          if len(self._core_pages_list) > 0:
             buf += await cmd.summarise_server_modules(self._core_pages_list, privilege_level)
-            buf += "\n"
+            buf += "\n\n"
          buf += await cmd.summarise_server_modules(self._modules_list, privilege_level)
       else:
          # Get the next node's help content.

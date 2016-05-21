@@ -18,7 +18,7 @@ class JCFDiscord(ServerModule):
    _cmdd = {}
 
    _HELP_SUMMARY = """
-      See `{modhelp}` for JCF Discord commands.
+      `{modhelp}` - JCF Discord commands.
       """
 
    _FUNCTION_STACKS = {
@@ -85,7 +85,7 @@ class JCFDiscord(ServerModule):
 
    @cmd.add(_cmdd, "functions", "fn", "stack", top="functions")
    async def _cmdf_functions(self, substr, msg, privilege_level):
-      """`{cmd}`"""
+      """`{cmd} [mbti type codes]` - Prints the corresponding MBTI cognitive function stack."""
       args = substr.split()
       types = []
       for arg in args:
@@ -108,7 +108,14 @@ class JCFDiscord(ServerModule):
 
    @cmd.add(_cmdd, "typeflair")
    async def _cmdf_typeflair(self, substr, msg, privilege_level):
-      """`{cmd}`"""
+      """
+      `{cmd} [mbti type code]` - Get the bot to assign you an MBTI type role.
+   
+      There is also a shortcut to using this command:
+      `{p}[mbti type code]`
+
+      **Example:** `{p}ISFJ` assigns you the `ISFJ` role.
+      """
       (left, right) = utils.separate_left_word(substr)
       new_role_name = left.upper()
       if not new_role_name in self._MBTI_TYPES_SET:
@@ -124,7 +131,7 @@ class JCFDiscord(ServerModule):
 
    @cmd.add(_cmdd, "subreddit", default=True)
    async def _cmdf_noot(self, substr, msg, privilege_level):
-      """`{cmd}`"""
+      """`{cmd}` - Get a link to the JCFDiscord community's subreddit."""
       await self._client.send_msg(msg, "Our subreddit is at https://www.reddit.com/r/JCFDiscord/.")
       return
 

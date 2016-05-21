@@ -20,7 +20,7 @@ class TruthGame(ServerModule):
    _cmdd = {}
 
    _HELP_SUMMARY = """
-      See `{modhelp}` for truth game commands.
+      `{modhelp}` - Truth game.
       """
 
    DEFAULT_SETTINGS = {
@@ -89,7 +89,7 @@ class TruthGame(ServerModule):
       `{cmd}` - Adds you to the game.
 
       This command also allows moderators to add other users and arbitrary strings as participants.
-      E.g.: `{cmd} an elephant` - Adds "an elephant" as a participant.
+      **Example:** `{cmd} an elephant` - Adds "an elephant" as a participant.
       """
       channel = msg.channel
       await self._abort_if_not_truth_channel(channel)
@@ -114,7 +114,7 @@ class TruthGame(ServerModule):
       `{cmd}` - Removes you from the game.
 
       This command also allows moderators to remove other users and arbitrary strings.
-      E.g.: `{cmd} an elephant` - Removes "an elephant" as a participant.
+      **Example:** `{cmd} an elephant` - Removes "an elephant" as a participant.
       """
       channel = msg.channel
       await self._abort_if_not_truth_channel(channel)

@@ -19,10 +19,10 @@ class WolframAlpha(ServerModule):
    _cmdd = {}
 
    _HELP_SUMMARY = """
-      See `{modhelp}` to manage the Wolfram Alpha module.
-      `[p]wa [query]` - Make a Wolfram Alpha query.
-      `[p]define [word]` - Get word definition from WA.
+      `{modhelp}` - Query Wolfram Alpha.
       """
+   # `[p]wa [query]` - Make a Wolfram Alpha query.
+   # `[p]define [word]` - Get word definition from WA.
 
    DEFAULT_SHARED_SETTINGS = {
       "wa app id": "PLACEHOLDER",

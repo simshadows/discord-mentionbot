@@ -18,7 +18,7 @@ class Random(ServerModule):
    _cmdd = {}
 
    _HELP_SUMMARY = """
-      `[p]random [integer]` - Get random int. (See `{modhelp}` for more!)
+      `{modhelp}` - For generating random values.
       """
 
    # TODO: Add this to help detail in the future...
@@ -52,7 +52,25 @@ class Random(ServerModule):
 
    @cmd.add(_cmdd, "number", "num", "int", "integer", default=True)
    async def _cmdf_number(self, substr, msg, privilege_level):
-      """`{cmd}`"""
+      """
+      `{cmd} [args]` - Generates a random integer.
+
+      **Examples of usage:**
+
+      *Note: All ranges listed here are inclusive.*
+
+      `{cmd}`
+      Random number from 1 to 10.
+
+      `{cmd} 2000`
+      Random number from 1 to 2000.
+
+      `{cmd} -50 to 100`
+      Random number from -50 to 100.
+
+      `{cmd} 1 to 5 to 10 to 15`
+      Generates three random numbers of the ranges 1-5, 5-10, and 10-15.
+      """
       # Compile a set of ranges to randomize.
       
       args = utils.remove_whitespace(substr)
@@ -104,9 +122,16 @@ class Random(ServerModule):
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmdd, "choose", "ch", "choice", "choices", top="choose")
+   @cmd.add(_cmdd, "choose", "choice", "choices", top=True)
    async def _cmdf_choose(self, substr, msg, privilege_level):
-      """`{cmd}`"""
+      """
+      `{cmd} [option1]; [option2]; [...]` - Randomly choose from multiple options.
+
+      **EXAMPLE:**
+
+      `{cmd} Red; Green; Blue`
+      Randomly choose between those three colours.
+      """
       choices = substr.split(";")
       choices = list(filter(None, choices)) # Remove empty strings
       if len(choices) == 0:
@@ -119,9 +144,13 @@ class Random(ServerModule):
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmdd, "coin", "flip")
+   @cmd.add(_cmdd, "coin", "flip", top=True)
    async def _cmdf_coin(self, substr, msg, privilege_level):
-      """`{cmd}`"""
+      """
+      `{cmd}` - 50/50 Heads or tails.
+
+      Or... at least in theory. Some say there's a 1/6000 possibility of seeing the coin land on its side, though I've personally never seen it happen.
+      """
       if random.randint(0,1) == 1:
          buf = "Heads"
       else:
@@ -139,7 +168,7 @@ class Random(ServerModule):
 
    @cmd.add(_cmdd, "colour", "color", "rgb")
    async def _cmdf_colour(self, substr, msg, privilege_level):
-      """`{cmd}`"""
+      """`{cmd}` - Generates a random RGB colour code."""
       rand_int = random.randint(0,(16**6)-1)
       rand = hex(rand_int)[2:] # Convert to hex
       rand = rand.zfill(6)
@@ -148,9 +177,35 @@ class Random(ServerModule):
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmdd, "dice", "roll")
+   @cmd.add(_cmdd, "dice", "roll", top=True)
    async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):
-      """`{cmd}`"""
+      """
+      `{cmd} [args]` - Roll some dice.
+
+      **Dice notation:**
+
+      Dice rolls are represented with a code of the form:
+      "3d6"
+      This code means you roll 6-sided dice three times and sum up the result.
+      Furthermore, these dice have sides of values 1,2,3,4,... . E.g. a 6-sided dice has sides 1,2,3,4,5,6.
+      
+      **Examples of usage:**
+
+      `{cmd}`
+      Rolls a 1d6 (a single 6-sided die).
+
+      `{cmd} 12`
+      Rolls a 1d12 (a single 12-sided die).
+
+      `{cmd} d4`
+      Rolls a 1d4 (a single 4-sided die).
+
+      `{cmd} 2d8`
+      Rolls a 2d8 (two 8-sided dice).
+
+      `{cmd} 1000d498`
+      Rolls a 1000d498 (1000 498-sided dice).
+      """
       if substr == "":
          throws = 1
          sides = 6
@@ -189,7 +244,11 @@ class Random(ServerModule):
 
    @cmd.add(_cmdd, "user", "member", "u", "mem")
    async def _cmdf_colour(self, substr, msg, privilege_level):
-      """`{cmd}` - Chooses a random member from this server."""
+      """
+      `{cmd}` - Chooses a random member from this server.
+
+      This command does not mention users.
+      """
       random_member = random.choice(list(msg.server.members))
       buf = "**Your random user is:** {0} (UID: {1})\n".format(random_member.name, random_member.id)
       buf += "(Chosen out of {} users.)".format(str(len(msg.server.members))) # TODO: Fix concurrent access?

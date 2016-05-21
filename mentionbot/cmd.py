@@ -316,26 +316,28 @@ class CommandMeta(HelpNode):
       assert isinstance(privilege_level, PrivilegeLevel)
       buf = None
       if self._top_level_alias_action is self.TopLevelAliasAction.NO_TOP_LEVEL_ALIASES:
-         buf = self._help_detail.format(cmd="{p}{grp}" + self._aliases[0])
+         buf = self._help_detail.format(p="{p}", grp="{grp}", cmd="{p}{grp}" + self._aliases[0])
       else:
-         buf = self._help_detail.format(cmd="{p}" + self.get_top_aliases()[0])
+         buf = self._help_detail.format(p="{p}", grp="{grp}", cmd="{p}" + self.get_top_aliases()[0])
       buf += "\n\n"
-      buf0 = "**Required privilege level:** "
-      buf0 += self._minimum_privilege.get_commonname()
+      buf0 = ""
+      if self._minimum_privilege is PrivilegeLevel.get_lowest_privilege():
+         buf0 = "**Required privilege level:** "
+         buf0 += self._minimum_privilege.get_commonname()
       if (not privilege_level is None) and (privilege_level < self._minimum_privilege):
          buf += "**(Sorry, you do not have the correct privilege level.)**\n"
          buf += buf0 + "\n**Your privilege level:** "
          buf += privilege_level.get_commonname()
       else:
-         buf += buf0
+         buf = (buf + buf0).strip()
       return buf
 
    async def get_help_summary(self, privilege_level):
       assert isinstance(privilege_level, PrivilegeLevel)
       if self._top_level_alias_action is self.TopLevelAliasAction.NO_TOP_LEVEL_ALIASES:
-         return self._help_summary.format(cmd="{p}{grp}" + self._aliases[0])
+         return self._help_summary.format(p="{p}", grp="{grp}", cmd="{p}{grp}" + self._aliases[0])
       else:
-         return self._help_summary.format(cmd="{p}" + self.get_top_aliases()[0])
+         return self._help_summary.format(p="{p}", grp="{grp}", cmd="{p}" + self.get_top_aliases()[0])
 
    async def node_min_priv(self):
       return self._minimum_privilege
