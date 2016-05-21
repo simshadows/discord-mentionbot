@@ -788,14 +788,15 @@ class ServerBotInstance:
    async def _get_help_content(self, substr, msg, cmd_prefix, privilege_level):
       buf = None
       if substr == "":
-         buf = await cmd.compose_help_summary(self._cmdd, privilege_level) + "\n\n"
-         buf = buf.format(p="{p}", b="")
-         buf2 = await self._modules.get_help_content("", privilege_level)
-         buf2 = "\n".join(sorted(buf2.splitlines(), key=lambda e: e.lower()))
-         buf += buf2
+         # buf = await cmd.compose_help_summary(self._cmdd, privilege_level) + "\n\n"
+         buf = await self._modules.get_help_detail(privilege_level=privilege_level)
+         return buf.format(p=cmd_prefix, grp="")
       else:
-         buf = await self._modules.get_help_content(substr, privilege_level)
-      return buf.format(p=cmd_prefix)
+         node = await self._modules.get_node(substr)
+         if node is None:
+            return "No help content found for `{}`.".format(substr)
+         buf = await node.get_help_detail(privilege_level=privilege_level)
+         return buf.format(p=cmd_prefix, grp=substr + " ")
    
    def get_presence_timedelta(self):
       return datetime.datetime.utcnow() - self.initialization_timestamp

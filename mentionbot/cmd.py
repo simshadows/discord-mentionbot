@@ -1,6 +1,7 @@
 import inspect
 import enum
 import abc
+import collections
 
 from . import utils, errors
 from .enums import PrivilegeLevel
@@ -17,10 +18,10 @@ from .enums import PrivilegeLevel
 # THROWS: UnknownCommandError - Thrown if cmd_name is not in the dictionary.
 # THROWS: CommandPrivilegeError - Thrown if cmd_name is in the dictionary, but
 #                                 privilege_level is not high enough to execute it.
-def get(cmd_dict, cmd_name, privilege_level):
+async def get(cmd_dict, cmd_name, privilege_level):
    try:
       cmd_to_execute = cmd_dict[cmd_name]
-      if privilege_level < cmd_to_execute.cmd_meta.get_min_priv():
+      if privilege_level < (await cmd_to_execute.cmd_meta.node_min_priv()):
             raise errors.CommandPrivilegeError
       return cmd_to_execute
    except KeyError:
@@ -32,14 +33,12 @@ async def compose_help_summary(cmd_dict, privilege_level):
    cats_dict = {} # FORMAT: category name string -> help content string
    for (cmd_name, cmd_obj) in cmd_dict.items():
       if not cmd_obj in seen_set:
-         if privilege_level < cmd_obj.cmd_meta.get_min_priv():
+         if privilege_level < (await cmd_obj.cmd_meta.node_min_priv()):
             continue
          seen_set.add(cmd_obj)
          help_str = await get_help_summary(cmd_obj)
          if len(help_str) != 0:
-            cat_name = (await cmd_obj.cmd_meta.get_help_summary())[1] # TODO: Messy...
-            if cat_name is None:
-               cat_name = ""
+            cat_name = cmd_obj.cmd_meta.node_category()
             cat_buf = None
             if cat_name in cats_dict:
                cat_buf = cats_dict[cat_name]
@@ -85,15 +84,10 @@ async def get_help_summary(cmd_obj):
       "b": "{b}",
       "c": cmd_obj.cmd_meta.get_aliases()[0],
    }
-   return (await cmd_obj.cmd_meta.get_help_summary())[0].format(**kwargs)
+   return await cmd_obj.cmd_meta.get_help_summary().format(**kwargs)
 
 async def get_help_detail(cmd_obj):
    return await cmd_obj.cmd_meta.get_help_detail()
-
-# Carries out "{modhelp}" -> "{p}help {mod}" evaluation, while also
-# substituting "{mod}".
-def format_mod_evaluate(content_str, *, mod=None):
-   return content_str.format(modhelp="{p}help " + mod, mod=mod, p="{p}")
 
 ###########################################################################################
 # FUNCTION DECORATORS #####################################################################
@@ -130,17 +124,20 @@ def add(cmd_dict, *cmd_names, **kwargs):
 
    # Get kwargs
    default = bool(kwargs.get("default", False))
-   top = kwargs.get("top", False)
+   top_kwarg = kwargs.get("top", False)
    category = kwargs.get("category", None)
    minimum_privilege = kwargs.get("minimum_privilege", None)
 
    def function_decorator(function):
       _ensure_cmd_obj(function)
       function.cmd_meta.set_aliases(cmd_names)
+      top = top_kwarg
       if isinstance(top, bool):
          if top:
             function.cmd_meta.set_top_aliases_existing()
       else:
+         if isinstance(top, str):
+            top = [top]
          function.cmd_meta.set_top_aliases_explicitly(list(top))
       if not category is None:
          assert isinstance(category, str)
@@ -217,15 +214,10 @@ class HelpNode(abc.ABC):
                                                      # alias used by the
                                                      # aggregator underneath.
          STEP 2 (aggregators) for ServerModuleWrapper:
-            "{p}" remains untouched.
-            "{grp}" becomes "{grp}[module_alias] " # module_alias is the primary
-                                                   # alias used by the
-                                                   # aggregator.
+            All remains untouched.
          STEP 3 (requester) for ServerBotInstance:
             "{p}" becomes the new prefix
-            "{grp}" disappears.
-
-
+            "{grp}" is evaluated to the path taken to reach the node.
       
       CURRENT SCHEME (for reference until I've completely replaced it)
          Help message string formatting arguments:
@@ -247,7 +239,7 @@ class HelpNode(abc.ABC):
    # RETURNS: Either a string containing help content, or None if no help
    #          content exists.
    async def get_node(self, locator_string):
-      assert isinstance(locator_str, str)
+      assert isinstance(locator_string, str)
       path = locator_string.split()
       prev = None
       curr = self
@@ -269,12 +261,26 @@ class HelpNode(abc.ABC):
    # POSTCONDITION: Will always produce help content.
    #                This implies no NoneTypes or empty strings.
    # RETURNS: Tuple with two items:
-   #              [0]: The help summary content. Guaranteed to 
+   #              [0]: The help summary content.
    #              [1]: A "category" string that may help nodes aggregating
    #                   other help nodes to organize their help content.
    #                   Value is None if there is no catgory.
    @abc.abstractmethod
    async def get_help_summary(self, privilege_level=None):
+      raise NotImplementedError
+
+   # Get the minimum privilege level normally required to access the node.
+   # POSTCONDITION: Guaranteed to produce a PrivilegeLevel object.
+   #                For nodes with no privilege restriction, the lowest
+   #                privilege level will be returned.
+   @abc.abstractmethod
+   async def node_min_priv(self):
+      raise NotImplementedError
+
+   # Get a string that names the category in which the node identifies itself
+   # to belong to. If no category, then this will return an empty string.
+   @abc.abstractmethod
+   async def node_category(self):
       raise NotImplementedError
 
    # Get the next IHelpNode object, given a locator string specifying this next
@@ -294,8 +300,94 @@ class HelpNode(abc.ABC):
       assert type(locator_string) is str
       assert (not " " in locator_string) and (not locator_string is "")
       assert entry_string is None or type(entry_string) is str
-      assert (not " " in entry_string) and (not entry_string is "")
       raise NotImplementedError
+
+   #################################################
+   ### USEFUL UTILITY FUNCTIONS FOR IMPLEMENTORS ###
+   #################################################
+   # These methods are used for processing help content.
+
+   # Produces a help content string out of a dictionary of command functions.
+   @classmethod
+   async def _summarise_commands(cls, cmd_dict, privilege_level=None):
+      # TODO: NOTHING IS ACTUALLY DONE WITH THE PRIVILEGE LEVEL YET.
+      if privilege_level is None:
+         privilege_level = Privilege_level.get_lowest_privilege()
+
+      seen = set() # Seen CommandMeta objects
+      cats_dict = collections.defaultdict(lambda: [])
+      # cats_dict - Maps category names to lists of command help summaries.
+      #             Those without categories are in the "" category.
+      for (cmd_name, cmd_obj) in cmd_dict.items():
+         node = cmd_obj.cmd_meta
+         if node in seen: continue
+         seen.add(node)
+         cat_name = await node.node_category()
+         # Compose the string to append to the list within the relevant category.
+         buf = await node.get_help_summary(privilege_level)
+         cats_dict[cat_name].append(buf)
+
+      # Separate the no-category category. This will be dealt with separately.
+      no_cat = cats_dict[""]
+      del cats_dict[""]
+
+      # Sort each category and put the category names into a list.
+      cat_name_list = []
+      for (cat_name, cat) in cats_dict.items():
+         cat_name_list.append(cat_name)
+         cat.sort(key=lambda e: e.lower())
+
+      # Sort the category names
+      cat_name_list.sort(key=lambda e: e.lower())
+
+      # Put it all together
+      buf = ""
+      if len(no_cat) > 0:
+         no_cat.sort(key=lambda e: e.lower())
+         buf += "\n".join(no_cat)
+      for cat_name in cat_name_list:
+         buf += "\n\n**{}**\n".format(cat_name)
+         buf += "\n".join(cats_dict[cat_name])
+      return buf
+
+   # Produces a help content string out of a list of ServerModuleWrapper objects.
+   @classmethod
+   async def _summarise_server_modules(cls, modules, privilege_level=None):
+      # TODO: NOTHING IS ACTUALLY DONE WITH THE PRIVILEGE LEVEL YET.
+      if privilege_level is None:
+         privilege_level = Privilege_level.get_lowest_privilege()
+
+      cats_dict = collections.defaultdict(lambda: [])
+      # cats_dict - Maps category names to lists of module summaries.
+      #             Those without categories are in the "" category.
+      for module in modules:
+         cat_name = await module.node_category()
+         # Compose the string to append to the list within the relevant category.
+         buf = await module.get_help_summary(privilege_level)
+         cats_dict[cat_name].append(buf)
+
+      # Separate the no-category category. This will be dealt with separately.
+      no_cat = cats_dict[""]
+      del cats_dict[""]
+
+      # Sort each category and put the category names into a list.
+      cat_name_list = []
+      for (cat_name, cat) in cats_dict.items():
+         cat_name_list.append(cat_name)
+         cat.sort(key=lambda e: e.lower())
+
+      # Sort the category names
+      cat_name_list.sort(key=lambda e: e.lower())
+
+      # Put it all together
+      buf = ""
+      if len(no_cat) > 0:
+         no_cat.sort(key=lambda e: e.lower())
+         buf += "\n".join(no_cat)
+      for cat_name in cat_name_list:
+         buf += "\n\n**{}**\n".format(cat_name)
+         buf += "\n".join(cats_dict[cat_name])
+      return buf
 
 # STILL IN DEVELOPMENT
 # class CommandHelpPage(HelpNode):
@@ -399,7 +491,7 @@ class CommandMeta(HelpNode):
       self._help_detail = None
 
       # Attributes for module help content
-      self._help_category = None
+      self._help_category = "" # No category by default
       self._help_summary = None
 
       # Parsing the docstring to get _help_detail and _help_summary
@@ -449,9 +541,6 @@ class CommandMeta(HelpNode):
    def get_aliases(self):
       return list(self._aliases)
 
-   def get_min_priv(self):
-      return self._minimum_privilege
-
    def get_top_aliases(self):
       if self._top_level_alias_action is self.TopLevelAliasAction.USE_EXISTING_ALIASES:
          return list(self._aliases)
@@ -476,15 +565,20 @@ class CommandMeta(HelpNode):
          buf += buf0
       return buf
 
-   # PARAMETER: privilege_level - This argument doesn't actually do anything.
    async def get_help_summary(self, privilege_level=None):
-      cat = self._help_category
-      assert (isinstance(cat, str) and len(cat) > 0) or cat is None
-      return (self._help_summary, cat)
+      if self._top_level_alias_action is self.TopLevelAliasAction.NO_TOP_LEVEL_ALIASES:
+         return self._help_summary.format(cmd="{p}{grp}" + self._aliases[0])
+      else:
+         return self._help_summary.format(cmd="{p}" + self.get_top_aliases()[0])
+
+   async def node_min_priv(self):
+      return self._minimum_privilege
+
+   async def node_category(self):
+      return self._help_category
 
    async def get_next_node(self, locator_string, entry_string):
       assert type(locator_string) is str
       assert (not " " in locator_string) and (not locator_string is "")
       assert entry_string is None or type(entry_string) is str
-      assert (not " " in entry_string) and (not entry_string is "")
       return None # This is a leaf node.

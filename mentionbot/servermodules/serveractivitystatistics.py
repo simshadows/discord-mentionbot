@@ -48,7 +48,7 @@ class ServerActivityStatistics(ServerModule):
       (left, right) = utils.separate_left_word(substr)
       execute_regular_cmd = False
       try:
-         cmd_to_execute = cmd.get(self._cmdd, left, privilege_level)
+         cmd_to_execute = await cmd.get(self._cmdd, left, privilege_level)
          execute_regular_cmd = True
       except (errors.InvalidCommandArgumentsError, errors.CommandPrivilegeError):
          pass

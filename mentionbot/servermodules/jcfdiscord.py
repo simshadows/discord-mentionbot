@@ -108,6 +108,7 @@ class JCFDiscord(ServerModule):
 
    @cmd.add(_cmdd, "typeflair")
    async def _cmdf_typeflair(self, substr, msg, privilege_level):
+      """`{cmd}`"""
       (left, right) = utils.separate_left_word(substr)
       new_role_name = left.upper()
       if not new_role_name in self._MBTI_TYPES_SET:

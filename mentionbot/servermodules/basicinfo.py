@@ -31,7 +31,7 @@ class BasicInfo(ServerModule):
 
    @cmd.add(_cmdd, "avatar", "dp", "avatarurl", top=True)
    async def _cmdf_avatar(self, substr, msg, privilege_level):
-      """`{p}{c} [user]` - Get a user's avatar."""
+      """`{cmd} [user]` - Get a user's avatar."""
       substr = substr.strip()
       user = None
       if len(substr) == 0:
@@ -50,7 +50,7 @@ class BasicInfo(ServerModule):
 
    @cmd.add(_cmdd, "user", "whois", "who", default=True, top=True)
    async def _cmdf_user(self, substr, msg, privilege_level):
-      """`{p}{c} [user]` - Get user info."""
+      """`{cmd} [user]` - Get user info."""
       # Get user. Copied from _cmd_avatar()...
       substr = substr.strip()
       user = None
@@ -81,7 +81,7 @@ class BasicInfo(ServerModule):
 
    @cmd.add(_cmdd, "role", "rolelist", top=True)
    async def _cmdf_rolestats(self, substr, msg, privilege_level):
-      """`{p}{c} [rolename]` - Get role stats."""
+      """`{cmd} [rolename]` - Get role stats."""
       server = msg.server
       if len(substr) == 0:
          await self._client.send_msg(msg, "Error: Must specify a role.")
@@ -123,7 +123,7 @@ class BasicInfo(ServerModule):
 
    @cmd.add(_cmdd, "thisserver", "server", top=True)
    async def _cmdf_server(self, substr, msg, privilege_level):
-      """`{p}{c}` - Get some simple server info and statistics."""
+      """`{cmd}` - Get some simple server info and statistics."""
       s = msg.server
       # Count voice and text channels
       text_ch_total = 0
@@ -153,7 +153,7 @@ class BasicInfo(ServerModule):
 
    @cmd.add(_cmdd, "servericon", top=True)
    async def _cmdf_servericon(self, substr, msg, privilege_level):
-      """`{p}{c}` - Get server icon."""
+      """`{cmd}` - Get server icon."""
       if msg.server.icon_url == "":
          return await self._client.send_msg(msg, "This server has no icon.")
       else:

@@ -168,7 +168,7 @@ class BsiStarkRavingMadBot(ServerModule):
 
    @cmd.add(_cmdd, "blame", top=True)
    async def _cmdf_blame(self, substr, msg, privilege_level):
-      """`{p}{c}`"""
+      """`{cmd}`"""
       if (substr == "<@{}>".format(self._res.botowner_ID)) or (substr == "<@{}>".format(self._res.me_ID)):
          # TODO: Consider also checking name matches... idk
          buf = "{} did nothing wrong."
@@ -184,7 +184,7 @@ class BsiStarkRavingMadBot(ServerModule):
 
    @cmd.add(_cmdd, "doot", top=True)
    async def _cmdf_doot(self, substr, msg, privilege_level):
-      """`{p}{c}`"""
+      """`{cmd}`"""
       # var m = await Client.SendMessage(e.Channel, "doot doot");
       # await Task.Delay(1000);
       # TODO: Figure out how to do this with asyncio without hanging up the bot for the whole 1 second...
@@ -201,7 +201,7 @@ class BsiStarkRavingMadBot(ServerModule):
 
    @cmd.add(_cmdd, "rip", top=True)
    async def _cmdf_rip(self, substr, msg, privilege_level):
-      """`{p}{c}`"""
+      """`{cmd}`"""
       await self._client.send_msg(msg, "doesnt even deserve a funeral")
       return
 
@@ -213,7 +213,7 @@ class BsiStarkRavingMadBot(ServerModule):
 
    @cmd.add(_cmdd, "sleep", top=True)
    async def _cmdf_sleep(self, substr, msg, privilege_level):
-      """`{p}{c}`"""
+      """`{cmd}`"""
       # The original command takes a user mention from substr and appends it to the end.
       # so "$sleep" -> "Go to sleep"
       # and "$sleep <@123> <@456>" -> "Go to sleep <@123>"
@@ -250,7 +250,7 @@ class BsiStarkRavingMadBot(ServerModule):
 
    @cmd.add(_cmdd, "ud", "urbandictionary", "urban", top=True)
    async def _cmdf_ud(self, substr, msg, privilege_level):
-      """`{p}{c}`"""
+      """`{cmd}`"""
       await self._client.send_msg(msg, "http://www.urbandictionary.com/define.php?term=" + urllibparse.quote(substr))
       return
 

@@ -2,7 +2,7 @@ import re
 
 from . import utils, errors, cmd
 
-class ServerModuleGroup: # (cmd.HelpNode) TODO
+class ServerModuleGroup(cmd.HelpNode):
 
    # TODO: Implement more efficient data structures. Too much linear searching is going on.
 
@@ -80,39 +80,6 @@ class ServerModuleGroup: # (cmd.HelpNode) TODO
          del self._modules_cmd_dict[cmd_name]
       self._modules_list.remove(module_to_remove)
 
-   # Returns a string containing help message content.
-   #     May return an empty string if no help content.
-   # If presenting a summary, the returned string will lack
-   # a "title", so it might be necessary to do the following:
-   #     buf = "**HELP CONTENT:**\n" + modules.get_help_content()
-   # This also only presents help content for modules it maintains.
-   # If ServerBotInstance has additional functionality, it should append it
-   # to the returned string. Depends on what ServerBotInstance wants to do.
-   # PRECONDITION: The ServerModuleGroup object is filled with modules.
-   async def get_help_content(self, substr, privilege_level):
-      if substr == "":
-         # This serves a summary of commands.
-         buf = ""
-         for module in self._modules_list:
-            content = await module.get_help_summary(privilege_level)
-            if content != "":
-               buf += content + "\n"
-         buf = buf[:-1] # Remove extra newline.
-      else:
-         # This serves detailed help content for a module.
-         # It passes the arguments in as well to allow modules to display
-         # different help content as they wish. How this is handled is
-         # all up to the module.
-         (left, right) = utils.separate_left_word(substr)
-         try:
-            content = await self._modules_cmd_dict[left].get_help_detail(right, privilege_level)
-            if content == "":
-               raise errors.NoHelpContentExists
-            buf = content
-         except KeyError:
-            raise errors.NoHelpContentExists
-      return buf
-
    # Returns list of all installed modules in this instance.
    # RETURNS: A list of tuples, each tuple in the format:
    #          (module_name, module_short_description, is_active)
@@ -147,13 +114,24 @@ class ServerModuleGroup: # (cmd.HelpNode) TODO
    ### HelpNode Implementations ###
    ################################
 
-   # def get_help_detail(self):
-   #    raise NotImplementedError
+   async def get_help_detail(self, privilege_level=None):
+      return await self._summarise_server_modules(self._modules_list, privilege_level=privilege_level)
 
-   # def get_help_summary(self):
-   #    raise NotImplementedError
+   async def get_help_summary(self, privilege_level=None):
+      return "ServerModuleGroup objects have no help summary yet."
 
-   # def get_next_node(self, locator_string):
-   #    # Please insert this assert in implementations.
-   #    assert not " " in locator_string
-   #    raise NotImplementedError
+   async def node_min_priv(self):
+      return PrivilegeLevel.get_lowest_privilege()
+
+   async def node_category(self):
+      return ""
+
+   async def get_next_node(self, locator_string, entry_string):
+      # A few asserts that may be used.
+      assert type(locator_string) is str
+      assert (not " " in locator_string) and (not locator_string is "")
+      assert entry_string is None or type(entry_string) is str
+      if locator_string in self._modules_cmd_dict:
+         return self._modules_cmd_dict[locator_string]
+      else:
+         return None

@@ -5,7 +5,7 @@ import concurrent
 from . import utils, errors, cmd
 from .servermoduleresources import ServerModuleResources
 
-class ServerModuleWrapper:
+class ServerModuleWrapper(cmd.HelpNode):
    """
    Wraps the operations of a server module.
 
@@ -184,22 +184,59 @@ class ServerModuleWrapper:
    # METHODS SERVED BY THE MODULE #########################################################
    ########################################################################################
 
-   async def get_help_summary(self, privilege_level):
+   # (HelpNode IMPLEMENTATION METHOD)
+   async def get_help_detail(self, privilege_level=None):
+      if not self.is_active():
+         return "The `{}` module is not active.".format(self.module_name)
+      try:
+         return await self._module_instance.get_help_detail(privilege_level=privilege_level)
+      except Exception as e:
+         return await self._module_method_error_handler(e)
+
+   # (HelpNode IMPLEMENTATION METHOD)
+   async def get_help_summary(self, privilege_level=None):
       if not self.is_active():
          return "(The `{}` module is not active.)".format(self.module_name)
       try:
-         return await self._module_instance.get_help_summary(privilege_level, self._module_cmd_aliases[0])
+         return await self._module_instance.get_help_summary(privilege_level=privilege_level)
       except Exception as e:
          await self._module_method_error_handler(e)
          return "(Unable to obtain `{}` help.)".format(self.module_name)
 
-   async def get_help_detail(self, substr, privilege_level):
+   # (HelpNode IMPLEMENTATION METHOD)
+   async def node_min_priv(self):
       if not self.is_active():
-         return "The `{}` module is not active.".format(self.module_name)
+         return PrivilegeLevel.get_lowest_privilege()
       try:
-         return await self._module_instance.get_help_detail(substr, privilege_level, self._module_cmd_aliases[0])
+         return await self._module_instance.node_min_priv()
       except Exception as e:
-         return await self._module_method_error_handler(e)
+         await self._module_method_error_handler(e)
+         return PrivilegeLevel.get_lowest_privilege()
+
+   # (HelpNode IMPLEMENTATION METHOD)
+   async def node_category(self):
+      if not self.is_active():
+         return "<<INACTIVE>>"
+      try:
+         return await self._module_instance.node_category()
+      except Exception as e:
+         await self._module_method_error_handler(e)
+         return "<<ERROR>>"
+
+   # (HelpNode IMPLEMENTATION METHOD)
+   async def get_next_node(self, locator_string, entry_string):
+      # A few asserts that may be used.
+      assert type(locator_string) is str
+      assert (not " " in locator_string) and (not locator_string is "")
+      assert entry_string is None or type(entry_string) is str
+      
+      if not self.is_active():
+         return None
+      try:
+         return await self._module_instance.get_next_node(locator_string, entry_string)
+      except Exception as e:
+         await self._module_method_error_handler(e)
+         return None
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
       if not self.is_active():

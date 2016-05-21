@@ -76,7 +76,7 @@ class TruthGame(ServerModule):
    @cmd.add(_cmdd, "newgame", top=True)
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_newgame(self, substr, msg, privilege_level):
-      """`{p}{c}` - New game."""
+      """`{cmd}` - New game."""
       channel = msg.channel
       await self._abort_if_not_truth_channel(channel)
       await self._new_game(channel)
@@ -86,10 +86,10 @@ class TruthGame(ServerModule):
    @cmd.add(_cmdd, "in", top=True)
    async def _cmdf_in(self, substr, msg, privilege_level):
       """
-      `{p}{c}` - Adds you to the game.
+      `{cmd}` - Adds you to the game.
 
       This command also allows moderators to add other users and arbitrary strings as participants.
-      E.g.: `{p}{c} an elephant` - Adds "an elephant" as a participant.
+      E.g.: `{cmd} an elephant` - Adds "an elephant" as a participant.
       """
       channel = msg.channel
       await self._abort_if_not_truth_channel(channel)
@@ -111,10 +111,10 @@ class TruthGame(ServerModule):
    @cmd.add(_cmdd, "out", top=True)
    async def _cmdf_out(self, substr, msg, privilege_level):
       """
-      `{p}{c}` - Removes you from the game.
+      `{cmd}` - Removes you from the game.
 
       This command also allows moderators to remove other users and arbitrary strings.
-      E.g.: `{p}{c} an elephant` - Removes "an elephant" as a participant.
+      E.g.: `{cmd} an elephant` - Removes "an elephant" as a participant.
       """
       channel = msg.channel
       await self._abort_if_not_truth_channel(channel)

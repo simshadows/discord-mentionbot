@@ -2,6 +2,7 @@ import abc
 import textwrap
 
 from . import utils, cmd
+from .enums import PrivilegeLevel
 
 module_list = []
 
@@ -12,7 +13,7 @@ def registered(cls):
 
 # Abstract Class (would've been an interface...)
 # All server modules are subclasses of ServerModule.
-class ServerModule(abc.ABC):
+class ServerModule(cmd.HelpNode):
    """
    The base class of all server modules.
 
@@ -37,7 +38,7 @@ class ServerModule(abc.ABC):
    # A string, potentially multi-line, giving a brief summary of the module.
    # Formatting arguments "modhelp", "mod", and "p" are used here, evaluated
    # when processing this string.
-   _HELP_SUMMARY = NotImplemented
+   _HELP_SUMMARY = "`{modhelp}` <<PLACEHOLDER>>"
 
    ##############################################################################
    # THE BELOW MUST NOT BE OVERRIDDEN ###########################################
@@ -55,31 +56,48 @@ class ServerModule(abc.ABC):
       return
 
    @classmethod
-   def get_cmd_functions(self):
-      if self._cmdd is NotImplemented:
+   def get_cmd_functions(cls):
+      if cls._cmdd is NotImplemented:
          raise NotImplementedError
       seen_set = set()
-      for (alias, function) in self._cmdd.items():
+      for (alias, function) in cls._cmdd.items():
          if function not in seen_set:
             seen_set.add(function)
             yield function
+
+   # (HelpNode IMPLEMENTATION METHOD)
+   async def node_min_priv(self):
+      return PrivilegeLevel.get_lowest_privilege()
+      # TODO: Make use of whole-module privilege restrictions in the future.
+
+   async def node_category(self):
+      return ""
+      # TODO: Make use of categories in the future.
+
+   # (HelpNode IMPLEMENTATION METHOD)
+   async def get_next_node(self, locator_string, entry_string):
+      assert type(locator_string) is str
+      assert (not " " in locator_string) and (not locator_string is "")
+      assert entry_string is None or type(entry_string) is str
+      if locator_string in self._cmdd:
+         return self._cmdd[locator_string]
+      else:
+         return None
 
    ##############################################################################
    # THE BELOW USE EXISTING SERVICES THAT MAY BE OVERRIDDEN #####################
    ##############################################################################
 
-   # Get a help-message string summarising the module functionality,
-   # or at least directing the user to more detailed help.
-   # Returned string has no leading/trailing whitespace.
-   async def get_help_summary(self, privilege_level, module_alias):
-      buf = textwrap.dedent(self._HELP_SUMMARY).strip()
-      return cmd.format_mod_evaluate(buf, mod=module_alias)
+   # (HelpNode IMPLEMENTATION METHOD)
+   # This may be overwritten completely if you wish.
+   async def get_help_detail(self, privilege_level=None):
+      return await self._summarise_commands(self._cmdd, privilege_level=privilege_level)
 
-   # Get a detailed help-message string about the module.
-   # String has no leading/trailing whitespace.
-   async def get_help_detail(self, substr, privilege_level, module_alias):
-      buf = await cmd.compose_help_summary(self._cmdd, privilege_level)
-      return buf.format(b=module_alias + " ", p="{p}")
+   # (HelpNode IMPLEMENTATION METHOD)
+   # This may be overwritten completely if you wish.
+   async def get_help_summary(self, privilege_level=None):
+      buf = textwrap.dedent(self._HELP_SUMMARY).strip()
+      return buf.format(p="{p}", modhelp="{p}help {grp}")
 
    # This method is called if a command is to be handled by the module.
    # By default, it processes a command in _cmdd.
@@ -90,7 +108,7 @@ class ServerModule(abc.ABC):
    # bot command processing system.
    async def process_cmd(self, substr, msg, privilege_level):
       (left, right) = utils.separate_left_word(substr)
-      cmd_to_execute = cmd.get(self._cmdd, left, privilege_level)
+      cmd_to_execute = await cmd.get(self._cmdd, left, privilege_level)
       await cmd_to_execute(self, right, msg, privilege_level)
       return
 

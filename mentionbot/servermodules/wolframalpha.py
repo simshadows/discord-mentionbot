@@ -20,8 +20,8 @@ class WolframAlpha(ServerModule):
 
    _HELP_SUMMARY = """
       See `{modhelp}` to manage the Wolfram Alpha module.
-      `{p}wa [query]` - Make a Wolfram Alpha query.
-      `{p}define [word]` - Get word definition from WA.
+      `[p]wa [query]` - Make a Wolfram Alpha query.
+      `[p]define [word]` - Get word definition from WA.
       """
 
    DEFAULT_SHARED_SETTINGS = {
@@ -82,7 +82,7 @@ class WolframAlpha(ServerModule):
 
    @cmd.add(_cmdd, "query", "q", top="wa")
    async def _cmdf_query(self, substr, msg, privilege_level):
-      """`{p}wa [query]` - Make a Wolfram Alpha query."""
+      """`{cmd} [query]` - Make a Wolfram Alpha query."""
       if substr == "":
          await self._client.send_msg(msg, "Error: No text input made for query. Aborting.")
       else:
@@ -119,7 +119,7 @@ class WolframAlpha(ServerModule):
 
    @cmd.add(_cmdd, "define", "def", top="define")
    async def _cmdf_define(self, substr, msg, privilege_level):
-      """`{p}define [word]` - Get word definition from WA."""
+      """`{cmd} [word]` - Get word definition from WA."""
       if substr == "":
          await self._client.send_msg(msg, "Error: No text input made for query. Aborting.")
       else:
