@@ -786,17 +786,10 @@ class ServerBotInstance:
       raise BaseException
 
    async def _get_help_content(self, substr, msg, cmd_prefix, privilege_level):
-      buf = None
-      if substr == "":
-         # buf = await cmd.compose_help_summary(self._cmdd, privilege_level) + "\n\n"
-         buf = await self._modules.get_help_detail(privilege_level=privilege_level)
-         return buf.format(p=cmd_prefix, grp="")
-      else:
-         node = await self._modules.get_node(substr)
-         if node is None:
-            return "No help content found for `{}`.".format(substr)
-         buf = await node.get_help_detail(privilege_level=privilege_level)
-         return buf.format(p=cmd_prefix, grp=substr + " ")
+      buf = await self._modules.get_help_detail(substr, "", privilege_level)
+      if buf is None:
+         return "No help content found for `{}`.".format(substr)
+      return buf.format(p=cmd_prefix, grp="")
    
    def get_presence_timedelta(self):
       return datetime.datetime.utcnow() - self.initialization_timestamp

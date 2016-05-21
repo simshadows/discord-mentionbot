@@ -1,6 +1,7 @@
 import re
 
 from . import utils, errors, cmd
+from .enums import PrivilegeLevel
 
 class ServerModuleGroup(cmd.HelpNode):
 
@@ -114,10 +115,24 @@ class ServerModuleGroup(cmd.HelpNode):
    ### HelpNode Implementations ###
    ################################
 
-   async def get_help_detail(self, privilege_level=None):
-      return await self._summarise_server_modules(self._modules_list, privilege_level=privilege_level)
+   async def get_help_detail(self, locator_string, entry_string, privilege_level):
+      assert isinstance(locator_string, str) and isinstance(entry_string, str)
+      assert isinstance(privilege_level, PrivilegeLevel)
+      buf = None
+      if locator_string is "":
+         # Serve module help content.
+         buf = await cmd.summarise_server_modules(self._modules_list, privilege_level)
+      else:
+         # Get the next node's help content.
+         (left, right) = utils.separate_left_word(locator_string)
+         if left in self._modules_cmd_dict:
+            buf = await self._modules_cmd_dict[left].get_help_detail(right, left, privilege_level)
+            if not buf is None:
+               buf = buf.format(p="{p}", grp="{grp}" + left + " ")
+      return buf
 
-   async def get_help_summary(self, privilege_level=None):
+   async def get_help_summary(self, privilege_level):
+      assert isinstance(privilege_level, PrivilegeLevel)
       return "ServerModuleGroup objects have no help summary yet."
 
    async def node_min_priv(self):
@@ -125,13 +140,3 @@ class ServerModuleGroup(cmd.HelpNode):
 
    async def node_category(self):
       return ""
-
-   async def get_next_node(self, locator_string, entry_string):
-      # A few asserts that may be used.
-      assert type(locator_string) is str
-      assert (not " " in locator_string) and (not locator_string is "")
-      assert entry_string is None or type(entry_string) is str
-      if locator_string in self._modules_cmd_dict:
-         return self._modules_cmd_dict[locator_string]
-      else:
-         return None

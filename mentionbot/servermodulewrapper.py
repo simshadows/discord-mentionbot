@@ -1,8 +1,10 @@
 import asyncio
 import sys
 import concurrent
+import traceback
 
 from . import utils, errors, cmd
+from .enums import PrivilegeLevel
 from .servermoduleresources import ServerModuleResources
 
 class ServerModuleWrapper(cmd.HelpNode):
@@ -52,18 +54,11 @@ class ServerModuleWrapper(cmd.HelpNode):
       # Initialize self._shortcut_cmd_aliases
       self._shortcut_cmd_aliases = {}
       for cmd_fn in self._module_class.get_cmd_functions():
-         if not hasattr(cmd_fn, "top_level_alias_type"):
+         top_level_aliases = cmd_fn.cmd_meta.get_top_aliases()
+         if top_level_aliases is None:
             continue
-         module_cmd_alias = cmd_fn.cmd_names[0]
-         top_level_aliases = None
-         if cmd_fn.top_level_alias_type is cmd.TopLevelAliasAction.USE_EXISTING_ALIASES:
-            top_level_aliases = cmd_fn.cmd_names
-         elif cmd_fn.top_level_alias_type is cmd.TopLevelAliasAction.USE_NEW_ALIASES:
-            top_level_aliases = cmd_fn.top_level_aliases
-         else:
-            raise RuntimeError("Not a recognized enum value.")
          for top_level_alias in top_level_aliases:
-            self._shortcut_cmd_aliases[top_level_alias] = module_cmd_alias
+            self._shortcut_cmd_aliases[top_level_alias] = cmd_fn.cmd_meta.get_aliases()[0]
       return self
 
    def __init__(self, token):
@@ -185,20 +180,28 @@ class ServerModuleWrapper(cmd.HelpNode):
    ########################################################################################
 
    # (HelpNode IMPLEMENTATION METHOD)
-   async def get_help_detail(self, privilege_level=None):
+   async def get_help_detail(self, locator_string, entry_string, privilege_level):
+      assert isinstance(locator_string, str) and isinstance(entry_string, str)
+      assert isinstance(privilege_level, PrivilegeLevel)
       if not self.is_active():
          return "The `{}` module is not active.".format(self.module_name)
       try:
-         return await self._module_instance.get_help_detail(privilege_level=privilege_level)
+         print(locator_string)
+         print(entry_string)
+         if entry_string in self._shortcut_cmd_aliases:
+            locator_string = self._shortcut_cmd_aliases[entry_string] + " " + locator_string
+            entry_string = self._module_cmd_aliases[0]
+         return await self._module_instance.get_help_detail(locator_string, entry_string, privilege_level)
       except Exception as e:
          return await self._module_method_error_handler(e)
 
    # (HelpNode IMPLEMENTATION METHOD)
-   async def get_help_summary(self, privilege_level=None):
+   async def get_help_summary(self, privilege_level):
+      assert isinstance(privilege_level, PrivilegeLevel)
       if not self.is_active():
          return "(The `{}` module is not active.)".format(self.module_name)
       try:
-         return await self._module_instance.get_help_summary(privilege_level=privilege_level)
+         return await self._module_instance.get_help_summary(privilege_level)
       except Exception as e:
          await self._module_method_error_handler(e)
          return "(Unable to obtain `{}` help.)".format(self.module_name)
@@ -222,21 +225,6 @@ class ServerModuleWrapper(cmd.HelpNode):
       except Exception as e:
          await self._module_method_error_handler(e)
          return "<<ERROR>>"
-
-   # (HelpNode IMPLEMENTATION METHOD)
-   async def get_next_node(self, locator_string, entry_string):
-      # A few asserts that may be used.
-      assert type(locator_string) is str
-      assert (not " " in locator_string) and (not locator_string is "")
-      assert entry_string is None or type(entry_string) is str
-      
-      if not self.is_active():
-         return None
-      try:
-         return await self._module_instance.get_next_node(locator_string, entry_string)
-      except Exception as e:
-         await self._module_method_error_handler(e)
-         return None
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
       if not self.is_active():

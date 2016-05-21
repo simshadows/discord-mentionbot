@@ -18,7 +18,7 @@ class SelfServeColours(ServerModule):
    _cmdd = {}
 
    _HELP_SUMMARY = """
-      `[p]colour [rgb code]` - Assign yourself a colour. `{p}colour` clears.
+      `[p]colour [rgb code]` - Assign yourself a colour. `[p]colour` clears.
       """
 
    _re_rgb_code = re.compile("[0-9a-fA-F]{6}")
@@ -30,8 +30,8 @@ class SelfServeColours(ServerModule):
       self._res.suppress_autokill(True)
       return
 
-   async def get_help_detail(self, substr, privilege_level, module_alias):
-      return await self.get_help_summary(privilege_level, module_alias)
+   async def _get_help_header_text(self, privilege_level):
+      return await self.get_help_summary(privilege_level)
 
    async def process_cmd(self, substr, msg, privilege_level):
       # First process the input.

@@ -74,28 +74,33 @@ class ServerModule(cmd.HelpNode):
       return ""
       # TODO: Make use of categories in the future.
 
-   # (HelpNode IMPLEMENTATION METHOD)
-   async def get_next_node(self, locator_string, entry_string):
-      assert type(locator_string) is str
-      assert (not " " in locator_string) and (not locator_string is "")
-      assert entry_string is None or type(entry_string) is str
-      if locator_string in self._cmdd:
-         return self._cmdd[locator_string]
-      else:
-         return None
-
    ##############################################################################
    # THE BELOW USE EXISTING SERVICES THAT MAY BE OVERRIDDEN #####################
    ##############################################################################
 
    # (HelpNode IMPLEMENTATION METHOD)
    # This may be overwritten completely if you wish.
-   async def get_help_detail(self, privilege_level=None):
-      return await self._summarise_commands(self._cmdd, privilege_level=privilege_level)
+   async def get_help_detail(self, locator_string, entry_string, privilege_level):
+      assert isinstance(locator_string, str) and isinstance(entry_string, str)
+      assert isinstance(privilege_level, PrivilegeLevel)
+      buf = None
+      if locator_string is "":
+         # Serve module help content.
+         buf = await cmd.summarise_commands(self._cmdd, privilege_level=privilege_level)
+         buf0 = await self._get_help_header_text(privilege_level)
+         if not buf0 is None:
+            buf = buf0 + "\n\n" + buf
+      else:
+         # Get the next node's help content.
+         (left, right) = utils.separate_left_word(locator_string)
+         if left in self._cmdd:
+            buf = await self._cmdd[left].cmd_meta.get_help_detail(right, left, privilege_level)
+      return buf
 
    # (HelpNode IMPLEMENTATION METHOD)
    # This may be overwritten completely if you wish.
-   async def get_help_summary(self, privilege_level=None):
+   async def get_help_summary(self, privilege_level):
+      assert isinstance(privilege_level, PrivilegeLevel)
       buf = textwrap.dedent(self._HELP_SUMMARY).strip()
       return buf.format(p="{p}", modhelp="{p}help {grp}")
 
@@ -119,6 +124,13 @@ class ServerModule(cmd.HelpNode):
    # Do whatever initialization you wish here.
    async def _initialize(self, resources):
       pass
+
+   # This function adds additional text to get_help_detail() when
+   # locator_string="".
+   # Any text returned by _get_help_header_text() will be appended above the
+   # command summary produced in get_help_summary().
+   async def _get_help_header_text(self, privilege_level):
+      return None
 
    # Every module has the opportunity to pre-process the contents of a message.
    # This is carried out after all modules have carried out their on_message()

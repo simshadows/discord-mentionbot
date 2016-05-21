@@ -48,6 +48,13 @@ class PMGreetings(ServerModule):
       self._res.suppress_autokill(True)
       return
 
+   async def _get_help_header_text(self, privilege_level):
+      buf = "This module sends personalized greeting messages to new members via PM.\n\n"
+      buf += self._SUBSTITUTION_INFO
+      buf += "\n\n**Available Commands:**\n"
+      buf = buf.format(self._MEMBER_NAME_IDENTIFIER, self._SERVER_NAME_IDENTIFIER).strip()
+      return buf
+
    def _load_settings(self):
       settings = self._res.get_settings()
       if settings is None:
@@ -63,14 +70,6 @@ class PMGreetings(ServerModule):
       settings = {"greeting_template": self._greeting_template}
       self._res.save_settings(settings)
       return
-
-   async def get_help_detail(self, substr, privilege_level, module_alias):
-      buf = "This module sends personalized greeting messages to new members via PM.\n\n"
-      buf += self._SUBSTITUTION_INFO
-      buf += "\n\n**Available Commands:**\n"
-      buf = buf.format(self._MEMBER_NAME_IDENTIFIER, self._SERVER_NAME_IDENTIFIER).strip()
-      buf += "\n" + await super(PMGreetings, self).get_help_detail(substr, privilege_level, module_alias)
-      return buf
 
    @cmd.add(_cmdd, "view", "viewmessage", "see", "get", "getmessage", default=True)
    async def _cmdf_view(self, substr, msg, privilege_level):
@@ -101,7 +100,7 @@ class PMGreetings(ServerModule):
       """
       `{cmd} [message contents]` - Set the server greeting message.
 
-      For information on what tokens are used, see `{p}help {mod}`.
+      For information on what tokens are used, see `<<PLACEHOLDER>>`.
       """
       if len(substr) == 0:
          await self._client.send_msg(msg, self._SUBSTITUTION_INFO)
