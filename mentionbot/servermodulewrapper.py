@@ -4,10 +4,11 @@ import concurrent
 import traceback
 
 from . import utils, errors, cmd
+from .helpnode import HelpNode
 from .enums import PrivilegeLevel
 from .servermoduleresources import ServerModuleResources
 
-class ServerModuleWrapper(cmd.HelpNode):
+class ServerModuleWrapper(HelpNode): #  # TODO Having weird issues here...
    """
    Wraps the operations of a server module.
 

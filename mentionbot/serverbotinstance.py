@@ -9,16 +9,104 @@ import re
 import datetime
 import copy
 import traceback
+import collections
+import textwrap
 
 import discord
 
 from . import utils, errors, cmd
+from .helpnode import HelpNode
 from .enums import PrivilegeLevel
 
 from .servermodulegroup import ServerModuleGroup
 from .serverpersistentstorage import ServerPersistentStorage
 from .privilegemanager import PrivilegeManager
 from .servermodulefactory import ServerModuleFactory
+
+# Registers a core command.
+def _core_command(help_page_dict, page_name):
+   assert isinstance(page_name, str)
+   def function_decorator(function):
+      page_commands = help_page_dict[page_name]
+      page_commands.append(function)
+      return function
+   return function_decorator
+
+class CoreCommandsHelpPage(HelpNode):
+   def __init__(self):
+      self._page_aliases = []
+      self._cmd_list = []
+      self._cmd_dict = {}
+      self._help_summary = "<<PLACEHOLDER>>"
+      self._above_text = "" # This is text that will be added before the
+                            # command listing. This must be pre-stripped
+                            # then a newline appended to the end.
+      return
+
+   # PARAMETER: cmd_obj - A command object to add to the collection.
+   def add_command(self, cmd_obj):
+      assert hasattr(cmd_obj, "cmd_meta")
+      self._cmd_list.append(cmd_obj)
+      for alias in cmd_obj.cmd_meta.get_aliases():
+         self._cmd_dict[alias] = cmd_obj
+      return
+
+   # PARAMETER: text - Set the help summary text.
+   def set_page_aliases(self, alias_list):
+      assert isinstance(alias_list, list)
+      self._page_aliases = alias_list
+      return
+
+   # PARAMETER: text - Set the help summary text.
+   def set_help_summary(self, text):
+      assert isinstance(text, str)
+      self._help_summary = text.strip()
+      return
+
+   # PARAMETER: text - Either a string containing text to append to the top
+   #                   in get_help_detail(), or None.
+   def set_above_text(self, text):
+      if text is None:
+         self._above_text = ""
+      else:
+         assert isinstance(text, str)
+         self._above_text = text.strip() + "\n\n"
+      return
+
+   def get_page_aliases(self):
+      return list(self._page_aliases)
+
+   ################################
+   ### HelpNode Implementations ###
+   ################################
+
+   async def get_help_detail(self, locator_string, entry_string, privilege_level):
+      assert isinstance(locator_string, str) and isinstance(entry_string, str)
+      assert isinstance(privilege_level, PrivilegeLevel)
+      buf = None
+      if locator_string is "":
+         # Serve the page's help content.
+         buf = await cmd.summarise_commands(self._cmd_dict, privilege_level=privilege_level)
+         if not self._above_text is None:
+            buf = self._above_text + buf
+      else:
+         # Get the next node's help content.
+         (left, right) = utils.separate_left_word(locator_string)
+         if left in self._cmd_dict:
+            buf = await self._cmd_dict[left].cmd_meta.get_help_detail(right, left, privilege_level)
+      return buf
+
+   async def get_help_summary(self, privilege_level):
+      assert isinstance(privilege_level, PrivilegeLevel)
+      return self._help_summary
+
+   async def node_min_priv(self):
+      return PrivilegeLevel.get_lowest_privilege()
+      # TODO: Make use of whole-module privilege restrictions in the future.
+
+   async def node_category(self):
+      return ""
+      # TODO: Make use of categories in the future.
 
 # ServerBotInstance manages everything to do with a particular server.
 # IMPORTANT: client is a MentionBot instance!!!
@@ -32,6 +120,23 @@ class ServerBotInstance:
    INIT_MENTIONS_NOTIFY_ENABLED = False
 
    _cmdd = {} # Command Dictionary
+   _helpd = collections.defaultdict(lambda: []) # Used to compile the
+                                                # core help pages.
+   _help_page_list = [] # Set up at the end of class initialization, this list
+                        # holds all help pages to add to ServerModuleGroup in
+                        # each ServerBotInstance instance.
+
+   _help_page_above_text = {
+      "core": """
+         These are your core commands.
+
+         Use them wisely, young Padawan.
+         """
+   }
+
+   _help_page_summaries = {
+      "core": "omg a summary"
+   }
 
    @classmethod
    async def get_instance(cls, client, server):
@@ -72,7 +177,7 @@ class ServerBotInstance:
             await new_module.activate()
          except:
             print("Error installing module {}. Skipping.".format(module_name))
-      self._modules = ServerModuleGroup(initial_modules=modules)
+      self._modules = ServerModuleGroup(initial_modules=modules, core_help_pages=cls._help_page_list)
 
       try:
          self._cmd_prefix = data["cmd prefix"]
@@ -178,6 +283,7 @@ class ServerBotInstance:
    ########################
 
    @cmd.add(_cmdd, "help")
+   @_core_command(_helpd, "core")
    async def _cmdf_help(self, substr, msg, privilege_level):
       """
       `{cmd} [command name]` - More help.
@@ -189,12 +295,14 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "source", "src", "github", "git")
+   @_core_command(_helpd, "core")
    async def _cmdf_source(self, substr, msg, privilege_level):
       """`{cmd}` - Where to get my source code."""
       await self._client.send_msg(msg, "https://github.com/simshadows/discord-mentionbot")
       return
 
    @cmd.add(_cmdd, "uptime")
+   @_core_command(_helpd, "core")
    async def _cmdf_uptime(self, substr, msg, privilege_level):
       """`{cmd}` - Get time since initialization."""
       buf = "**Bot current uptime:** {}. ".format(utils.timedelta_to_string(self.get_presence_timedelta()))
@@ -202,12 +310,14 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "time", "gettime", "utc")
+   @_core_command(_helpd, "core")
    async def _cmdf_time(self, substr, msg, privilege_level):
       """`{cmd}` - Get bot's system time in UTC."""
       await self._client.send_msg(msg, datetime.datetime.utcnow().strftime("My current system time: %c UTC"))
       return
 
    @cmd.add(_cmdd, "say")
+   @_core_command(_helpd, "core")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_say(self, substr, msg, privilege_level):
       """`{cmd} [text]` - Echo's the following text."""
@@ -221,6 +331,7 @@ class ServerBotInstance:
    # Random commands go here until they find a home in a proper module.
 
    @cmd.add(_cmdd, "lmgtfy", "google", "goog", "yahoo")
+   @_core_command(_helpd, "core")
    async def _cmdf_say(self, substr, msg, privilege_level):
       """`{cmd} [text]` - Let me google that for you..."""
       if len(substr) == 0:
@@ -229,6 +340,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "testbell")
+   @_core_command(_helpd, "core")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_msgcachedebug(self, substr, msg, privilege_level):
       """`{cmd}`"""
@@ -241,6 +353,7 @@ class ServerBotInstance:
    #######################################
 
    @cmd.add(_cmdd, "mods", "modules")
+   @_core_command(_helpd, "core")
    @cmd.category("Module Info/Management")
    async def _cmdf_mods(self, substr, msg, privilege_level):
       """`{cmd}` - View installed and available modules."""
@@ -285,6 +398,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "add", "install", "addmodule")
+   @_core_command(_helpd, "core")
    @cmd.category("Module Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_add(self, substr, msg, privilege_level):
@@ -303,6 +417,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "remove", "uninstall", "removemodule")
+   @_core_command(_helpd, "core")
    @cmd.category("Module Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_remove(self, substr, msg, privilege_level):
@@ -316,6 +431,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "activate", "reactivate", "activatemodule", "reactivatemodule")
+   @_core_command(_helpd, "core")
    @cmd.category("Module Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_activate(self, substr, msg, privilege_level):
@@ -336,6 +452,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "deactivate", "kill", "deactivatemodule", "killmodule")
+   @_core_command(_helpd, "core")
    @cmd.category("Module Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_activate(self, substr, msg, privilege_level):
@@ -357,6 +474,7 @@ class ServerBotInstance:
    ###########################################
 
    @cmd.add(_cmdd, "prefix", "predicate", "setprefix", "setpredicate")
+   @_core_command(_helpd, "core")
    @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_prefix(self, substr, msg, privilege_level):
@@ -370,6 +488,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "privinfo", "allprivs", "privsinfo", "whatprivs")
+   @_core_command(_helpd, "core")
    @cmd.category("Command Privilege Info/Management")
    async def _cmdf_privinfo(self, substr, msg, privilege_level):
       """`{cmd}` - Get information on the bot's command privilege system."""
@@ -388,6 +507,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "priv", "privilege", "mypriv")
+   @_core_command(_helpd, "core")
    @cmd.category("Command Privilege Info/Management")
    async def _cmdf_priv(self, substr, msg, privilege_level):
       """`{cmd}` - Check your command privilege level."""
@@ -397,6 +517,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "privof", "privilegeof")
+   @_core_command(_helpd, "core")
    @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_privof(self, substr, msg, privilege_level):
@@ -406,6 +527,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "userprivsresolved", "userprivilegesresolved")
+   @_core_command(_helpd, "core")
    @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_userprivsresolved(self, substr, msg, privilege_level):
@@ -430,6 +552,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "userprivs", "userprivileges")
+   @_core_command(_helpd, "core")
    @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_userprivs(self, substr, msg, privilege_level):
@@ -456,6 +579,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "roleprivs", "roleprivileges", "flairprivs", "flairprivileges", "tagprivs", "tagprivileges")
+   @_core_command(_helpd, "core")
    @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.TRUSTED)
    async def _cmdf_roleprivs(self, substr, msg, privilege_level):
@@ -475,6 +599,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "adduserpriv", "adduserprivilege")
+   @_core_command(_helpd, "core")
    @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_adduserpriv(self, substr, msg, privilege_level):
@@ -510,6 +635,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "addrolepriv", "addroleprivilege")
+   @_core_command(_helpd, "core")
    @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_addrolepriv(self, substr, msg, privilege_level):
@@ -546,6 +672,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "removeuserpriv", "removeuserprivilege")
+   @_core_command(_helpd, "core")
    @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_removeuserpriv(self, substr, msg, privilege_level):
@@ -571,6 +698,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "removerolepriv", "removeroleprivilege", "removeflairpriv", "removeflairprivilege", "removetagpriv", "removetagprivilege")
+   @_core_command(_helpd, "core")
    @cmd.category("Command Privilege Info/Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_removerolepriv(self, substr, msg, privilege_level):
@@ -613,6 +741,7 @@ class ServerBotInstance:
    ###################################################
 
    @cmd.add(_cmdd, "iam")
+   @_core_command(_helpd, "core")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_iam(self, substr, msg, privilege_level):
@@ -631,6 +760,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "setgame", "setgamestatus")
+   @_core_command(_helpd, "core")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setgame(self, substr, msg, privilege_level):
@@ -640,6 +770,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "tempgame")
+   @_core_command(_helpd, "core")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setgame(self, substr, msg, privilege_level):
@@ -649,6 +780,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "revertgame")
+   @_core_command(_helpd, "core")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setgame(self, substr, msg, privilege_level):
@@ -658,6 +790,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "setusername", "updateusername", "newusername", "setname", "newname")
+   @_core_command(_helpd, "core")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setusername(self, substr, msg, privilege_level):
@@ -668,6 +801,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "setavatar", "updateavatar", "setdp", "newdp")
+   @_core_command(_helpd, "core")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_setusername(self, substr, msg, privilege_level):
@@ -725,6 +859,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "joinserver")
+   @_core_command(_helpd, "core")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_joinserver(self, substr, msg, privilege_level):
@@ -737,6 +872,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "leaveserver")
+   @_core_command(_helpd, "core")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_leaveserver(self, substr, msg, privilege_level):
@@ -746,6 +882,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "msgcachedebug")
+   @_core_command(_helpd, "core")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_msgcachedebug(self, substr, msg, privilege_level):
@@ -755,6 +892,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "closebot", "quit", "exit")
+   @_core_command(_helpd, "core")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_closebot(self, substr, msg, privilege_level):
@@ -763,6 +901,7 @@ class ServerBotInstance:
       sys.exit(0)
 
    @cmd.add(_cmdd, "throwexception", "exception")
+   @_core_command(_helpd, "core")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_throwexception(self, substr, msg, privilege_level):
@@ -770,6 +909,7 @@ class ServerBotInstance:
       raise Exception
 
    @cmd.add(_cmdd, "throwexception2")
+   @_core_command(_helpd, "core")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_throwexception2(self, substr, msg, privilege_level):
@@ -779,6 +919,7 @@ class ServerBotInstance:
       return
 
    @cmd.add(_cmdd, "throwbaseexception", "baseexception")
+   @_core_command(_helpd, "core")
    @cmd.category("Admin Commands")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
    async def _cmdf_throwexception(self, substr, msg, privilege_level):
@@ -794,4 +935,18 @@ class ServerBotInstance:
    def get_presence_timedelta(self):
       return datetime.datetime.utcnow() - self.initialization_timestamp
 
+   # Set up the pages.
+   for (page_name, cmd_list) in _helpd.items():
+      page = CoreCommandsHelpPage()
+      page.set_page_aliases([page_name])
+      if page_name in _help_page_above_text:
+         above_text = _help_page_above_text[page_name]
+         above_text = textwrap.dedent(above_text).strip()
+         page.set_above_text(above_text)
+      if page_name in _help_page_summaries:
+         summary_text = _help_page_summaries[page_name]
+         page.set_help_summary(summary_text)
+      for cmd_obj in cmd_list:
+         page.add_command(cmd_obj)
+      _help_page_list.append(page)
 

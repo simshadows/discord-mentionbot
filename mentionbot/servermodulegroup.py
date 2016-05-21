@@ -1,16 +1,17 @@
 import re
 
 from . import utils, errors, cmd
+from .helpnode import HelpNode
 from .enums import PrivilegeLevel
 
-class ServerModuleGroup(cmd.HelpNode):
+class ServerModuleGroup(HelpNode):
 
    # TODO: Implement more efficient data structures. Too much linear searching is going on.
 
    # PRECONDITION: initial_modules is a list of unique modules.
    # PRECONDITION: initial_modules is already sorted by desired appearance
    #               when getting summary help content.
-   def __init__(self, initial_modules=[]):
+   def __init__(self, initial_modules=[], core_help_pages=[]):
       # Initialize our module collections.
       # Two collections for efficiency (dict for calling commands, list for iterating).
       self._modules_cmd_dict = {}
@@ -18,6 +19,11 @@ class ServerModuleGroup(cmd.HelpNode):
       for module in self._modules_list:
          for cmd_name in module.all_cmd_aliases:
             self._modules_cmd_dict[cmd_name] = module
+      self._core_pages_dict = {}
+      self._core_pages_list = list(core_help_pages)
+      for help_page in self._core_pages_list:
+         for alias in help_page.get_page_aliases():
+            self._core_pages_dict[alias] = help_page
       return
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
@@ -119,12 +125,21 @@ class ServerModuleGroup(cmd.HelpNode):
       assert isinstance(locator_string, str) and isinstance(entry_string, str)
       assert isinstance(privilege_level, PrivilegeLevel)
       buf = None
+      print("DEBUGGING: loc = " + locator_string)
       if locator_string is "":
          # Serve module help content.
-         buf = await cmd.summarise_server_modules(self._modules_list, privilege_level)
+         buf = ""
+         if len(self._core_pages_list) > 0:
+            buf += await cmd.summarise_server_modules(self._core_pages_list, privilege_level)
+            buf += "\n"
+         buf += await cmd.summarise_server_modules(self._modules_list, privilege_level)
       else:
          # Get the next node's help content.
          (left, right) = utils.separate_left_word(locator_string)
+         if left in self._core_pages_dict:
+            buf = await self._core_pages_dict[left].get_help_detail(right, left, privilege_level)
+            if not buf is None:
+               buf = buf.format(p="{p}", grp="")
          if left in self._modules_cmd_dict:
             buf = await self._modules_cmd_dict[left].get_help_detail(right, left, privilege_level)
             if not buf is None:

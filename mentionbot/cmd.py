@@ -4,7 +4,9 @@ import abc
 import collections
 
 from . import utils, errors
+from .helpnode import HelpNode
 from .enums import PrivilegeLevel
+from .servermodulewrapper import ServerModuleWrapper
 
 ###########################################################################################
 # UTILITY FUNCTIONS #######################################################################
@@ -69,7 +71,8 @@ async def summarise_commands(cmd_dict, privilege_level=None):
       buf += "\n".join(cats_dict[cat_name])
    return buf
 
-# Produces a help content string out of a list of ServerModuleWrapper objects.
+# Produces a help content string out of a list of ServerModuleWrapper objects
+# and CoreCommandsHelpPage objects.
 async def summarise_server_modules(modules, privilege_level):
    assert isinstance(privilege_level, PrivilegeLevel)
    cats_dict = collections.defaultdict(lambda: [])
@@ -79,7 +82,8 @@ async def summarise_server_modules(modules, privilege_level):
       cat_name = await module.node_category()
       # Compose the string to append to the list within the relevant category.
       buf = await module.get_help_summary(privilege_level)
-      buf = buf.format(p="{p}", grp="{grp}" + module.module_cmd_aliases[0] + " ")
+      if isinstance(module, ServerModuleWrapper):
+         buf = buf.format(p="{p}", grp="{grp}" + module.module_cmd_aliases[0] + " ")
       cats_dict[cat_name].append(buf)
 
    # Separate the no-category category. This will be dealt with separately.
@@ -206,162 +210,6 @@ def _ensure_cmd_obj(function):
    if not hasattr(function, "cmd_meta"):
       function.cmd_meta = CommandMeta(function)
    return
-
-class HelpNode(abc.ABC):
-   """
-   This defines an object that can be referenced as a node in a directed graph
-   of help node objects.
-
-   HelpNode implementors:
-      - ServerModuleGroup (as this is an entrypoint)
-      - ServerModuleWrapper
-      - CommandHelpPage
-      - CommandMeta
-
-   SUBSTITUTION:
-
-      PROPOSED SCHEME
-         Commands are always "{cmd}".
-         STEP 1 (leaves) for CommandMeta:
-            IF it's marked as a top-level command:
-               "{cmd}" becomes "{p}[top_level_alias]"
-            ELSE:
-               "{cmd}" becomes "{p}{grp}[cmd_alias]" # cmd_alias is the primary
-                                                     # alias used by the
-                                                     # aggregator underneath.
-         STEP 2 (aggregators) for ServerModuleWrapper:
-            All remains untouched.
-         STEP 3 (requester) for ServerBotInstance:
-            "{p}" becomes the new prefix
-            "{grp}" is evaluated to the path taken to reach the node.
-      
-      CURRENT SCHEME (for reference until I've completely replaced it)
-         Help message string formatting arguments:
-             Everywhere:
-                "{cmd}" -> "{bc}{c}" -> "{p}{b}{c}"
-                   "{cmd}", "{c}", and "{bc}"->"{p}{b}" are evaluated in get_help_summary().
-                   "{b}" is evaluated where the help summary is composed from the command
-                      objects themselves.
-                   "{p}" is evaluated last, before sending off the final string.
-             In modules:
-                "{modhelp}" -> "{p}help {mod}"
-                   "{modhelp}" and "{mod}" are evaluated where the help summary is composed
-                      from the command objects themselves, in a module method.
-                   "{p}" is evaluated last, before sending off the final string.
-
-   """
-
-   # Get help content specified by the locator string.
-   # PARAMETER: locator_string - A string used to locate the help content.
-   #                             By convention, 
-   # RETURNS: Either a string containing help content, or None if no help
-   #          content exists.
-   # Get the node's detail help content as a string.
-   # POSTCONDITION: Will always produce help content.
-   #                This implies no NoneTypes or empty strings.
-   @abc.abstractmethod
-   async def get_help_detail(self, locator_string, entry_string, privilege_level):
-      assert isinstance(locator_string, str) and isinstance(entry_string, str)
-      assert isinstance(privilege_level, PrivilegeLevel)
-      raise NotImplementedError
-
-   # Get the node's summary help content as a string.
-   # POSTCONDITION: Will always produce help content.
-   #                This implies no NoneTypes or empty strings.
-   # RETURNS: Tuple with two items:
-   #              [0]: The help summary content.
-   #              [1]: A "category" string that may help nodes aggregating
-   #                   other help nodes to organize their help content.
-   #                   Value is None if there is no catgory.
-   @abc.abstractmethod
-   async def get_help_summary(self, privilege_level):
-      assert isinstance(privilege_level, PrivilegeLevel)
-      raise NotImplementedError
-
-   # Get the minimum privilege level normally required to access the node.
-   # POSTCONDITION: Guaranteed to produce a PrivilegeLevel object.
-   #                For nodes with no privilege restriction, the lowest
-   #                privilege level will be returned.
-   @abc.abstractmethod
-   async def node_min_priv(self):
-      raise NotImplementedError
-
-   # Get a string that names the category in which the node identifies itself
-   # to belong to. If no category, then this will return an empty string.
-   @abc.abstractmethod
-   async def node_category(self):
-      raise NotImplementedError
-
-   # OLD
-   # async def get_next_node(self, locator_string, entry_string):
-   # NEW
-   # async def get_help_detail(self, locator_string, entry_string, privilege_level):
-   # async def get_help_summary(self, privilege_level):
-
-# STILL IN DEVELOPMENT
-# class CommandHelpPage(HelpNode):
-#    """
-#    A general-use node collection of CommandMeta nodes.
-#    """
-#    def __init__(self):
-#       self._cmd_list = []
-#       self._cmd_dict = {}
-#       self._help_summary = None
-#       self._above_text = None # This is text that will be added before the
-#                               # command listing. This must be pre-stripped
-#                               # then a newline appended to the end.
-#       return
-
-#    # PARAMETER: cmd_obj - A command object to add to the collection.
-#    #                      Also supports a list of command objects (appends each
-#    #                      one individually).
-#    def add_command(self, cmd_obj):
-#       if not isinstance(cmd_obj, list):
-#          cmd_obj = list(cmd_obj)
-#       for x in cmd_obj:
-#          assert callable(x) and hasattr(x.cmd_meta, CommandMeta)
-#          for cmd_alias in x.cmd_meta.get_aliases():
-#             assert isinstance(cmd_alias, str)
-#             assert not cmd_alias in self._cmd_dict
-#             self._cmd_dict[cmd_alias] = cmd_obj
-#       self._cmd_list += cmd_obj
-#       return
-
-#    # PARAMETER: text - Either a string containing text to set as the help
-#    #                   summary, or None.
-#    def set_help_summary(self, text):
-#       if text is None:
-#          self._help_summary = None
-#       else:
-#          assert isinstance(text, str)
-#          self._help_summary = text.strip()
-#       return
-
-#    # PARAMETER: text - Either a string containing text to append to the top
-#    #                   in get_help_detail(), or None.
-#    def set_above_text(self, text):
-#       if text is None:
-#          self._above_text = None
-#       else:
-#          assert isinstance(text, str)
-#          self._above_text = text.strip() + "\n"
-#       return
-
-#    ################################
-#    ### HelpNode Implementations ###
-#    ################################
-
-#    async def get_help_detail(self, privilege_level=None):
-#       raise NotImplementedError
-
-#    async def get_help_summary(self, privilege_level=None):
-#       raise NotImplementedError
-
-#    async def get_next_node(self, locator_string):
-#       assert not " " in locator_string
-#       assert not locator_string is ""
-#       raise NotImplementedError
-
 
 class CommandMeta(HelpNode):
    """

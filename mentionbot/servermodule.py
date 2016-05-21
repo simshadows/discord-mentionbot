@@ -2,6 +2,7 @@ import abc
 import textwrap
 
 from . import utils, cmd
+from .helpnode import HelpNode
 from .enums import PrivilegeLevel
 
 module_list = []
@@ -13,7 +14,7 @@ def registered(cls):
 
 # Abstract Class (would've been an interface...)
 # All server modules are subclasses of ServerModule.
-class ServerModule(cmd.HelpNode):
+class ServerModule(HelpNode):
    """
    The base class of all server modules.
 
