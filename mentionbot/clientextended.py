@@ -11,7 +11,6 @@ class ClientExtended(discord.Client):
    def __init__(self, **kwargs):
       super(ClientExtended, self).__init__(**kwargs)
       self._MESSAGE_MAX_LEN = 2000
-      self._re_alldigits = re.compile("\d+")
 
       self._normal_game_status = ""
       return
@@ -19,7 +18,7 @@ class ClientExtended(discord.Client):
    # Search for a Member object.
    # Strings that may yield a Member object:
    #     A valid user ID
-   #     A valid user mention string (e.g. "<@12345>")
+   #     A valid user mention string (e.g. "<@12345>" or "<@!12345>")
    #     A valid username (only exact matches)
    # Note: Multiple users may be using the same username. This function will only return one.
    # Note: only guaranteed to work if input has no leading/trailing whitespace (i.e. stripped).
@@ -30,8 +29,8 @@ class ClientExtended(discord.Client):
    #                                If it's a valid server, the search is done on only that server.
    def search_for_user(self, text, enablenamesearch=False, serverrestriction=None): # TYPE: User
       if utils.re_user_mention.fullmatch(text):
-         searchkey = lambda user : user.id == str(text[2:-1])
-      elif self._re_alldigits.fullmatch(text):
+         searchkey = lambda user : user.id == str(utils.umention_str_to_id(text))
+      elif utils.re_digits.fullmatch(text):
          searchkey = lambda user : user.id == str(text)
       elif enablenamesearch:
          searchkey = lambda user : user.name == str(text)
@@ -52,7 +51,7 @@ class ClientExtended(discord.Client):
    # Search for a Channel object.
    # Strings that may yield a Channel object:
    #     A valid channel ID
-   #     A valid channel mention string (e.g. "<@12345>")
+   #     A valid channel mention string (e.g. "<#12345>")
    #     A valid channel name (only exact matches)
    # PRECONDITION: Input has no leading/trailing whitespace (i.e. stripped).
    # PARAMETER: enablenamesearch - True -> this function may also search by name.
@@ -63,7 +62,7 @@ class ClientExtended(discord.Client):
    def search_for_channel(self, text, enablenamesearch=False, serverrestriction=None): # Type: Channel
       if utils.re_ch_mention.fullmatch(text):
          return self.get_channel(text[2:-1])
-      elif self._re_alldigits.fullmatch(text):
+      elif utils.re_digits.fullmatch(text):
          return self.get_channel(text)
       elif enablenamesearch:
          searchkey = lambda channel : channel.name == str(text)

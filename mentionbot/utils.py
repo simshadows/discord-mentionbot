@@ -10,8 +10,11 @@ import http.client
 
 import discord
 
-re_user_mention = re.compile("<@\d+>")
+re_user_mention = re.compile("<@!?\d+>")
 re_ch_mention = re.compile("<#\d+>")
+
+re_digits = re.compile("\d+")
+re_int = re.compile("[-\+]?\d+")
 
 #################################################################################
 # SECRET TOKEN ##################################################################
@@ -21,24 +24,6 @@ re_ch_mention = re.compile("<#\d+>")
 class SecretToken:
    def __init__(self):
       return
-
-#################################################################################
-# SYNCHRONIZATION ###############################################################
-#################################################################################
-
-def synchronized(lock_attr_name):
-   def function_decorator(function):
-      async def wrapper_function(self, *args, **kwargs):
-         lock = getattr(self, lock_attr_name)
-         await lock.acquire()
-         ret = None
-         try:
-            ret = await function(self, *args, **kwargs)
-         finally:
-            lock.release()
-         return ret
-      return wrapper_function
-   return function_decorator
 
 #################################################################################
 # BASIC STRING OPERATIONS #######################################################
@@ -72,6 +57,7 @@ def str_asciionly(text):
    except:
       buf = ">>>>>>>>>>>>>>>>>>>>>>>>UNKNOWN"
       print("ERROR: Failed to convert string.")
+      return buf
    return buf[2:-1]
 
 # # PARAMETER: original_str: The string to be operated on.
@@ -89,7 +75,7 @@ def str_asciionly(text):
 #    return recursive_op(original_str, args)
 
 #################################################################################
-# INFORMATION REPRESENTATION ####################################################
+# DISCORD #######################################################################
 #################################################################################
 
 def user_to_str(user):
@@ -104,6 +90,24 @@ def user_to_str(user):
 #    else:
 #       ch_id = obj.id # Assumed to be a channel object
 #    return "<#{0}> (ID: {0})".format(str(ch_id))
+
+# PRECONDITION: The text full-matches re_user_mention.
+def umention_str_to_id(text):
+   assert re_user_mention.fullmatch(text)
+   assert text.startswith("<@") and text.endswith(">")
+   ret = None
+   if text[2] == "!":
+      ret = text[3:-1]
+   else:
+      ret = text[2:-1]
+   assert len(ret) > 0
+   return ret
+
+def get_all_mentions(text):
+   mentions = []
+   for mention_string in re_user_mention.findall(text):
+      mentions.append(umention_str_to_id(mention_string))
+   return mentions
 
 #################################################################################
 # WEB HELPER FUNCTIONS ##########################################################
@@ -232,8 +236,22 @@ def role_is_unused(server, role_obj):
    return True
 
 #################################################################################
-# ASYNCIO #######################################################################
+# ASYNCIO AND SYNCHRONIZATION ###################################################
 #################################################################################
+
+def synchronized(lock_attr_name):
+   def function_decorator(function):
+      async def wrapper_function(self, *args, **kwargs):
+         lock = getattr(self, lock_attr_name)
+         await lock.acquire()
+         ret = None
+         try:
+            ret = await function(self, *args, **kwargs)
+         finally:
+            lock.release()
+         return ret
+      return wrapper_function
+   return function_decorator
 
 # Allows the starting of coroutines anywhere, even in non-async functions.
 # This may also be useful in async functions as it schedules a callback, then
@@ -287,12 +305,6 @@ def datetime_rounddown_to_hour(datetime_object):
       day=date_object.day,
       hour=hour,
    )
-
-def get_all_mentions(text):
-   mentions = []
-   for mention_string in re_user_mention.findall(text):
-      mentions.append(mention_string[2:-1])
-   return mentions
 
 def timedelta_to_string(td, include_us=False):
    (hours, remainder) = divmod(td.seconds, 3600)

@@ -236,22 +236,31 @@ class ServerBotInstance:
          return # Without warning.
       substr = await self._modules.msg_preprocessor(substr, msg, self._cmd_prefix)
 
-      is_command = False
+      
       bot_mention = "<@{}>".format(str(self._client.user.id))
       bot_mention2 = "<@!{}>".format(str(self._client.user.id))
+      
+      begins_with_bot_mention = False
+      bot_mention_len = None
+      match = utils.re_user_mention.match(substr)
+      if match:
+         uid = utils.umention_str_to_id(substr[match.start():match.end()])
+         if uid == str(self._client.user.id):
+            begins_with_bot_mention = True
+            bot_mention_len = match.end() - match.start()
+
+      is_command = False
       if substr.startswith(self._cmd_prefix):
          substr = substr[len(self._cmd_prefix):].strip()
          is_command = True
-      elif substr.startswith(bot_mention):
+      elif begins_with_bot_mention:
          # If message starts with this bot being mentioned, treat it as a command.
          # This is done as a guaranteed way of invoking commands.
          # Useful when multiple bots share the same command predicate.
-         substr = substr[len(bot_mention):].strip()
+         substr = substr[bot_mention_len:].strip()
          is_command = True
-      elif substr.startswith(bot_mention2):
-         # TODO: Do something about the exclamation mark thing...
-         substr = substr[len(bot_mention2):].strip()
-         is_command = True
+         if len(substr) == 0:
+            substr = "help"
 
       if is_command:
          print("processing command: {pf}" + utils.str_asciionly(substr)) # Intentional un-substituted "{pf}"
@@ -314,8 +323,11 @@ class ServerBotInstance:
       `{cmd} random`
       More info on the `Random` module.
 
-      `{cmd} random dice`
-      More info on the `{p}random dice` command from the `Random` module.
+      `{cmd} random coin`
+      More info on the `{p}random coin` command from the `Random` module.
+
+      `{cmd} coin`
+      Same as `{cmd} random coin`, since `{cmd} coin` is an alias of the command.
       """
       help_content = await self._get_help_content(substr, msg, self.cmd_prefix, privilege_level)
       await self._client.send_msg(msg, help_content)
@@ -910,8 +922,8 @@ class ServerBotInstance:
    async def _cmdf_iam(self, substr, msg, privilege_level):
       """`{cmd} [user] [text]`"""
       (left, right) = utils.separate_left_word(substr)
-      if self._RE_MENTIONSTR.fullmatch(left):
-         user_to_pose_as = left[2:-1]
+      if utils.re_user_mention.fullmatch(left):
+         user_to_pose_as = utils.umention_str_to_id(left)
          replacement_msg = copy.deepcopy(msg)
          replacement_msg.author = self._client.search_for_user(user_to_pose_as)
          if replacement_msg.author == None:
@@ -1108,6 +1120,23 @@ class ServerBotInstance:
             To read more about other bot commands/functions:
             **`{p}help [...]`**
             """).strip() + "\n\n" + buf
+      elif substr == "[...]":
+         buf = textwrap.dedent("""
+            Oh, sorry, I meant you can query any available module or command \
+            by adding more to the help command you just used.
+
+            `{p}help` gives you a summary of all the other places you can \
+            reach via this help command, in order to find more bot commands.
+
+            `{p}help random` gives you a summary of the commands for the \
+            module of random number generation commands.
+
+            `{p}help coin` gives you a detailed explanation of what the \
+            `{p}coin` command actually does.
+
+            (Note: These commands may not work if the `Random` module is not \
+            installed.)
+            """)
       return buf.format(p=cmd_prefix, grp="")
    
    def get_presence_timedelta(self):

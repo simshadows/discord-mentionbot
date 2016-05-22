@@ -31,10 +31,8 @@ class Random(ServerModule):
    # `{pf}random colour` - Generates a random RGB colour code.
    # `{pf}random dice 3d9` - Rolls 9-sided dice (faces 1 to 9) 3 times.
 
-   _RE_DIGITS = re.compile("\d+")
-   _RE_INT = re.compile("[-\+]?\d+")
-   _RE_KW_CHOOSE = re.compile("choose|ch|choice|choices")
-   _RE_DICE_NOTATION = re.compile("(\d*d)?\d+")
+   _re_kw_choose = re.compile("choose|ch|choice|choices")
+   _re_dice_notation = re.compile("(\d*d)?\d+")
 
    async def _initialize(self, resources):
       self._res = resources
@@ -44,9 +42,9 @@ class Random(ServerModule):
       return
 
    async def process_cmd(self, substr, msg, privilege_level):
-      if self._RE_INT.match(substr):
+      if utils.re_int.match(substr):
          substr = "number " + substr
-      elif (not self._RE_KW_CHOOSE.match(substr)) and (";" in substr):
+      elif (not self._re_kw_choose.match(substr)) and (";" in substr):
          substr = "choose " + substr
       return await super(Random, self).process_cmd(substr, msg, privilege_level)
 
@@ -80,7 +78,7 @@ class Random(ServerModule):
       # Populate rng_ranges
       if (len(rng_sets) == 1) and (rng_sets[0] == ""):
          rng_ranges.append((1, 10))
-      elif (len(rng_sets) == 1) and self._RE_INT.fullmatch(rng_sets[0]):
+      elif (len(rng_sets) == 1) and utils.re_int.fullmatch(rng_sets[0]):
          val = int(rng_sets[0])
          if val > 1:
             rng_ranges.append((1, val))
@@ -98,7 +96,7 @@ class Random(ServerModule):
             # Convert all resulting strings to digits
             temp = []
             for value in rng_set:
-               if self._RE_INT.fullmatch(value):
+               if utils.re_int.fullmatch(value):
                   temp.append(int(value))
                else:
                   raise errors.InvalidCommandArgumentsError
@@ -209,7 +207,7 @@ class Random(ServerModule):
       if substr == "":
          throws = 1
          sides = 6
-      elif self._RE_DICE_NOTATION.fullmatch(substr):
+      elif self._re_dice_notation.fullmatch(substr):
          spl = utils.remove_blank_strings(substr.split("d"))
          if len(spl) == 1:
             throws = 1

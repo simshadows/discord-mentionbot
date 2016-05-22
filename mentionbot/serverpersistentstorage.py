@@ -11,7 +11,7 @@ class ServerPersistentStorage:
    #       obvious what the server is when reading the json file.
    # IMPORTANT: Changes to the data structure will need to be
    #            applied 
-   DEFAULT_SETTINGS = {
+   settings_default = {
       "Server Name": "",
       "Installed Modules": [
          "Random",
@@ -42,7 +42,7 @@ class ServerPersistentStorage:
       try:
          data = utils.json_read(self._settings_filepath)
       except FileNotFoundError:
-         data = copy.deepcopy(self.DEFAULT_SETTINGS)
+         data = copy.deepcopy(self.settings_default)
          utils.json_write(self._settings_filepath, data=data)
       # Update server name.
       if data["Server Name"] != self._server.name:
