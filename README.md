@@ -5,10 +5,9 @@ An extensible, module-based chatroom bot for [Discord](https://discordapp.com/).
 
 # Key features:
 
-* **Modularity**
+* **Modules** and **server-wise customizability**: Server owners are able to set up installed modules and change settings as desired. Settings are unique to each server (with rare exceptions).<sup>[1]</sup>
 * **Persistent data and settings**
 	* A **message caching service** is provided to modules to speed up the operation of message searches and statistics generation.
-* **Server-wise customizability**: Server owners are able to set up installed modules and change settings as desired. Settings are unique to each server (with rare exceptions).<sup>[1]</sup>
 * **Internal permissions system**: Assign roles/flairs/tags and users different permission levels to use commands. Apart from the bot owner and server owner, there are 9 assignable permission levels, including a "No Privileges" level.
 	* For example, a server could have a `Staff` role, which has a bot command privilege level of `Admin`.
 
@@ -16,7 +15,6 @@ An extensible, module-based chatroom bot for [Discord](https://discordapp.com/).
 
 View all installed and available modules in discord using the command `/mods`.
 
-* **Basic Information**: Presents some basic information about the server and the users in it, including user avatars and server icons. *(Installed by default.)*
 * **Mentions Notify**: PMs users of their mentions when they're offline.
 * **PM Greetings**: Greets users with a personalized private message upon joining the server. The contents of this private message can be customized.
 * **Server Activity Statistics**: Generates server statistics and graphs.
@@ -29,7 +27,6 @@ View all installed and available modules in discord using the command `/mods`.
 	* `/colour 00FF00` assigns the user a flair named `00ff00` with the appropriate colour.
 * **Truth Game**: Facilities to play a game of "Truth".
 * **Wolfram Alpha**: Allows users to query Wolfram Alpha.
-* **Misc**: For commands that have no where else to live. *(Installed by default.)*
 
 Some community-specific modules:
 
@@ -85,34 +82,35 @@ Some modules will need some additional setting up in order to work.
 
 TODO:
 
-* (VERY IMPORTANT) Clean up synchronization.
-* (VERY IMPORTANT) Figure out why message caching sometimes freezes. This doesn't appear to cause an exception traceback printout, and while it's frozen, it just doesn't do anything.
-* (VERY IMPORTANT) Figure out how to deal with the weird discord.py bug where sometimes, the server owner attribute is `None` and the server owner doesn't even appear in the list of users, meaning one less user than there actually are exists. The bot currently handles this error by restarting itself over and over until the bug is somehow resolved, but this can sometimes go on indefinitely.
-* (IMPORTANT): Figure out how to fix the issue with `serveractivitystatistics.py` where, on larger servers, it fails to send back the results of a query and the whole bot crashes (and thus restarts). The result of the query, however, still sit in the root of the repository and may be retrieved.
-* Implement "core modules" and put privilege management, module management, help messages, the misc commands module, and more things into "core modules". These core modules:
-	* do not show when you use `/mods` (but have good help messages),
-	* are **ALWAYS** installed by default,
-	* cannot be uninstalled,
-	* would require more exposed methods in `ServerModuleResources`, and
-	* are probably easily distinguished in the source files (e.g. by putting them in a folder other than `servermodules`).
-* Cleaner way to handle persistent storage of settings. Just look at the code to load/save settings in modules such as `dynamicchannels.py`. So damn messy!
-* Consider using databases? Might be better than using lots and lots of JSON files.
-* Consider using a `.ini` file for things like login token, bot owner ID, wolfram alpha app ID, etc.
-* (IMPORTANT) Fix weird issue in `MessageCache` where message where, while moving messages to disk, some timestamps would already be strings. They should all be `datetime` objects. It's fixed, but I still don't understand the source of the problem.
-* Fix the issue in `bsistarkravingmadbot` where the command prefix is hard-coded.
-* (IMPORTANT) Implement additional utility functions to make message pre-processing faster, and with neater code.
-* Figure out a way to use dicts for faster message preprocessing. (It currently uses lots of if-else statements.)
-* Implement json data verification.
-	* (LOW PRIORITY) Implement json data repair.
-* Reimplement abstract classes with the `abc` library.
-* Find all uses of utils.remove_blank_strings() and ensure none of them have a redundant list() around them.
-* (LOW PRIORITY) Implement data cache backups. The bot should also back up files if they're found to be corrupted (to allow for manual recovery in the case of a bug during runtime).
-* (LOW PRIORITY) Implement deeper module information infrastructure.
-* (LOW PRIORITY) Implement scheduling for module enable/disable, or "alternative command" enable/disable. For example, a feature may turn off if another bot is offline or not responding. I'm not too sure if this is necessary though, especially given the added complexity such a feature would bring. Modules may even be specially built for this purpose anyway...
-* (VERY LOW PRIORITY) The following module features:
-	* In module `Random`, implement more advanced dicerolling.
+* Planned Features:
+	* Re-implemented persistent storage. (**HIGH PRIORITY**)
+		* Infrastructure to easily define default values (rather than LOTS of key checks).
+		* Database storage instead of JSON?
+		* JSON data integrity check with JSON schema.
+		* (optional) JSON data recovery.
+	* Logging service. (**HIGH PRIORITY**)
+		* Server administrators can choose to allow log messages to be sent to a particular channel in a server.
+		* Log messages include channel closures (by the Dynamic Channels module), server-joins (by a future logging module), and initialization.
+		* Compliments the Python logger.
+		* If logging is not set up in a server, no logs are sent as messages, but will still be logged into the log file.
+	* Private message sessions.
+		* A private message session is one between a user and the bot, where commands operate on a particular server.
+		* For instance, this is useful for browsing through the help pages.
+		* However, this will require lots of reimplementation of message-sending code...
+	* `.ini` file for cleaner initial bot setup. Holds login token, bot owner ID, wolfram alpha app ID, etc.
+	* More advanced dicerolling in `Random`. (**LOW PRIORITY**)
+	* Data cache backups.
+		* The bot should also back up files if they're found to be corrupted (to allow for manual recovery in the case of a bug during runtime). (**LOW PRIORITY**)
+* Issues:
+	* Synchronization is messy.
+	* Should also optimize module on_message and msg_preprocessor somehow...
+	* Message caching sometimes freezes. This doesn't appear to cause an exception traceback printout, and while it's frozen, it just doesn't do anything.
+	* Weird discord.py bug where sometimes, the server owner attribute is `None` and the server owner doesn't even appear in the list of users, meaning one less user than there actually are exists. The bot currently handles this error by restarting itself over and over until the bug is somehow resolved, but this can sometimes go on indefinitely.
+	* On larger servers, `serveractivitystatistics.py` fails to send back the results of a query and the whole bot crashes (and thus restarts). The result of the query, however, still sit in the root of the repository and may be retrieved.
+	* Weird issue in `MessageCache` where message where, while moving messages to disk, some timestamps would already be strings. They should all be `datetime` objects. It's fixed, but I still don't understand the source of the problem.
+	* Command prefix is hard-coded in `bsistarkravingmadbot`.
 * (ONGOING) Find and exterminate security flaws...
 
 ---
 
-<sup>[1]</sup> Modules are usually designed to only view and manipulate the server it's installed for. However, some modules are also designed to work inter-server (such as stat-tracking). This of course also shows that modules are not explicitly restricted from viewing and manipulating servers it's not installed for. This can be a problem if there are bugs, security flaws, and generally poorly designed modules (all of which are unintended). While all effort is made to fix any of these, security is not a key focus at the moment, so only essential security features and simple checks are implemented.
+<sup>[1]</sup> Modules are usually designed to only view and manipulate the server it's installed for. However, some modules are also designed to work inter-server (such as stat-tracking). This of course also shows that modules are not explicitly restricted from viewing and manipulating servers it's not installed for. This can be a problem if there are bugs and generally poorly designed modules (all of which are unintended security issues).
