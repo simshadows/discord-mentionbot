@@ -1112,31 +1112,28 @@ class ServerBotInstance:
       return
 
    async def _get_help_content(self, substr, msg, cmd_prefix, privilege_level):
-      buf = await self._modules.get_help_detail(substr, "", privilege_level)
-      if buf is None:
-         return "No help content found for `{}`.".format(substr)
-      if substr is "":
+      buf = None
+      if substr == "[...]":
          buf = textwrap.dedent("""
-            To read more about other bot commands/functions:
-            **`{p}help [...]`**
-            """).strip() + "\n\n" + buf
-      elif substr == "[...]":
-         buf = textwrap.dedent("""
-            Oh, sorry, I meant you can query any available module or command \
-            by adding more to the help command you just used.
+            Oh, sorry, I meant you can query any available module or command by adding more to the help command you just used.
 
-            `{p}help` gives you a summary of all the other places you can \
-            reach via this help command, in order to find more bot commands.
+            `{p}help` gives you a summary of all the other places you can reach via this help command, in order to find more bot commands.
 
-            `{p}help random` gives you a summary of the commands for the \
-            module of random number generation commands.
+            `{p}help random` gives you a summary of the commands for the module of random number generation commands.
 
-            `{p}help coin` gives you a detailed explanation of what the \
-            `{p}coin` command actually does.
+            `{p}help coin` gives you a detailed explanation of what the `{p}coin` command actually does.
 
-            (Note: These commands may not work if the `Random` module is not \
-            installed.)
+            (Note: These commands may not work if the `Random` module is not installed.)
             """)
+      else:
+         buf = await self._modules.get_help_detail(substr, "", privilege_level)
+         if buf is None:
+            return "No help content found for `{}`.".format(substr)
+         if substr is "":
+            buf = textwrap.dedent("""
+               To read more about other bot commands/functions:
+               **`{p}help [...]`**
+               """).strip() + "\n\n" + buf
       return buf.format(p=cmd_prefix, grp="")
    
    def get_presence_timedelta(self):
