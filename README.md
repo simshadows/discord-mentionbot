@@ -106,7 +106,6 @@ TODO:
 	* Should also optimize module on_message and msg_preprocessor somehow...
 	* Message caching sometimes freezes. This doesn't appear to cause an exception traceback printout, and while it's frozen, it just doesn't do anything.
 	* Weird discord.py bug where sometimes, the server owner attribute is `None` and the server owner doesn't even appear in the list of users, meaning one less user than there actually are exists. The bot currently handles this error by restarting itself over and over until the bug is somehow resolved, but this can sometimes go on indefinitely.
-	* On larger servers, `serveractivitystatistics.py` fails to send back the results of a query and the whole bot crashes (and thus restarts). The result of the query, however, still sit in the root of the repository and may be retrieved.
 	* Weird issue in `MessageCache` where message where, while moving messages to disk, some timestamps would already be strings. They should all be `datetime` objects. It's fixed, but I still don't understand the source of the problem.
 	* Command prefix is hard-coded in `bsistarkravingmadbot`.
 * (ONGOING) Find and exterminate security flaws...
