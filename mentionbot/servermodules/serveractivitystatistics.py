@@ -111,7 +111,11 @@ class ServerActivityStatistics(ServerModule):
          # right3 can be used for other things if need be...
 
          await self._client.send_msg(msg, "Generating `plotly` graph/raw values. Please wait...")
-         (data, x_vals) = await self._sg4_generate_graph_data(msg.channel, eval_obj["fn"], bin_obj["fn"], filter_fn["fn"])
+         
+         # Prepare for execution in process pool.
+         fn_args = [msg.channel, eval_obj["fn"], bin_obj["fn"], filter_fn["fn"]]
+         loop = asyncio.get_event_loop()
+         (data, x_vals) = await loop.run_in_executor(None, self._sg4_generate_graph_data, *fn_args)
          
          # Compile graph function kwargs
          graph_kwargs = {
@@ -392,7 +396,7 @@ class ServerActivityStatistics(ServerModule):
    # This function generates graph data based on the value evaluation
    # and binning functions.
 
-   async def _sg4_generate_graph_data(self, channel, measured, bins, sfilter):
+   def _sg4_generate_graph_data(self, channel, measured, bins, sfilter):
       data_temp = {} # Maps day delta -> chars sent
       for ch in self._res.server.channels:
          for msg_dict in self._res.message_cache_read(self._res.server.id, ch.id):

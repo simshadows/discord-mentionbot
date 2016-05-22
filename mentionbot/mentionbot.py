@@ -9,6 +9,7 @@ import os
 import traceback
 import functools
 import textwrap
+from concurrent.futures import ThreadPoolExecutor
 
 import discord # pip install git+https://github.com/Rapptz/discord.py@async
 # pip install git+https://github.com/Julian/jsonschema
@@ -349,6 +350,9 @@ async def _client_login(client, token):
 
 def run():
    loop = asyncio.get_event_loop()
+
+   executor = ThreadPoolExecutor(5)
+   loop.set_default_executor(executor)
 
    # Log in to discord
    client = MentionBot()
