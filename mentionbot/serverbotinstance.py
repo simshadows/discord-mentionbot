@@ -484,7 +484,15 @@ class ServerBotInstance:
          if role.name == substr:
             n_matching_roles += 1
       if n_matching_roles == 0:
-         await self._client.send_msg(msg, "No roles match `{}`.".format(substr))
+         buf = "No roles match `{}`.".format(substr)
+         close_match = None
+         for role in server.roles:
+            if role.name.lower() == substr.lower():
+               close_match = role.name
+               break
+         if not close_match is None:
+            buf += " Did you mean `{}`? (It's case-sensitive.)".format(close_match)
+         await self._client.send_msg(msg, buf)
          return
       matching_members = []
       for member in server.members:

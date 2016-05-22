@@ -18,7 +18,9 @@ def run():
 			print("RECONNECT_ON_ERROR is disabled.")
 			print("Bot has completed execution.")
 			return
-		print("Abnormal exit. Attempting to reconnect...")
+		print("Abnormal exit. Reconnecting in 10 seconds.")
+		time.sleep(10)
+		print("Attempting to reconnect...")
 
 if __name__ == '__main__':
    run()
