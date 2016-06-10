@@ -485,7 +485,7 @@ class ServerActivityStatistics(ServerModule):
    def _sg5_csv(self):
       CSV_DIALECT = "excel"
       async def function(channel, **kwargs):
-         temp_filename = "temp" + str(random.getrandbits(128)) + ".csv"
+         temp_filename = utils.generate_temp_filename() + ".csv"
          with open(temp_filename, "w", newline="") as f:
             csv_obj = csv.writer(f, dialect=CSV_DIALECT)
             for (x, y) in zip(kwargs["x_vals"], kwargs["y_vals"]):
@@ -539,7 +539,7 @@ class ServerActivityStatistics(ServerModule):
 
    # This is a utility function used by graph generating functions.
    async def _send_plotly_graph_object(self, channel, data, layout):
-      temp_filename = "temp" + str(random.getrandbits(128))
+      temp_filename = utils.generate_temp_filename()
       temp_file_ext = ".png"
       try:
          py.image.save_as({'data':data, 'layout':layout}, temp_filename, format='png')

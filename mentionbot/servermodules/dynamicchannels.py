@@ -335,7 +335,7 @@ class DynamicChannels(ServerModule):
       elif to_remove in self._default_channels:
          self._default_channels.remove(to_remove)
          self._save_settings()
-         await self._client.send_msg(msg, "<#{}> successfully removed to default list.".format(to_remove.id))
+         await self._client.send_msg(msg, "<#{}> successfully removed from default list.".format(to_remove.id))
       else:
          await self._client.send_msg(msg, "Error: Channel is not default.")
       return

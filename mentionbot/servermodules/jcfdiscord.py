@@ -39,11 +39,7 @@ class JCFDiscord(ServerModule):
       "ESTP": "Se - Ti - Fe - Ni",
       "ESFP": "Se - Fi - Te - Ni",
    }
-
-   _MBTI_TYPES = [
-      "INTJ","INTP","ENTJ","ENTP","INFJ","INFP","ENFJ","ENFP",
-      "ISTJ","ISFJ","ESTJ","ESFJ","ISTP","ISFP","ESTP","ESFP",
-   ]
+   _MBTI_TYPES = [k for (k,v) in _FUNCTION_STACKS.items()]
    _MBTI_TYPES_SET = set(_MBTI_TYPES) # Faster access to get set membership
 
    _EASTER_EGG_STACKS = {
@@ -57,13 +53,10 @@ class JCFDiscord(ServerModule):
       "ENJS": "Tp - Tr - Ss - Ov", "INJS": "Tr - Tp - Ov - Ss",
 
       "XXXX": "Xx - Xx - Xx - Xx",
+      "CUTE": "Ra - Wr - Xd - :3",
+      "JOSH": "Jo - Sh - Jo - Sh",
    }
-
-   _EASTER_EGG_TYPES = [
-      "ESPN", "ISPN", "ESPS", "ISPS", "ENPN", "INPN", "ENPS", "INPS",
-      "ESJN", "ISJN", "ESJS", "ISJS", "ENJN", "INJN", "ENJS", "INJS",
-      "XXXX",
-   ]
+   _EASTER_EGG_TYPES = [k for (k,v) in _EASTER_EGG_STACKS.items()]
    _EASTER_EGG_TYPES_SET = set(_EASTER_EGG_TYPES) # Faster access to get set membership
 
    _SWOLEBRO_ID = "100335016025788416"

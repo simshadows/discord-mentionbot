@@ -7,6 +7,7 @@ import asyncio
 import traceback
 import urllib.request
 import http.client
+import random
 
 import discord
 
@@ -327,6 +328,9 @@ def timedelta_to_string(td, include_us=False):
       buf += str(td.microseconds) + "μs "
    return buf[:-1]
 
+# TODO: Consider guaranteeing uniqueness of the filename.
+def generate_temp_filename():
+   return "temp" + str(random.getrandbits(128))
 
 # Opens, puts file contents in a string, and closes it.
 # If file doesn't exist, returns None.
