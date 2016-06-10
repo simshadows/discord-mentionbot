@@ -39,7 +39,7 @@ class JCFDiscord(ServerModule):
       "ESTP": "Se - Ti - Fe - Ni",
       "ESFP": "Se - Fi - Te - Ni",
    }
-   _MBTI_TYPES = [k for (k,v) in _FUNCTION_STACKS.items()]
+   _MBTI_TYPES = sorted([k for (k,v) in _FUNCTION_STACKS.items()])
    _MBTI_TYPES_SET = set(_MBTI_TYPES) # Faster access to get set membership
 
    _EASTER_EGG_STACKS = {

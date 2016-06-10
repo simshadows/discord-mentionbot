@@ -1,7 +1,3 @@
-# TEMP
-import urllib.parse as urllibparse
-import tempfile
-
 import os
 import sys
 import asyncio
@@ -561,54 +557,6 @@ class ServerBotInstance:
          return await self._client.send_msg(msg, "This server has no icon.")
       else:
          return await self._client.send_msg(msg, str(msg.server.icon_url))
-
-   ##########################
-   ### TEMPORARY COMMANDS ###
-   ##########################
-
-   # Random commands go here until they find a home in a proper module.
-
-   @cmd.add(_cmdd, "lmgtfy", "google", "goog", "yahoo")
-   @_core_command(_helpd, "core")
-   @cmd.category("Miscellaneous")
-   async def _cmdf_say(self, substr, msg, privilege_level):
-      """`{cmd} [text]` - Let me google that for you..."""
-      if len(substr) == 0:
-         raise errors.InvalidCommandArgumentsError
-      await self._client.send_msg(msg, "http://lmgtfy.com/?q=" + urllibparse.quote(substr))
-      return
-
-   @cmd.add(_cmdd, "tex", "latex")
-   @_core_command(_helpd, "core")
-   @cmd.category("Miscellaneous")
-   async def _cmdf_tex(self, substr, msg, privilege_level):
-      """
-      `{cmd} [code]` - Generate a math equation from LaTeX code.
-
-      This command uses the codecogs service.
-      http://latex.codecogs.com/
-      """
-      if len(substr) == 0:
-         raise errors.InvalidCommandArgumentsError
-      url = "http://latex.codecogs.com/png.latex?\dpi{300}%20\huge%20"
-      # url += substr.replace(" ", "%20")
-      url += urllibparse.quote(substr)
-      bytedata = None
-      try:
-         bytedata = utils.download_from_url(url)
-         if len(bytedata) <= 100: # Arbitrary value...
-            raise Exception
-      except:
-         buf = "<@{}>".format(msg.author.id)
-         buf += " Error generating image. Is your LaTeX code correct?"
-         await self._client.send_msg(msg, buf)
-         return
-      filename = utils.generate_temp_filename() + ".png"
-      with open(filename, "wb") as f:
-         f.write(bytedata)
-      await self._client.perm_send_file(msg.channel, filename)
-      os.remove(filename)
-      return
 
    #######################################
    ### MODULE INFO/MANAGEMENT COMMANDS ###

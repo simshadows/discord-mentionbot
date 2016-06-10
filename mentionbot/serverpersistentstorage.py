@@ -15,6 +15,7 @@ class ServerPersistentStorage:
       "Server Name": "",
       "Installed Modules": [
          "Random",
+         "Misc",
       ],
    }
 

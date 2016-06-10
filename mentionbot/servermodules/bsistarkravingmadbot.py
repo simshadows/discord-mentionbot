@@ -105,7 +105,7 @@ class BsiStarkRavingMadBot(ServerModule):
          "subreddit": pf + "jcfdiscord subreddit",
          "swole": pf + "jcfdiscord swole",
          "truth": this + " truth",
-         "ud": this + " ud",
+         "ud": pf + "ud",
          "whois": "whois" + pf, # NEEDS SPECIAL HANDLING
       }
 
@@ -247,12 +247,6 @@ class BsiStarkRavingMadBot(ServerModule):
          buf = "What they're saying is trulse."
 
       await self._client.send_msg(msg, buf)
-      return
-
-   @cmd.add(_cmdd, "ud", "urbandictionary", "urban", top=True)
-   async def _cmdf_ud(self, substr, msg, privilege_level):
-      """`{cmd}` - Query urban dictionary."""
-      await self._client.send_msg(msg, "http://www.urbandictionary.com/define.php?term=" + urllibparse.quote(substr))
       return
 
    def dont_run_module(self):
