@@ -86,21 +86,32 @@ TODO:
 	* Re-implemented persistent storage. (**HIGH PRIORITY**)
 		* Infrastructure to easily define default values (rather than LOTS of key checks).
 		* Database storage instead of JSON?
-		* JSON data integrity check with JSON schema.
-		* (optional) JSON data recovery.
+		* Or two-phase JSON data check:
+			* Phase 1: JSON schema
+			* Phase 2: Specific checks
 	* Logging service. (**HIGH PRIORITY**)
 		* Server administrators can choose to allow log messages to be sent to a particular channel in a server.
 		* Log messages include channel closures (by the Dynamic Channels module), server-joins (by a future logging module), and initialization.
 		* Compliments the Python logger.
 		* If logging is not set up in a server, no logs are sent as messages, but will still be logged into the log file.
-	* Private message sessions.
-		* A private message session is one between a user and the bot, where commands operate on a particular server.
-		* For instance, this is useful for browsing through the help pages.
-		* However, this will require lots of reimplementation of message-sending code...
+	* Channel Classification. (**HIGH PRIORITY**)
+		* *idk yet how it should be implemented...*
+		* Different classes of channels, such as:
+			* `nsfw_enabled` (**This is the main reason for this feature. If the final idea seems too complicated and unnecessary, I'll need to at least implement something to prevent NSFW content from being posted to particular channels.**)
+			* `default`: Automatically assigned to the channel's default channel.
+			* *We'll also need something to replace the default channel classification for the dynamic channels module...*
+			* `bot_log`: Copies of all log messages are sent to these channels. (*That's a little strange though if I allow the bot to do that. No one needs two or more of the same log message...*)
+		* Server admin may choose to use blacklist or whitelist, and may even have options for things like regex matching?
+	* Pseudorandomness for the `/truth choose` command, so that on average, all players should be chosen the same number of times.
+	* PM Bot Instance.
+		* A PM bot instance will be a private message session is one between a user and the bot.
 	* `.ini` file for cleaner initial bot setup. Holds login token, bot owner ID, wolfram alpha app ID, etc.
 	* More advanced dicerolling in `Random`. (**LOW PRIORITY**)
-	* Data cache backups.
-		* The bot should also back up files if they're found to be corrupted (to allow for manual recovery in the case of a bug during runtime). (**LOW PRIORITY**)
+	* Data cache backups or recovery. (**LOW PRIORITY**)
+		* The bot should also back up files if they're found to be corrupted (to allow for manual recovery in the case of a bug during runtime).
+	* Web interface for debugging and admin. (**LOW PRIORITY**)
+		* Still figure out if this idea would actually be useful.
+		* Although, this is a good opportunity to learn basic web programming...
 * Issues:
 	* Synchronization is messy.
 	* Should also optimize module on_message and msg_preprocessor somehow...
