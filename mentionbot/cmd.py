@@ -321,11 +321,11 @@ class CommandMeta(HelpNode):
          buf = self._help_detail.format(p="{p}", grp="{grp}", cmd="{p}" + self.get_top_aliases()[0])
       buf += "\n\n"
       buf0 = ""
-      if self._minimum_privilege is PrivilegeLevel.get_lowest_privilege():
+      if not self._minimum_privilege is PrivilegeLevel.get_lowest_privilege():
          buf0 = "**Required privilege level:** "
          buf0 += self._minimum_privilege.get_commonname()
       if (not privilege_level is None) and (privilege_level < self._minimum_privilege):
-         buf += "**(Sorry, you do not have the correct privilege level.)**\n"
+         buf += "**You do not have the correct privilege level to use this command.**\n"
          buf += buf0 + "\n**Your privilege level:** "
          buf += privilege_level.get_commonname()
       else:

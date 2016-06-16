@@ -128,10 +128,10 @@ class DynamicChannels(ServerModule):
       self._res.save_settings(settings)
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
-      if content.startswith("++"):
-         content = default_cmd_prefix + self._res.module_cmd_aliases[0] + " open " + content[2:]
-      elif content.startswith("+"):
-         content = default_cmd_prefix + self._res.module_cmd_aliases[0] + " search " + content[1:]
+      if content.startswith("+++"):
+         content = default_cmd_prefix + self._res.module_cmd_aliases[0] + " open " + content[3:]
+      elif content.startswith("++"):
+         content = default_cmd_prefix + self._res.module_cmd_aliases[0] + " search " + content[2:]
       return content
 
    async def process_cmd(self, substr, msg, privilege_level):
@@ -152,8 +152,8 @@ class DynamicChannels(ServerModule):
    @cmd.add(_cmdd, "search")
    async def _cmdf_search(self, substr, msg, privilege_level):
       """
-      `+` - See list of hidden channels. (Will cut off at 2000 chars.)
-      `+[string]` - Search list of hidden channels.
+      `++` - See list of hidden channels. (Will cut off at 2000 chars.)
+      `++[string]` - Search list of hidden channels.
       """
       ch_name = utils.convert_to_legal_channel_name(substr)
       available_channels = []
@@ -170,12 +170,13 @@ class DynamicChannels(ServerModule):
          buf = "**The following channels are available for re-opening:**"
          for ch in available_channels:
             buf += "\n" + ch.name
+      buf += "\n\nReopen a channel with the command `+++[channel name]`."
       await self._client.send_msg(msg, buf)
       return
 
    @cmd.add(_cmdd, "open", "create")
    async def _cmdf_open(self, substr, msg, privilege_level):
-      """`++[string]` - Create/unhide channel."""
+      """`+++[string]` - Create/unhide channel."""
       if len(self._scheduler.get_scheduled()) >= self._max_active_temp_channels >= 0:
          buf = "No more than {}".format(str(self._max_active_temp_channels))
          buf += " active temporary channels are allowed."

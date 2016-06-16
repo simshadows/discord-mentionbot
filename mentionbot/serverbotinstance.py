@@ -262,22 +262,12 @@ class ServerBotInstance:
          
          cmd_to_execute = None
          (left, right) = utils.separate_left_word(substr)
-         try:
-            cmd_to_execute = self._cmdd[left]
-         except KeyError:
-            pass
-
-         if cmd_to_execute is None:
+         if left in self._cmdd:
+            cmd_fn = await cmd.get(self._cmdd, left, privilege_level)
+            await cmd_fn(self, right, msg, privilege_level)
+         else:
             # Execute a module command. This will also handle command failure.
             await self._modules.process_cmd(substr, msg, privilege_level, silentfail=True)
-         else:
-            # Execute the core command.
-            try:
-               if privilege_level < cmd_to_execute.minimum_privilege:
-                  raise errors.CommandPrivilegeError
-            except AttributeError:
-               pass
-            await cmd_to_execute(self, right, msg, privilege_level)
       return
 
    async def on_member_join(self, member):
@@ -902,7 +892,7 @@ class ServerBotInstance:
       await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmdd, "iam")
+   @cmd.add(_cmdd, "iam", "spoof")
    @_core_command(_helpd, "admin")
    @cmd.category("Bot Owner Only")
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
