@@ -156,6 +156,15 @@ class DynamicChannels(ServerModule):
       `++[string]` - Search list of hidden channels.
       """
       ch_name = utils.convert_to_legal_channel_name(substr)
+
+      # TODO: TEMPORARY FIX until I can make a better implementation.
+      if len(ch_name) == 0:
+         buf = "Sorry, listing all channels has been temporarily disabled."
+         buf += " You can still filter the list by entering a search criteria"
+         buf += " though."
+         await self._client.send_msg(msg, buf)
+         return
+
       available_channels = []
       restrict = (len(ch_name) != 0)
       for ch in self._server.channels:
