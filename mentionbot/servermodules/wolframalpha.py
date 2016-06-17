@@ -37,13 +37,14 @@ class WolframAlpha(ServerModule):
    async def _initialize(self, resources):
       self._res = resources
       self._client = self._res.client
+      self._conf = self._res.get_config_ini_copy()
 
       self._max_pods = 2
       self._show_text = True
       self._show_img = False
 
-      self._wa_app_ID = "PLACEHOLDER"
-      self._wa_client = None
+      self._wa_app_ID = self._conf["api_keys"]["wolfram_alpha"]
+      self._wa_client = wolframalpha.Client(self._wa_app_ID)
 
       self._load_settings()
 
@@ -51,20 +52,6 @@ class WolframAlpha(ServerModule):
       return
 
    def _load_settings(self):
-      # Shared Settings
-      global_settings = self._res.get_shared_settings()
-      if global_settings is None:
-         self._res.save_shared_settings(self.DEFAULT_SHARED_SETTINGS)
-      else:
-         try:
-            self._wa_app_ID = global_settings["wa app id"]
-         except KeyError:
-            global_settings["wa app id"] = "PLACEHOLDER"
-            self._res.save_shared_settings(global_settings)
-
-      self._wa_client = wolframalpha.Client(self._wa_app_ID)
-
-      # Server Settings
       settings = self._res.get_settings()
       if settings is None:
          self._res.save_settings(self.DEFAULT_SETTINGS)
@@ -188,20 +175,13 @@ class WolframAlpha(ServerModule):
             await self._client.send_msg(msg, "Error: Must show at least text or images.")
       return
 
-   @cmd.add(_cmdd, "reloadsettings")
-   async def _cmdf_cmdnotimplemented(self, substr, msg, privilege_level):
-      """`{cmd}`"""
-      self._load_settings()
-      await self._client.send_msg(msg, "Wolfram Alpha settings reloaded successfully.")
-      return
-
    async def wa_query(self, query_str, reply_channel):
       try:
          return self._wa_client.query(query_str)
       except:
-         buf = "Error: No app ID has been registered."
-         buf += "\nFor security reasons, the bot owner will need "
-         buf += "to manually enter it into the module's shared `settings.json`."
+         buf = "**Error: No app ID has been registered.**"
+         buf += "\nThe bot owner will need to manually enter it into"
+         buf += " `config.ini` and relaunch the bot."
          await self._client.send_msg(reply_channel, buf)
          raise errors.OperationAborted
 

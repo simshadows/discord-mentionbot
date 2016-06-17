@@ -43,6 +43,9 @@ class ServerModuleResources:
    @property
    def module_cmd_aliases(self):
       return list(self._module_wrapper.module_cmd_aliases)
+
+   def get_config_ini_copy(self):
+      return self._client.get_config_ini_copy()
    
    # Get the server to process text again.
    async def server_process_text(self, substr, msg):

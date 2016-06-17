@@ -240,6 +240,9 @@ class MentionBot(clientextended.ClientExtended):
 
    def get_bot_owner_id(self):
       return self._bot_owner_id
+
+   def get_config_ini_copy(self):
+      return copy.deepcopy(self._conf)
    
    # Common code for handling an error.
    # Does:

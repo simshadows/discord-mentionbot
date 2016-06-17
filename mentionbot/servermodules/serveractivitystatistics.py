@@ -27,16 +27,15 @@ class ServerActivityStatistics(ServerModule):
       `{modhelp}` Generates user activity statistics.
       """
 
-   DEFAULT_SHARED_SETTINGS = {
-      "login username": "PLACEHOLDER",
-      "api key": "PLACEHOLDER",
-   }
-
    async def _initialize(self, resources):
       self._res = resources
       self._client = self._res.client
+      self._conf = self._res.get_config_ini_copy()
 
-      self._log_in_from_file()
+      self._plotly_api_key = self._conf["api_keys"]["plotly_api_key"]
+      self._plotly_username = self._conf["api_keys"]["plotly_username"]
+
+      py.sign_in(self._plotly_username, self._plotly_api_key)
 
       self._res.suppress_autokill(True)
       return
@@ -131,13 +130,6 @@ class ServerActivityStatistics(ServerModule):
 
          await graph_fn(msg.channel, **graph_kwargs)
 
-      return
-
-   @cmd.add(_cmdd, "login")
-   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
-   async def _cmdf_login(self, substr, msg, privilege_level):
-      self._log_in_from_file()
-      await self._client.send_msg(msg, "Login details have been loaded.")
       return
 
    ###############################################
@@ -513,30 +505,6 @@ class ServerActivityStatistics(ServerModule):
    ### OTHER SERVICES ###
    ######################
 
-   def _log_in_from_file(self):
-      shared_settings = self._res.get_shared_settings()
-
-      if shared_settings is None:
-         shared_settings = self.DEFAULT_SHARED_SETTINGS
-         self._res.save_shared_settings(shared_settings)
-
-      try:
-         username = shared_settings["login username"]
-      except KeyError:
-         username = self.DEFAULT_SHARED_SETTINGS["login username"]
-         shared_settings["login username"] = username
-
-      try:
-         api_key = shared_settings["api key"]
-      except KeyError:
-         api_key = self.DEFAULT_SHARED_SETTINGS["api key"]
-         shared_settings["api key"] = api_key
-
-      py.sign_in(username, api_key)
-
-      self._res.save_shared_settings(shared_settings)
-      return
-
    # This is a utility function used by graph generating functions.
    async def _send_plotly_graph_object(self, channel, data, layout):
       temp_filename = utils.generate_temp_filename()
@@ -545,9 +513,10 @@ class ServerActivityStatistics(ServerModule):
          py.image.save_as({'data':data, 'layout':layout}, temp_filename, format='png')
       except:
          print(traceback.format_exc())
-         buf = "Unknown error occurred. Maybe you forgot to sign in..."
-         buf += "\n(Bot owner must manually enter plotly login details in settings files,"
-         buf += " and use `/stats login` for it take effect.)"
+         buf = "**Unknown error occurred. Maybe my plotly login details are"
+         buf += " incorrect...**"
+         buf += "\n(Bot owner must manually enter a plotly username and API"
+         buf += " key in `config.ini` and relaunch the bot.)"
          await self._client.send_msg(channel, buf)
          raise errors.OperationAborted
       try:
