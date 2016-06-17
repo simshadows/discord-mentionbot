@@ -144,10 +144,11 @@ class ServerBotInstance:
    }
 
    @classmethod
-   async def get_instance(cls, client, server):
+   async def get_instance(cls, client, server, config_dict):
       self = cls(cls._SECRET_TOKEN)
       self._client = client
       self._server = server
+      self._config_dict = config_dict
 
       self._data_directory = self._client.CACHE_DIRECTORY + "serverdata/" + self._server.id + "/"
       self._shared_directory = self._client.CACHE_DIRECTORY + "shared/"

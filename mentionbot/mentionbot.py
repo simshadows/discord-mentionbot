@@ -27,7 +27,7 @@ handler = logging.FileHandler(filename="mentionbot.log", encoding="utf-8", mode=
 handler.setFormatter(logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s"))
 logger.addHandler(handler)
 
-LOGIN_DETAILS_FILENAME = "bot_user_token" # This file is used to login. Only contains two lines. Line 1 is email, line 2 is password.
+_config_dict = None
 
 class MentionBot(clientextended.ClientExtended):
    BOTOWNER_ID = "119384097473822727"
@@ -36,7 +36,6 @@ class MentionBot(clientextended.ClientExtended):
    CACHE_DIRECTORY = "cache/" # This MUST end with a forward-slash. e.g. "cache/"
 
    NOTIFY_BOTOWNER_ON_INIT = True
-   KILL_BOT_ON_MESSAGE_EXCEPTION = True
    
    def __init__(self, **kwargs):
       super(MentionBot, self).__init__(**kwargs)
@@ -51,7 +50,12 @@ class MentionBot(clientextended.ClientExtended):
 
       self.botowner = None
 
+      self._config_dict = kwargs["config_dict"]
       self._bot_instances = None
+
+      assert isinstance(self._config_dict, dict)
+
+      self._kill_bot_on_message_exception = self._config_dict["error_handling"]["kill_bot_on_message_exception"]
       return
 
    async def on_ready(self):
@@ -63,7 +67,8 @@ class MentionBot(clientextended.ClientExtended):
 
          self._bot_instances = {}
          for server in self.servers:
-            self._bot_instances[server] = await ServerBotInstance.get_instance(self, server)
+            new_args = [self, server, self._config_dict]
+            self._bot_instances[server] = await ServerBotInstance.get_instance(*new_args)
 
          await self.set_game_status(MentionBot.INITIAL_GAME_STATUS)
          try:
@@ -178,7 +183,7 @@ class MentionBot(clientextended.ClientExtended):
       except errors.OperationAborted:
          print("Caught OperationAborted.")
       except Exception as e:
-         await handle_general_error(e, msg, close_bot=self.KILL_BOT_ON_MESSAGE_EXCEPTION)
+         await handle_general_error(e, msg, close_bot=self._kill_bot_on_message_exception)
       except (SystemExit, KeyboardInterrupt):
          raise
       except BaseException as e:
@@ -348,29 +353,15 @@ async def _client_login(client, token):
    await client.connect()
    return
 
-def run():
+def run(config_dict):
    loop = asyncio.get_event_loop()
 
    executor = ThreadPoolExecutor(5)
    loop.set_default_executor(executor)
 
-   # Log in to discord
-   client = MentionBot()
-   print("\nAttempting to log in using file '" + LOGIN_DETAILS_FILENAME + "'.")
-   if not os.path.isfile(LOGIN_DETAILS_FILENAME):
-      login_file = open(LOGIN_DETAILS_FILENAME, "w")
-      login_file.write("TOKEN")
-      login_file.close()
-      print("File does not exist. Please edit the file {} with your login details.")
-      sys.exit()
-   login_file = open(LOGIN_DETAILS_FILENAME, "r")
-   email = "(No email. This variable is depreciated.)"
-   password = "(No password. This variable is depreciated.)"
-   bot_user_token = login_file.readline().strip()
-   login_file.close()
-   print("Token found.")
+   client = MentionBot(config_dict=config_dict)
+   bot_user_token = config_dict["DEFAULT"]["bot_user_token"]
    print("Logging in...") # print("Logging in...", end="")
-
    try:
       loop.run_until_complete(_client_login(client, bot_user_token))
    except Exception as e:
