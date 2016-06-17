@@ -84,7 +84,7 @@ class ServerModuleResources:
 
    @property
    def botowner_ID(self):
-      return self._sbi.client.BOTOWNER_ID
+      return self._sbi.client.get_bot_owner_id()
 
    @property
    def me_ID(self):

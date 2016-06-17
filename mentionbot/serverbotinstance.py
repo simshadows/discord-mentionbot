@@ -115,12 +115,8 @@ class CoreCommandsHelpPage(HelpNode):
 # IMPORTANT: client is a MentionBot instance!!!
 class ServerBotInstance:
    _SECRET_TOKEN = utils.SecretToken()
-   
-   DEFAULT_COMMAND_PREFIX = "/"
 
    _RE_MENTIONSTR = re.compile("<@\d+>")
-
-   INIT_MENTIONS_NOTIFY_ENABLED = False
 
    _cmdd = {} # Command Dictionary
    _helpd = collections.defaultdict(lambda: []) # Used to compile the
@@ -148,7 +144,9 @@ class ServerBotInstance:
       self = cls(cls._SECRET_TOKEN)
       self._client = client
       self._server = server
-      self._config_dict = config_dict
+      self._conf = config_dict
+
+      self._default_command_prefix = self._conf["misc"]["default_command_prefix"]
 
       self._data_directory = self._client.CACHE_DIRECTORY + "serverdata/" + self._server.id + "/"
       self._shared_directory = self._client.CACHE_DIRECTORY + "shared/"
@@ -157,7 +155,7 @@ class ServerBotInstance:
       self._bot_name = self._client.user.name # TODO: Move this somewhere else.
       self._initialization_timestamp = datetime.datetime.utcnow()
 
-      botowner_ID = self._client.BOTOWNER_ID
+      botowner_ID = self._client.get_bot_owner_id()
       serverowner_ID = self._server.owner.id
 
       self._storage = ServerPersistentStorage(self._data_directory + "settings.json", self._server)
@@ -188,7 +186,7 @@ class ServerBotInstance:
       try:
          self._cmd_prefix = data["cmd prefix"]
       except KeyError:
-         self._cmd_prefix = data["cmd prefix"] = self.DEFAULT_COMMAND_PREFIX
+         self._cmd_prefix = data["cmd prefix"] = self._default_command_prefix
          
       self._storage.save_server_settings(data)
 

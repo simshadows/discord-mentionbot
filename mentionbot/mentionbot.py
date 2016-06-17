@@ -27,15 +27,10 @@ handler = logging.FileHandler(filename="mentionbot.log", encoding="utf-8", mode=
 handler.setFormatter(logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s"))
 logger.addHandler(handler)
 
-_config_dict = None
+_conf = None
 
 class MentionBot(clientextended.ClientExtended):
-   BOTOWNER_ID = "119384097473822727"
-   INITIAL_GAME_STATUS = "bot is running"
-   INITIALIZING_GAME_STATUS = "bot is initializing"
    CACHE_DIRECTORY = "cache/" # This MUST end with a forward-slash. e.g. "cache/"
-
-   NOTIFY_BOTOWNER_ON_INIT = True
    
    def __init__(self, **kwargs):
       super(MentionBot, self).__init__(**kwargs)
@@ -44,47 +39,66 @@ class MentionBot(clientextended.ClientExtended):
       self.on_member_join_lock = asyncio.Lock()
       self.on_member_remove_lock = asyncio.Lock()
 
-      print("BOTOWNER_ID = '{}'".format(MentionBot.BOTOWNER_ID))
-      print("INITIAL_GAME_STATUS = '{}'".format(MentionBot.INITIAL_GAME_STATUS))
       print("CACHE_DIRECTORY = '{}'".format(MentionBot.CACHE_DIRECTORY))
 
-      self.botowner = None
+      self._conf = kwargs["config_dict"]
+      assert isinstance(self._conf, dict)
 
-      self._config_dict = kwargs["config_dict"]
+      self._kill_bot_on_message_exception = self._conf["error_handling"]["kill_bot_on_message_exception"]
+      
+      self._notify_botowner_on_init = self._conf["misc"]["notify_botowner_on_init"]
+
+      self._default_status = self._conf["misc"]["default_status"]
+      self._init_status = self._conf["misc"]["initialization_status"]
+
+      self._bot_owner_id = self._conf["DEFAULT"]["bot_owner_id"]
+      self._bot_owner_obj = None
+
       self._bot_instances = None
-
-      assert isinstance(self._config_dict, dict)
-
-      self._kill_bot_on_message_exception = self._config_dict["error_handling"]["kill_bot_on_message_exception"]
       return
 
    async def on_ready(self):
       try:
-         await self.set_game_status(MentionBot.INITIALIZING_GAME_STATUS)
-         self.botowner = self.search_for_user(MentionBot.BOTOWNER_ID)
+         await self.set_game_status(self._init_status)
+         self._bot_owner_obj = self.search_for_user(self.get_bot_owner_id())
+         if self._bot_owner_obj is None:
+            buf = textwrap.dedent("""
+               Failed to find the bot owner.
+               
+               Either:
+                  - You haven't entered a valid ID in config.ini bot_owner_id,
+                  - That ID isn't associated with a real user, or
+                  - The owner exists, but this bot is not present in a server with them.
+
+               As of right now, this bot is not designed to function without being able to see its owner.
+
+               Please solve this before relaunching.
+               """).strip()
+            print(buf)
+            sys.exit(0)
 
          self.message_cache = await MessageCache.get_instance(self, self.CACHE_DIRECTORY)
 
          self._bot_instances = {}
          for server in self.servers:
-            new_args = [self, server, self._config_dict]
+            new_args = [self, server, self._conf]
             self._bot_instances[server] = await ServerBotInstance.get_instance(*new_args)
 
-         await self.set_game_status(MentionBot.INITIAL_GAME_STATUS)
+         await self.set_game_status(self._default_status)
          try:
-            botowner = self.search_for_user(MentionBot.BOTOWNER_ID)
-            print("Bot owner: " + self.botowner.name)
+            botowner = self.search_for_user(self.get_bot_owner_id())
+            print("Bot owner: " + self._bot_owner_obj.name)
          except:
             print("Bot owner: (NOT FOUND. UNKNOWN ERROR.)")
-            print("Bot owner ID: " + MentionBot.BOTOWNER_ID)
+            print("Bot owner ID: " + self.get_bot_owner_id())
          print("Bot name: " + self.user.name)
          print("")
          self.on_message_lock.release()
          self.on_member_join_lock.release()
          self.on_member_remove_lock.release()
-         if self.NOTIFY_BOTOWNER_ON_INIT:
+         if self._notify_botowner_on_init:
             try:
-               await self.send_msg(self.botowner, "Initialization complete.")
+               await self.send_msg(self._bot_owner_obj, "Initialization complete.")
             except:
                print("FAILED TO SEND BOTOWNER INITIALIZATION NOTIFICATION.")
          logging.info("Initialization complete.")
@@ -223,6 +237,9 @@ class MentionBot(clientextended.ClientExtended):
    ##################
    # Other Services #
    ##################
+
+   def get_bot_owner_id(self):
+      return self._bot_owner_id
    
    # Common code for handling an error.
    # Does:
@@ -297,7 +314,7 @@ class MentionBot(clientextended.ClientExtended):
 
          logging.critical(buf)
          try:
-            await self.send_msg(self.botowner, buf)
+            await self.send_msg(self._bot_owner_obj, buf)
          except:
             buf = "FAILED TO SEND BOTOWNER STACKTRACE."
             logging.critical(buf)
@@ -317,7 +334,7 @@ class MentionBot(clientextended.ClientExtended):
                """)
             buf = buf.format(e_name=type(e).__name__, e_des=str(e)).strip()
 
-         buf += "\n<@{}> Check it out, will ya?".format(MentionBot.BOTOWNER_ID)
+         buf += "\n<@{}> Check it out, will ya?".format(self.get_bot_owner_id())
 
          if len(final_info) != 0:
             buf += "\n\n" + final_info

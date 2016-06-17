@@ -10,9 +10,11 @@ reconnect_on_error = None
 
 bot_user_token = None
 
+# TODO: Allow user customization of the cache directory's location.
 config_defaults = {
 	"DEFAULT": {
 		"bot_user_token": "PLACEHOLDER",
+		"bot_owner_id": "PLACEHOLDER",
 	},
 	"error_handling": {
 		"kill_bot_on_message_exception": "FALSE",
@@ -22,7 +24,13 @@ config_defaults = {
 		"plotly_api_key": "PLACEHOLDER",
 		"plotly_username": "PLACEHOLDER",
 		"wolfram_alpha": "PLACEHOLDER",
-	}
+	},
+	"misc": {
+		"default_command_prefix": "/",
+		"notify_botowner_on_init": "TRUE",
+		"default_status": "bot is running",
+		"initialization_status": "bot is initializing",
+	},
 }
 
 # TODO: Consider merging this with the bot utils.py version.
@@ -78,6 +86,7 @@ def ini_parse(config_dict):
 	must_be_bool = [
 		("error_handling", "kill_bot_on_message_exception"),
 		("error_handling", "reconnect_on_error"),
+		("misc", "notify_botowner_on_init"),
 	]
 
 	def convert_to_bool(key1, key2):
@@ -101,11 +110,19 @@ def ini_parse(config_dict):
 	return
 
 def run():
-	print("Reading config.ini settings...")
+	print("Reading config.ini settings...\n")
 	config_dict = ini_load()
 	if config_dict is None:
-		buf = "Please edit bot_user_token in config.ini with your bot login,"
-		buf += " then relaunch."
+		buf = textwrap.dedent("""
+			This appears to be your first time setting up this bot.
+
+			Please edit the following items in in config.ini before relaunching:
+				bot_user_token
+				bot_owner_id
+
+			Optionally, also fill in the other placeholders to enable further \
+			functionality.
+			""").strip()
 		print(buf)
 		return
 	ini_parse(config_dict)
