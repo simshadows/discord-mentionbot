@@ -1,10 +1,14 @@
 import multiprocessing as mp
-import os, sys, time, copy
+import os, sys, re, time, copy
 import configparser
 import textwrap
 import mentionbot.mentionbot as botentry
 
 ini_file_name = "config.ini"
+
+# These two regexes must both be used to verify a folder name.
+re_dirname_fullmatch = re.compile("[a-z0-9_-]+") # This must be full-matched.
+re_dirname_once = re.compile("[a-z0-9]") # There must be at least one match.
 
 reconnect_on_error = None
 
@@ -25,6 +29,9 @@ config_defaults = {
 		"plotly_api_key": "PLACEHOLDER",
 		"plotly_username": "PLACEHOLDER",
 		"wolfram_alpha": "PLACEHOLDER",
+	},
+	"filenames": {
+		"cache_folder": "cache",
 	},
 	"misc": {
 		"default_command_prefix": "/",
@@ -109,6 +116,13 @@ def ini_parse(config_dict):
 	for (key1, key2) in must_be_bool:
 		convert_to_bool(key1, key2)
 		assert isinstance(config_dict[key1][key2], bool)
+
+	# Check cache folder name.
+	fname = config_dict["filenames"]["cache_folder"]
+	if not re_dirname_once.search(fname):
+		raise ValueError("Cache folder name must have at least one lowercase or digit.")
+	if not re_dirname_fullmatch.fullmatch(fname):
+		raise ValueError("Cache folder name must only be made of up lowercase, digits, underscores, or dashes.")
 	return
 
 def run():

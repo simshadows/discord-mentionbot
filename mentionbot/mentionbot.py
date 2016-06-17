@@ -28,8 +28,6 @@ handler.setFormatter(logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(me
 logger.addHandler(handler)
 
 class MentionBot(clientextended.ClientExtended):
-   CACHE_DIRECTORY = "cache/" # This MUST end with a forward-slash. e.g. "cache/"
-   
    def __init__(self, **kwargs):
       super(MentionBot, self).__init__(**kwargs)
 
@@ -37,10 +35,12 @@ class MentionBot(clientextended.ClientExtended):
       self.on_member_join_lock = asyncio.Lock()
       self.on_member_remove_lock = asyncio.Lock()
 
-      print("CACHE_DIRECTORY = '{}'".format(MentionBot.CACHE_DIRECTORY))
-
       self._conf = kwargs["config_dict"]
       assert isinstance(self._conf, dict)
+
+      # This MUST end with a forward-slash. e.g. "cache/"
+      self._cache_dirname = self._conf["filenames"]["cache_folder"] + "/"
+      assert utils.is_safe_directory_name(self._cache_dirname[:-1])
 
       self._kill_bot_on_message_exception = self._conf["error_handling"]["kill_bot_on_message_exception"]
       
@@ -76,7 +76,7 @@ class MentionBot(clientextended.ClientExtended):
             print(buf)
             sys.exit(0)
 
-         self.message_cache = await MessageCache.get_instance(self, self.CACHE_DIRECTORY)
+         self.message_cache = await MessageCache.get_instance(self, self._cache_dirname)
 
          self._bot_instances = {}
          for server in self.servers:
@@ -239,6 +239,9 @@ class MentionBot(clientextended.ClientExtended):
 
    def get_bot_owner_id(self):
       return self._bot_owner_id
+
+   def get_cache_dirname(self):
+      return self._cache_dirname
 
    def get_config_ini_copy(self):
       return copy.deepcopy(self._conf)

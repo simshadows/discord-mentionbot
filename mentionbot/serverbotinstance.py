@@ -148,8 +148,8 @@ class ServerBotInstance:
 
       self._default_command_prefix = self._conf["misc"]["default_command_prefix"]
 
-      self._data_directory = self._client.CACHE_DIRECTORY + "serverdata/" + self._server.id + "/"
-      self._shared_directory = self._client.CACHE_DIRECTORY + "shared/"
+      self._data_directory = self._client.get_cache_dirname() + "serverdata/" + self._server.id + "/"
+      self._shared_directory = self._client.get_cache_dirname() + "shared/"
 
       self._cmd_prefix = None
       self._bot_name = self._client.user.name # TODO: Move this somewhere else.
@@ -986,7 +986,7 @@ class ServerBotInstance:
             await self._client.send_msg(msg, buf)
       else:
          await self._client.send_msg(msg, "Setting avatar via saved file...")
-         our_dir = self._client.CACHE_DIRECTORY + "updateavatar/"
+         our_dir = self._client.get_cache_dirname() + "updateavatar/"
          # TODO: Make that filename a constant
          # TODO: Nicer cache directory name use?
          utils.mkdir_recursive(our_dir)

@@ -17,6 +17,10 @@ re_ch_mention = re.compile("<#\d+>")
 re_digits = re.compile("\d+")
 re_int = re.compile("[-\+]?\d+")
 
+# These two regexes must both be used to verify a folder name.
+re_dirname_fullmatch = re.compile("[a-z0-9_-]+") # This must be full-matched.
+re_dirname_once = re.compile("[a-z0-9]") # There must be at least one match.
+
 #################################################################################
 # SECRET TOKEN ##################################################################
 #################################################################################
@@ -331,6 +335,16 @@ def timedelta_to_string(td, include_us=False):
 # TODO: Consider guaranteeing uniqueness of the filename.
 def generate_temp_filename():
    return "temp" + str(random.getrandbits(128))
+
+# Returns True if text is considered to be a safe directory name.
+# Note that it is stricter than the actual naming restrictions.
+# For instance, it doesn't allow spaces to be used.
+# This function is usually used for double-verification.
+def is_safe_directory_name(text):
+   if re_dirname_once.search(text) and re_dirname_fullmatch.fullmatch(text):
+      return True
+   else:
+      return False
 
 # Opens, puts file contents in a string, and closes it.
 # If file doesn't exist, returns None.
