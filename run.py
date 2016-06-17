@@ -19,6 +19,7 @@ config_defaults = {
 	"error_handling": {
 		"kill_bot_on_message_exception": "FALSE",
 		"reconnect_on_error": "TRUE",
+		"message_bot_owner_on_error": "TRUE",
 	},
 	"api_keys": {
 		"plotly_api_key": "PLACEHOLDER",
@@ -27,7 +28,7 @@ config_defaults = {
 	},
 	"misc": {
 		"default_command_prefix": "/",
-		"notify_botowner_on_init": "TRUE",
+		"message_bot_owner_on_init": "TRUE",
 		"default_status": "bot is running",
 		"initialization_status": "bot is initializing",
 	},
@@ -86,7 +87,8 @@ def ini_parse(config_dict):
 	must_be_bool = [
 		("error_handling", "kill_bot_on_message_exception"),
 		("error_handling", "reconnect_on_error"),
-		("misc", "notify_botowner_on_init"),
+		("error_handling", "message_bot_owner_on_error"),
+		("misc", "message_bot_owner_on_init"),
 	]
 
 	def convert_to_bool(key1, key2):

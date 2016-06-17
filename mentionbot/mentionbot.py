@@ -27,8 +27,6 @@ handler = logging.FileHandler(filename="mentionbot.log", encoding="utf-8", mode=
 handler.setFormatter(logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s"))
 logger.addHandler(handler)
 
-_conf = None
-
 class MentionBot(clientextended.ClientExtended):
    CACHE_DIRECTORY = "cache/" # This MUST end with a forward-slash. e.g. "cache/"
    
@@ -46,7 +44,8 @@ class MentionBot(clientextended.ClientExtended):
 
       self._kill_bot_on_message_exception = self._conf["error_handling"]["kill_bot_on_message_exception"]
       
-      self._notify_botowner_on_init = self._conf["misc"]["notify_botowner_on_init"]
+      self._message_bot_owner_on_init = self._conf["misc"]["message_bot_owner_on_init"]
+      self._message_bot_owner_on_error = self._conf["error_handling"]["message_bot_owner_on_error"]
 
       self._default_status = self._conf["misc"]["default_status"]
       self._init_status = self._conf["misc"]["initialization_status"]
@@ -96,7 +95,7 @@ class MentionBot(clientextended.ClientExtended):
          self.on_message_lock.release()
          self.on_member_join_lock.release()
          self.on_member_remove_lock.release()
-         if self._notify_botowner_on_init:
+         if self._message_bot_owner_on_init:
             try:
                await self.send_msg(self._bot_owner_obj, "Initialization complete.")
             except:
@@ -282,7 +281,8 @@ class MentionBot(clientextended.ClientExtended):
          extra_info = str(kwargs.get("extra_info", "")).strip()
          final_info = str(kwargs.get("final_info", "")).strip()
 
-         # STEP 1: Send the error report to the bot owner (via PM) and log it.
+         # STEP 1: Log error report and, if set to notify the bot owner, message
+         #         them the error via PM.
 
          buf = "**EXCEPTION**"
 
@@ -316,12 +316,13 @@ class MentionBot(clientextended.ClientExtended):
             buf += "\n\n" + final_info
 
          logging.critical(buf)
-         try:
-            await self.send_msg(self._bot_owner_obj, buf)
-         except:
-            buf = "FAILED TO SEND BOTOWNER STACKTRACE."
-            logging.critical(buf)
-            print(buf, file=sys.stderr)
+         if self._message_bot_owner_on_error:
+            try:
+               await self.send_msg(self._bot_owner_obj, buf)
+            except:
+               buf = "FAILED TO SEND BOTOWNER STACKTRACE."
+               logging.critical(buf)
+               print(buf, file=sys.stderr)
 
          # STEP 2: Create user feedback, and if a command message was supplied,
          #         send this message into that channel.
