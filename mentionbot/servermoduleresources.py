@@ -18,6 +18,10 @@ class ServerModuleResources:
       
       self._settings_filepath = self._data_directory + "settings.json"
       self._shared_settings_filepath = self._shared_directory + "settings.json"
+
+      # Ensure the data and shared directories exist.
+      utils.mkdir_recursive(self._data_directory)
+      utils.mkdir_recursive(self._shared_directory)
       return
 
    @property

@@ -13,13 +13,13 @@ class WolframAlpha(ServerModule):
 
    MODULE_NAME = "Wolfram Alpha"
    MODULE_SHORT_DESCRIPTION = "Conveniently allows you to send and receive WA queries."
-   RECOMMENDED_CMD_NAMES = ["wamanage"]
+   RECOMMENDED_CMD_NAMES = ["wamod"]
    
    _SECRET_TOKEN = utils.SecretToken()
    _cmdd = {}
 
    _HELP_SUMMARY = """
-      `{modhelp}` - Query Wolfram Alpha.
+      `{modhelp}` - Wolfram Alpha.
       """
    # `[p]wa [query]` - Make a Wolfram Alpha query.
    # `[p]define [word]` - Get word definition from WA.

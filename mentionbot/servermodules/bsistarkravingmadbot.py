@@ -19,7 +19,7 @@ class BsiStarkRavingMadBot(ServerModule):
    _cmdd = {}
 
    _HELP_SUMMARY = """
-      `{modhelp}` for StarkRavingMadBot standin commands.
+      `{modhelp}` - StarkRavingMadBot standin commands.
       """
 
    # STARK_PF = "$" # TODO: Consider implementing this.

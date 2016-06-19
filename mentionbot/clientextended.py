@@ -146,5 +146,9 @@ class ClientExtended(discord.Client):
          await self.send_msg(destination, "Error: Unable to post file. Are permissions set up?")
       return
 
+   # TODO
+   # async def send_text_as_file(self, destination, filetext):
+   #    return
+
 
 

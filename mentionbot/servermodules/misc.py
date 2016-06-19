@@ -10,6 +10,7 @@ import discord
 
 from .. import utils, errors, cmd
 from ..servermodule import ServerModule, registered
+from ..enums import PrivilegeLevel
 
 @registered
 class Misc(ServerModule):
@@ -37,7 +38,7 @@ class Misc(ServerModule):
       return
 
    @cmd.add(_cmdd, "lmgtfy", "google", "goog", "yahoo", top=True)
-   async def _cmdf_say(self, substr, msg, privilege_level):
+   async def _cmdf_lmgtfy(self, substr, msg, privilege_level):
       """`{cmd} [text]` - Let me google that for you..."""
       if len(substr) == 0:
          raise errors.InvalidCommandArgumentsError

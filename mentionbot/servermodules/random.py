@@ -18,7 +18,7 @@ class Random(ServerModule):
    _cmdd = {}
 
    _HELP_SUMMARY = """
-      `{modhelp}` - For generating random values.
+      `{modhelp}` - Generate pseudo-random values.
       """
 
    # TODO: Add this to help detail in the future...
