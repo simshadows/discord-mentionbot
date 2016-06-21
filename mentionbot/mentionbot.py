@@ -97,7 +97,7 @@ class MentionBot(clientextended.ClientExtended):
          self.on_member_remove_lock.release()
          if self._message_bot_owner_on_init:
             try:
-               await self.send_msg(self._bot_owner_obj, "Initialization complete.")
+               await self.send_owner_msg("Initialization complete.")
             except:
                print("FAILED TO SEND BOTOWNER INITIALIZATION NOTIFICATION.")
          logging.info("Initialization complete.")
@@ -247,8 +247,7 @@ class MentionBot(clientextended.ClientExtended):
       return copy.deepcopy(self._conf)
 
    async def send_owner_msg(self, text):
-      await self.send_msg(self._bot_owner_obj, text)
-      return
+      return await self.send_msg(self._bot_owner_obj, text)
    
    # Common code for handling an error.
    # Does:
@@ -325,7 +324,7 @@ class MentionBot(clientextended.ClientExtended):
          logging.critical(buf)
          if self._message_bot_owner_on_error:
             try:
-               await self.send_msg(self._bot_owner_obj, buf)
+               await self.send_owner_msg(buf)
             except:
                buf = "FAILED TO SEND BOTOWNER STACKTRACE."
                logging.critical(buf)

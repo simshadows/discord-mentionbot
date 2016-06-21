@@ -177,6 +177,7 @@ class ServerBotInstance:
       for module_name in data["Installed Modules"]:
          if not self._module_factory.module_exists(module_name):
             print("Module \"{}\" does not exist. Skipping.".format(module_name))
+            continue
          try:
             new_module = await self._module_factory.new_module_instance(module_name, self)
             await new_module.activate()

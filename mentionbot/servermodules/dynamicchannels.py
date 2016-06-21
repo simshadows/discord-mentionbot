@@ -5,6 +5,7 @@ from copy import deepcopy
 import re
 import traceback
 import concurrent
+import textwrap
 
 import discord
 
@@ -33,6 +34,8 @@ class DynamicChannels(ServerModule):
       "channel timeout": 10,
       "max active temp channels": 5,
       "bot flairs": [],
+      "max stored last opened": 10,
+      "last opened": [], # List of channel IDs
    }
 
    _re_non_alnum_or_dash = re.compile("[^-0-9a-zA-Z]")
@@ -48,6 +51,8 @@ class DynamicChannels(ServerModule):
       self._channel_timeout = None # Channel timeout in seconds.
       self._max_active_temp_channels = None # If <0, then there's no limit.
       self._bot_flairs = None
+      self._max_stored_last_opened = None
+      self._last_opened = None
 
       await self._load_settings()
 
@@ -72,14 +77,15 @@ class DynamicChannels(ServerModule):
          if not "id" in item:
             continue
          ch_id = item["id"]
+         if not isinstance(ch_id, str):
+            continue
          ch = self._client.search_for_channel(ch_id, serverrestriction=self._server)
          if not ch is None:
             # Missed channels are simply skipped.
             self._default_channels.append(ch)
 
-
-      self._channel_timeout = settings.get("channel timeout", accept_if=lambda x: x > 0)
-      self._max_active_temp_channels = settings.get("max active temp channels")
+      self._channel_timeout = settings.get("channel timeout", accept_if=lambda x: 100000 >= x > 0)
+      self._max_active_temp_channels = settings.get("max active temp channels", accept_if=lambda x: x <= 100000)
 
       def no_issues_in_bot_flairs(x):
          if not isinstance(x, list):
@@ -89,6 +95,18 @@ class DynamicChannels(ServerModule):
                return False
          return True
       self._bot_flairs = settings.get("bot flairs", accept_if=no_issues_in_bot_flairs)
+
+      self._max_stored_last_opened = settings.get("max stored last opened", accept_if=lambda x: 200 >= x > 0)
+
+      self._last_opened = []
+      last_opened_data = settings.get("last opened")
+      for ch_id in last_opened_data:
+         if not isinstance(ch_id, str):
+            continue
+         ch = self._client.search_for_channel(ch_id, serverrestriction=self._server)
+         if not ch is None:
+            # Missed channels are simply skipped.
+            self._last_opened.append(ch)
 
       await settings.report_if_changed(self._client, self, server=self._server)
       self._save_settings()
@@ -108,7 +126,11 @@ class DynamicChannels(ServerModule):
          default_channels.append(save_object)
       settings["default channels"] = default_channels
 
+      settings["max stored last opened"] = self._max_stored_last_opened
+      settings["last opened"] = [x.id for x in self._last_opened]
+
       self._res.save_settings(settings)
+      return
 
    async def msg_preprocessor(self, content, msg, default_cmd_prefix):
       if content.startswith("+++"):
@@ -135,23 +157,27 @@ class DynamicChannels(ServerModule):
    @cmd.add(_cmdd, "search")
    async def _cmdf_search(self, substr, msg, privilege_level):
       """
-      `++` - See list of hidden channels. (Will cut off at 2000 chars.)
+      `++` - See a list of the last opened channels.
       `++[string]` - Search list of hidden channels.
       """
       ch_name = utils.convert_to_legal_channel_name(substr)
 
-      # TODO: TEMPORARY FIX until I can make a better implementation.
       if len(ch_name) == 0:
-         buf = "Sorry, listing all channels has been temporarily disabled."
-         buf += " You can still filter the list by entering a search criteria"
-         buf += " though."
+         buf = "**Last {} channels opened:**".format(str(self._max_stored_last_opened))
+         listed = 0
+         for ch in self._last_opened:
+            if listed == self._max_stored_last_opened:
+               break
+            buf += "\n" + ch.name
+            listed += 1
+         if listed == 0:
+            buf = "No channels were recently opened."
          await self._client.send_msg(msg, buf)
          return
 
       available_channels = []
-      restrict = (len(ch_name) != 0)
       for ch in self._server.channels:
-         if restrict and (self._name_is_default_channel(ch.name) or (ch.type != discord.ChannelType.text)):
+         if self._name_is_default_channel(ch.name) or (ch.type != discord.ChannelType.text):
             continue
          if ch_name in ch.name:
             available_channels.append(ch)
@@ -191,6 +217,7 @@ class DynamicChannels(ServerModule):
       buf += " Closing after {} minutes of inactivity.".format(str(self._channel_timeout))
       await self._client.send_msg(ch, buf)
       await self._client.send_msg(msg, "Channel <#{}> successfully opened.".format(ch.id))
+      self._add_to_last_opened(ch)
       return
 
    @cmd.add(_cmdd, "status", "admin", "s", "stat", "settings", default=True)
@@ -198,24 +225,48 @@ class DynamicChannels(ServerModule):
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_status(self, substr, msg, privilege_level):
       """`{cmd}` - A summary of the module's settings."""
-      buf = "**Timeout**: " + str(self._channel_timeout) + " minutes"
+      buf = textwrap.dedent("""\
+         **Timeout**: {timeout}
+         **Max Active**: {max_active}
+         **Max Stored Last-Opened Channels**: {max_stored_last_opened}
+
+         **Bot flairs**: {bot_flairs}
+
+         **Default Channels**:
+         {default_channels}
+         """).strip()
+
+      format_kwargs = {
+         "timeout": str(self._channel_timeout) + " minutes",
+         "max_active": None, # Placeholder
+         "max_stored_last_opened": str(self._max_stored_last_opened),
+         "bot_flairs": None, # Placeholder
+         "default_channels": None, # Placeholder
+      }
+
       if self._max_active_temp_channels < 0:
-         buf += "\n**Max Active**: unlimited channels"
+         format_kwargs["max_active"] = "unlimited channels"
       else:
-         buf += "\n**Max Active**: " + str(self._max_active_temp_channels) + " channels"
+         format_kwargs["max_active"] = str(self._max_active_temp_channels) + " channels"
+
+      bot_flairs = ""
       if len(self._bot_flairs) == 0:
-         buf += "\n\n**No bot flairs have been assigned.**"
+         bot_flairs = "*(none)*"
       else:
-         buf += "\n\n**Bot flairs**: "
          for flair_name in self._bot_flairs:
-            buf += flair_name + ", "
-         buf = buf[:-2]
-      buf += "\n\n**Default Channels**:"
+            bot_flairs += flair_name + ", "
+         bot_flairs = bot_flairs[:-2]
+      format_kwargs["bot_flairs"] = bot_flairs
+
+      default_channels = ""
       if len(self._default_channels) == 0:
-         buf += "\nNONE."
+         default_channels = "*(none)*"
       else:
          for ch in self._default_channels:
-            buf += "\n<#{0}> (ID: {0})".format(ch.id)
+            default_channels += "\n<#{0}> (ID: {0})".format(ch.id)
+         default_channels = default_channels[1:]
+
+      buf = buf.format(**format_kwargs)
       await self._client.send_msg(msg, buf)
       return
 
@@ -344,14 +395,20 @@ class DynamicChannels(ServerModule):
       """
       try:
          new_timeout = int(substr)
-         if new_timeout < 1:
-            await self._client.send_msg(msg, "Error: Timeout must be >0 minutes.")
-         else:
-            self._channel_timeout = new_timeout
-            self._save_settings()
-            await self._client.send_msg(msg, "Timeout set to {} minutes.".format(str(self._channel_timeout)))
       except ValueError:
          await self._client.send_msg(msg, "Error: Must enter an integer.")
+         raise errors.OperationAborted
+
+      if new_timeout < 1:
+         await self._client.send_msg(msg, "Error: Timeout must be >0 minutes.")
+         raise errors.OperationAborted
+      elif new_timeout > 100000:
+         await self._client.send_msg(msg, "Error: Timeout too large.")
+         raise errors.OperationAborted
+      
+      self._channel_timeout = new_timeout
+      self._save_settings()
+      await self._client.send_msg(msg, "Timeout set to {} minutes.".format(str(new_timeout)))
       return
 
    @cmd.add(_cmdd, "setmaxactive")
@@ -363,14 +420,79 @@ class DynamicChannels(ServerModule):
       `{cmd} -1` - Set maximum active channels to unlimited.
       """
       try:
-         self._max_active_temp_channels = int(substr)
-         self._save_settings()
-         if self._max_active_temp_channels < 0:
-            await self._client.send_msg(msg, "Max active channels set to unlimited.")
-         else:
-            await self._client.send_msg(msg, "Max active channels set to {}.".format(str(self._max_active_temp_channels)))
+         new_value = int(substr)
       except ValueError:
          await self._client.send_msg(msg, "Error: Must enter an integer.")
+         raise errors.OperationAborted
+      
+      set_to_message = None
+
+      if self._max_active_temp_channels < 0:
+         await self._client.send_msg(msg, "Max active channels set to unlimited.")
+         set_to_message = "unlimited"
+      elif self._max_active_temp_channels > 100000:
+         await self._client.send_msg(msg, "Error: Max active channels is too large.")
+         raise errors.OperationAborted
+      else:
+         set_to_message = str(new_value)
+      
+      self._max_active_temp_channels = new_value
+      self._save_settings()
+      await self._client.send_msg(msg, "Max active channels set to {}.".format(set_to_message))
+      return
+
+   @cmd.add(_cmdd, "setmaxlastopened")
+   @cmd.category("Admin - Misc")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   async def _cmdf_setmaxactive(self, substr, msg, privilege_level):
+      """
+      `{cmd} [int]` - Set the maximum stored last opened channels.
+
+      This is to limit the number of channels that appear when you use the open channel command with no arguments.
+      """
+      try:
+         new_value = int(substr)
+      except ValueError:
+         await self._client.send_msg(msg, "Error: Must enter an integer.")
+         raise errors.OperationAborted
+
+      if new_value < 1:
+         await self._client.send_msg(msg, "Error: Value must be >0.")
+         raise errors.OperationAborted
+      elif new_value > 100000:
+         await self._client.send_msg(msg, "Error: Value too large.")
+         raise errors.OperationAborted
+      
+      self._max_stored_last_opened = new_value
+      self._save_settings()
+      await self._client.send_msg(msg, "Max stored last opened channels set to {}.".format(str(new_value)))
+      return
+
+   @cmd.add(_cmdd, "clearlastopened")
+   @cmd.category("Admin - Misc")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   async def _cmdf_setmaxactive(self, substr, msg, privilege_level):
+      """
+      `{cmd} [int]` - Clear the list of last opened channels.
+      """
+      old_elements = len(self._last_opened)
+      self._last_opened = []
+      await self._client.send_msg(msg, "{} removed from the last opened list.".format(str(old_elements)))
+      return
+
+   async def _chopen_name_check(self, msg, ch_name):
+      if len(ch_name) < 2:
+         await self._client.send_msg(msg, "Channel name must be at least 2 characters long.")
+         raise errors.OperationAborted
+      elif (ch_name[:1] == "-") or self._re_non_alnum_or_dash.search(ch_name):
+         await self._client.send_msg(msg, "`{}` is an illegal channel name.".format(ch_name))
+         raise errors.OperationAborted
+      elif len(ch_name) > 100:
+         await self._client.send_msg(msg, "Channel name can't be larger than 100 characters.")
+         raise errors.OperationAborted
+      elif self._name_is_default_channel(ch_name):
+         await self._client.send_msg(msg, "Can't open a default channel.")
+         raise errors.OperationAborted
       return
 
    async def _chopen_name_check(self, msg, ch_name):
@@ -393,6 +515,14 @@ class DynamicChannels(ServerModule):
          if ch.name == ch_name:
             return True
       return False
+
+   def _add_to_last_opened(self, channel):
+      if not channel in self._last_opened:
+         self._last_opened.insert(0, channel)
+         del self._last_opened[self._max_stored_last_opened:]
+         assert len(self._last_opened) <= self._max_stored_last_opened
+         self._save_settings()
+      return
 
    # # Generator, yields all temporary channels.
    # def _gen_temp_channels(self):
