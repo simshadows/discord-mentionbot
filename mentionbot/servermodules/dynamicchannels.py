@@ -164,7 +164,7 @@ class DynamicChannels(ServerModule):
 
       if len(ch_name) == 0:
          
-         buf = "**Last {} channels opened:**".format(str(self._max_stored_last_opened))
+         buf = "**Last {} channels opened:**"
          buf2 = ""
          listed = 0
          for ch in self._last_opened:
@@ -173,8 +173,9 @@ class DynamicChannels(ServerModule):
             buf2 += "\n" + ch.name
             listed += 1
          if listed == 0:
-            buf2 = "No channels were recently opened."
-         buf = buf.format(str(listed)) + buf2
+            buf = "No channels were recently opened."
+         else:
+            buf = buf.format(str(listed)) + buf2
          await self._client.send_msg(msg, buf)
          return
 
