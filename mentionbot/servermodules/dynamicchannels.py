@@ -1,6 +1,7 @@
+import sys
 import asyncio
 import threading
-import copy
+from copy import deepcopy
 import re
 import traceback
 import concurrent
@@ -10,6 +11,8 @@ import discord
 from .. import utils, errors, cmd
 from ..servermodule import ServerModule, registered
 from ..enums import PrivilegeLevel
+
+from ..attributedictwrapper import AttributeDictWrapper
 
 @registered
 class DynamicChannels(ServerModule):
@@ -25,10 +28,11 @@ class DynamicChannels(ServerModule):
       `{modhelp}` - Temporary channels.
       """
 
-   DEFAULT_SETTINGS = {
+   _default_settings = {
       "default channels": [],
       "channel timeout": 10,
-      "max active temp channels": 5
+      "max active temp channels": 5,
+      "bot flairs": [],
    }
 
    _re_non_alnum_or_dash = re.compile("[^-0-9a-zA-Z]")
@@ -45,7 +49,7 @@ class DynamicChannels(ServerModule):
       self._max_active_temp_channels = None # If <0, then there's no limit.
       self._bot_flairs = None
 
-      self._load_settings()
+      await self._load_settings()
 
       self._scheduler = ChannelCloseScheduler(self._client, self._server, self)
       loop = asyncio.get_event_loop()
@@ -58,57 +62,40 @@ class DynamicChannels(ServerModule):
    def bot_flairs(self):
       return self._bot_flairs
 
-   def _load_settings(self):
-      # Server Settings
-      settings = self._res.get_settings(default=self.DEFAULT_SETTINGS)
-         
+   async def _load_settings(self):
+      settings_dict = self._res.get_settings(default=self._default_settings)
+      settings = AttributeDictWrapper(settings_dict, self._default_settings)
+
       self._default_channels = []
-      default_ch_data = []
-      try:
-         default_ch_data = settings["default channels"]
-      except KeyError:
-         settings["default channels"] = []
-         self._res.save_settings(settings)
+      default_ch_data = settings.get("default channels")
       for item in default_ch_data:
-         try:
-            ch_id = item["id"]
-            ch = self._client.search_for_channel(ch_id, serverrestriction=self._server)
-            if not ch is None:
-               self._default_channels.append(ch)
-         except KeyError:
+         if not "id" in item:
             continue
+         ch_id = item["id"]
+         ch = self._client.search_for_channel(ch_id, serverrestriction=self._server)
+         if not ch is None:
+            # Missed channels are simply skipped.
+            self._default_channels.append(ch)
 
-      self._channel_timeout = 10
-      try:
-         self._channel_timeout = int(settings["channel timeout"])
-      except (KeyError, ValueError):
-         settings["channel timeout"] = self._channel_timeout
-         self._res.save_settings(settings)
 
-      self._max_active_temp_channels = 5
-      try:
-         self._max_active_temp_channels = int(settings["max active temp channels"])
-         if self._max_active_temp_channels < 0:
-            self._max_active_temp_channels = 5
-      except (KeyError, ValueError):
-         settings["max active temp channels"] = self._max_active_temp_channels
-         self._res.save_settings(settings)
+      self._channel_timeout = settings.get("channel timeout", accept_if=lambda x: x > 0)
+      self._max_active_temp_channels = settings.get("max active temp channels")
 
-      self._bot_flairs = []
-      try:
-         self._bot_flairs = settings["bot flairs"]
-         if not isinstance(self._bot_flairs, list):
-            raise ValueError
-         for e in self._bot_flairs:
-            if not isinstance(e, str):
-               raise ValueError
-      except (KeyError, ValueError):
-         settings["bot flairs"] = self._bot_flairs = []
-         self._res.save_settings(settings)
+      def no_issues_in_bot_flairs(x):
+         if not isinstance(x, list):
+            return False
+         for i in x:
+            if not isinstance(i, str):
+               return False
+         return True
+      self._bot_flairs = settings.get("bot flairs", accept_if=no_issues_in_bot_flairs)
+
+      await settings.report_if_changed(self._client, self, server=self._server)
+      self._save_settings()
       return
 
    def _save_settings(self):
-      settings = self._res.get_settings()
+      settings = {}
       settings["channel timeout"] = self._channel_timeout
       settings["max active temp channels"] = self._max_active_temp_channels
       settings["bot flairs"] = self._bot_flairs

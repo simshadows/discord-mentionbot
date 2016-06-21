@@ -175,12 +175,16 @@ class ServerBotInstance:
       
       modules = []
       for module_name in data["Installed Modules"]:
+         if not self._module_factory.module_exists(module_name):
+            print("Module \"{}\" does not exist. Skipping.".format(module_name))
          try:
             new_module = await self._module_factory.new_module_instance(module_name, self)
-            modules.append(new_module)
             await new_module.activate()
-         except:
-            print("Error installing module {}. Skipping.".format(module_name))
+            modules.append(new_module)
+         except Exception as e:
+            print(traceback.format_exc(), file=sys.stderr)
+            extra_info = "Error installing module {}. Skipping.".format(module_name)
+            await self._client.report_exception(e, extra_info=extra_info)
       self._modules = ServerModuleGroup(initial_modules=modules, core_help_pages=cls._help_page_list)
 
       try:

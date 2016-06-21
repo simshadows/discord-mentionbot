@@ -1,4 +1,7 @@
+import textwrap
 from copy import deepcopy
+
+from .servermodule import ServerModule
 
 class AttributeDictWrapper:
 
@@ -41,7 +44,7 @@ class AttributeDictWrapper:
    def get(self, attr_name, other_types=[], accept_if=None):
       assert isinstance(attr_name, str)
       assert callable(accept_if) or (accept_if is None)
-      default_value = self._default[attr_name] # May raise KeyError.
+      default_value = deepcopy(self._default[attr_name]) # May raise KeyError.
       if (not accept_if is None) and (not accept_if(default_value)):
          raise RuntimeError("The default value didn't pass verification!")
 
@@ -72,6 +75,7 @@ class AttributeDictWrapper:
       else:
          self._log_change("Filled missing attribute \"{}\".".format(attr_name))
          self._data[attr_name] = default_value
+         return default_value
 
    def get_change_log(self):
       if len(self._modifications_log) > 0:
@@ -80,3 +84,23 @@ class AttributeDictWrapper:
       else:
          text = ""
       return text
+
+   # If changes were made, send an appropriate report.
+   # Arguments:
+   #     mentionbot: The MentionBot client.
+   #     calling_obj: The object that called this function.
+   #     server: The server in which the data is associated with.
+   #        Optional.
+   async def report_if_changed(self, mentionbot, calling_obj, server=None):
+      # assert isinstance(mentionbot_client, MentionBot)
+      # assert isinstance(server_obj, discord.Server)
+      change_log = self.get_change_log()
+      if not change_log == "":
+         classname = type(calling_obj).__name__
+         buf = "Issues in user data for `{}` was detected.".format(classname)
+         if not server is None:
+            buf += "\nServer: `{}`".format(server.name)
+         buf += "\nThe following changes were made to the data:\n```\n"
+         buf += change_log + "\n```"
+         await mentionbot.send_owner_msg(buf)
+      return

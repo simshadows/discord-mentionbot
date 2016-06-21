@@ -245,6 +245,10 @@ class MentionBot(clientextended.ClientExtended):
 
    def get_config_ini_copy(self):
       return copy.deepcopy(self._conf)
+
+   async def send_owner_msg(self, text):
+      await self.send_msg(self._bot_owner_obj, text)
+      return
    
    # Common code for handling an error.
    # Does:
