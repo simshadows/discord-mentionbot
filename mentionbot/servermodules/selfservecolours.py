@@ -14,13 +14,13 @@ class SelfServeColours(ServerModule):
 
    MODULE_NAME = "Self-Serve Colours"
    MODULE_SHORT_DESCRIPTION = "Allows users to pick their own personal colour flair."
-   RECOMMENDED_CMD_NAMES = ["colour", "color", "rgb"]
+   RECOMMENDED_CMD_NAMES = ["colourmod", "colormod"]
    
    _SECRET_TOKEN = utils.SecretToken()
    _cmdd = {}
 
    _HELP_SUMMARY = """
-      `{modhelp}` - Personal colour roles. <<PLACEHOLDER>>
+      `{modhelp}` - Personal colour roles.
       """
    # `{p}{grp}[rgb code]` - Assign yourself a colour.
    # `{p}{grp}colour` - Removes your current colour flair.
@@ -34,27 +34,31 @@ class SelfServeColours(ServerModule):
       self._res.suppress_autokill(True)
       return
 
-   async def get_help_detail(self, locator_string, entry_string, privilege_level):
-      assert isinstance(locator_string, str) and isinstance(entry_string, str)
-      assert isinstance(privilege_level, PrivilegeLevel)
-      return await self.get_help_summary(privilege_level)
-
-   async def process_cmd(self, substr, msg, privilege_level):
+   @cmd.add(_cmdd, "colour", "color", "rgb", top=True, default=True)
+   async def _cmdf_ud(self, substr, msg, privilege_level):
+      """
+      `{cmd} [rgb colour code]` - Assign yourself a colour role.
+      `{cmd} random` - Assign yourself a random colour role.
+      `{cmd}` - Removes your current colour role.
+      """
       # First process the input.
+      substr = substr.lower()
       if (len(substr) == 0) or (substr == "clear"):
          # Just remove the colour flair.
          await self._remove_colour_roles(msg.author)
          await self._client.send_msg(msg, "Removed <@{}>'s colour role.".format(msg.author.id))
          return
+      elif substr == "random":
+         rand_int = random.randint(0,(16**6)-1)
+         rand = hex(rand_int)[2:] # Convert to hex
+         rand = rand.zfill(6)
+         substr = rand
       elif substr.startswith("#"):
          substr = substr[1:]
-      rgb_code_str = r = g = b = None
-      if self._re_rgb_code.fullmatch(substr):
-         rgb_code_str = substr.lower()
+
+      rgb_code_str = substr
+      if self._re_rgb_code.fullmatch(rgb_code_str):
          rgb_code_int = int(rgb_code_str, base=16)
-         # r = int(rgb_code_str[:2], base=16)
-         # g = int(rgb_code_str[2:4], base=16)
-         # b = int(rgb_code_str[-2:], base=16)
       else:
          await self._client.send_msg(msg, substr + " is not a valid colour code.")
          raise errors.OperationAborted

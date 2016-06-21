@@ -97,7 +97,7 @@ class AttributeDictWrapper:
       change_log = self.get_change_log()
       if not change_log == "":
          classname = type(calling_obj).__name__
-         buf = "Issues in user data for `{}` was detected.".format(classname)
+         buf = "Issues in user data for `{}` were detected.".format(classname)
          if not server is None:
             buf += "\nServer: `{}`".format(server.name)
          buf += "\nThe following changes were made to the data:\n```\n"
