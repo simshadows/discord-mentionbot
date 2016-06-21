@@ -25,7 +25,7 @@ class ServerActivityStatistics(ServerModule):
    _cmdd = {}
 
    _HELP_SUMMARY = """
-      `{modhelp}` Generates user activity statistics.
+      `{modhelp}` - Generates user activity statistics.
       """
 
    async def _initialize(self, resources):
