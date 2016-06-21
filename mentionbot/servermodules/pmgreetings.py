@@ -56,10 +56,7 @@ class PMGreetings(ServerModule):
       return buf
 
    def _load_settings(self):
-      settings = self._res.get_settings()
-      if settings is None:
-         self._res.save_settings(self.DEFAULT_SETTINGS)
-         settings = self._res.get_settings()
+      settings = self._res.get_settings(default=self.DEFAULT_SETTINGS)
       try:
          self._greeting_template = settings["greeting_template"]
       except KeyError:

@@ -1,5 +1,5 @@
 import asyncio
-import copy
+from copy import deepcopy
 
 import discord
 
@@ -56,23 +56,32 @@ class ServerModuleResources:
       return await self._sbi.process_text(substr, msg)
 
    # Get module settings.
-   # Returns None if no settings were found.
-   def get_settings(self):
+   # If no settings are found and no default was supplied, None is returned.
+   # If no settings were found and a default was supplied, then a deepcopy
+   # of the default object is returned.
+   def get_settings(self, default=None):
       try:
          return utils.json_read(self._settings_filepath)
       except FileNotFoundError:
-         return None
+         if default is None:
+            return None
+         else:
+            return deepcopy(default)
 
    # Save module settings.
    def save_settings(self, data):
       utils.json_write(self._settings_filepath, data=data)
       return
 
-   def get_shared_settings(self):
+   # Similar to get_settings, but shared across all instances of the module.
+   def get_shared_settings(self, default=None):
       try:
          return utils.json_read(self._shared_settings_filepath)
       except FileNotFoundError:
-         return None
+         if default is None:
+            return None
+         else:
+            return deepcopy(default)
 
    def save_shared_settings(self, data):
       utils.json_write(self._shared_settings_filepath, data=data)

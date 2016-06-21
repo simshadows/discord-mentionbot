@@ -45,9 +45,7 @@ class TruthGame(ServerModule):
       return
 
    def _load_settings(self):
-      settings = self._res.get_settings()
-      if settings is None:
-         self._res.save_settings(self.DEFAULT_SETTINGS)
+      settings = self._res.get_settings(default=self.DEFAULT_SETTINGS)
 
       self._enabled_channels = []
       try:

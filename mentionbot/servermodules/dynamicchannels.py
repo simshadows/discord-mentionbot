@@ -60,55 +60,51 @@ class DynamicChannels(ServerModule):
 
    def _load_settings(self):
       # Server Settings
-      settings = self._res.get_settings()
-      if settings is None:
-         self._res.save_settings(self.DEFAULT_SETTINGS)
-      else:
+      settings = self._res.get_settings(default=self.DEFAULT_SETTINGS)
          
-         self._default_channels = []
-         default_ch_data = []
+      self._default_channels = []
+      default_ch_data = []
+      try:
+         default_ch_data = settings["default channels"]
+      except KeyError:
+         settings["default channels"] = []
+         self._res.save_settings(settings)
+      for item in default_ch_data:
          try:
-            default_ch_data = settings["default channels"]
+            ch_id = item["id"]
+            ch = self._client.search_for_channel(ch_id, serverrestriction=self._server)
+            if not ch is None:
+               self._default_channels.append(ch)
          except KeyError:
-            settings["default channels"] = []
-            self._res.save_settings(settings)
-         for item in default_ch_data:
-            try:
-               ch_id = item["id"]
-               ch = self._client.search_for_channel(ch_id, serverrestriction=self._server)
-               if not ch is None:
-                  self._default_channels.append(ch)
-            except KeyError:
-               continue
+            continue
 
-         self._channel_timeout = 10
-         try:
-            self._channel_timeout = int(settings["channel timeout"])
-         except (KeyError, ValueError):
-            settings["channel timeout"] = self._channel_timeout
-            self._res.save_settings(settings)
+      self._channel_timeout = 10
+      try:
+         self._channel_timeout = int(settings["channel timeout"])
+      except (KeyError, ValueError):
+         settings["channel timeout"] = self._channel_timeout
+         self._res.save_settings(settings)
 
-         self._max_active_temp_channels = 5
-         try:
-            self._max_active_temp_channels = int(settings["max active temp channels"])
-            if self._max_active_temp_channels < 0:
-               self._max_active_temp_channels = 5
-         except (KeyError, ValueError):
-            settings["max active temp channels"] = self._max_active_temp_channels
-            self._res.save_settings(settings)
+      self._max_active_temp_channels = 5
+      try:
+         self._max_active_temp_channels = int(settings["max active temp channels"])
+         if self._max_active_temp_channels < 0:
+            self._max_active_temp_channels = 5
+      except (KeyError, ValueError):
+         settings["max active temp channels"] = self._max_active_temp_channels
+         self._res.save_settings(settings)
 
-         self._bot_flairs = []
-         try:
-            self._bot_flairs = settings["bot flairs"]
-            if not isinstance(self._bot_flairs, list):
+      self._bot_flairs = []
+      try:
+         self._bot_flairs = settings["bot flairs"]
+         if not isinstance(self._bot_flairs, list):
+            raise ValueError
+         for e in self._bot_flairs:
+            if not isinstance(e, str):
                raise ValueError
-            for e in self._bot_flairs:
-               if not isinstance(e, str):
-                  raise ValueError
-         except (KeyError, ValueError):
-            settings["bot flairs"] = self._bot_flairs = []
-            self._res.save_settings(settings)
-
+      except (KeyError, ValueError):
+         settings["bot flairs"] = self._bot_flairs = []
+         self._res.save_settings(settings)
       return
 
    def _save_settings(self):

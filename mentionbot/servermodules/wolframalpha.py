@@ -24,10 +24,6 @@ class WolframAlpha(ServerModule):
    # `[p]wa [query]` - Make a Wolfram Alpha query.
    # `[p]define [word]` - Get word definition from WA.
 
-   DEFAULT_SHARED_SETTINGS = {
-      "wa app id": "PLACEHOLDER",
-   }
-
    DEFAULT_SETTINGS = {
       "max pods": 2,
       "show text": "true",
@@ -52,19 +48,15 @@ class WolframAlpha(ServerModule):
       return
 
    def _load_settings(self):
-      settings = self._res.get_settings()
-      if settings is None:
-         self._res.save_settings(self.DEFAULT_SETTINGS)
-      else:
-         try:
-            self._max_pods = settings["max pods"]
-            self._show_text = utils.str_says_true(settings["show text"])
-            self._show_img = utils.str_says_true(settings["show img"])
-         except KeyError:
-            settings["max pods"] = 2
-            settings["show text"] = True
-            settings["show img"] = False
-            self._res.save_settings(settings)
+      settings = self._res.get_settings(default=self.DEFAULT_SETTINGS)
+      try:
+         self._max_pods = settings["max pods"]
+         self._show_text = utils.str_says_true(settings["show text"])
+         self._show_img = utils.str_says_true(settings["show img"])
+      except KeyError:
+         settings["max pods"] = 2
+         settings["show text"] = True
+         settings["show img"] = False
       return
 
    @cmd.add(_cmdd, "query", "q", top="wa")

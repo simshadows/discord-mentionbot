@@ -4,7 +4,7 @@
 # schema representation.
 
 # This functions both as a mini-tutorial and a test case.
-sample_schema = {
+_sample_schema = {
    "attrA": ["I'm a default value."],
    "attrB": ["I also require the matching data to be a string."],
    "attrC": ["I'm default", None], # But I can also be NULL.
@@ -45,7 +45,7 @@ sample_schema = {
    }], # Note that empty dictionaries don't fail verification.
    "attrM": [[], None], # I am an empty list by default, but can also be NULL.
 }
-sample_data_success1 = {
+_sample_data_success1 = {
    "attrA": "some arbitrary string",
    "attrB": "some arbitrary string",
    "attrC": None,
@@ -71,7 +71,7 @@ sample_data_success1 = {
    }],
    "attrM": None,
 }
-sample_data_fail1 = {
+_sample_data_fail1 = {
    "attrA": 123, # FAIL HERE
    "attrB": "some arbitrary string",
    "attrC": None,
@@ -97,7 +97,7 @@ sample_data_fail1 = {
    }],
    "attrM": None,
 }
-sample_data_fail2 = {
+_sample_data_fail2 = {
    "attrA": "some arbitrary string",
    "attrB": "some arbitrary string",
    "attrC": None,
@@ -123,7 +123,7 @@ sample_data_fail2 = {
    }],
    "attrM": None,
 }
-sample_data_fail3 = {
+_sample_data_fail3 = {
    "attrA": "some arbitrary string",
    "attrB": "some arbitrary string",
    "attrC": None,
@@ -149,7 +149,7 @@ sample_data_fail3 = {
    }],
    "attrM": None,
 }
-sample_data_success2 = {
+_sample_data_success2 = {
    "attrA": "",
    "attrB": "",
    "attrC": None,
@@ -170,93 +170,11 @@ sample_data_success2 = {
 
 
 
-class DefaultJSONTypeError(TypeError):
-   def __init__(self, attr_name):
-      self.json_attrlist = []
-      if not attr_name is None:
-         assert isinstance(attr_name, str)
-         self.json_attrlist.append(attr_name)
-      return
-   def append_attr(self, attr_name)
-      assert isinstance(attr_name, str)
-      self.json_attrlist.append(attr_name)
-      return
 
-
-class DefaultJSONVerifier:
-   _basic_types = [type(None), str, int, float, bool]
-
-   def __init__(self, schema):
-      if not isinstance(schema, dict):
-      raise TypeError("Schema object must be a dict.")
-      self._compiled = self._compile_object(schema)
-      return
-
-   @classmethod
-   def _compile_object(cls, schema):
-      c = {}
-      for (k, v) in schema.items():
-         # Key must be a string.
-         if not isinstance(k, str):
-            raise DefaultJSONTypeError(None)
-         # Value must be a non-empty list.
-         if (not isinstance(v, list)) or (len(v) == 0):
-               raise DefaultJSONTypeError(k)
-         for i in v:
-            if self._is_basic_data(i):
-      return c
-
-   # Returns True if item is a basic data item.
-   @classmethod
-   def _is_basic_data(cls, item):
-      for t in cls._basic_types:
-         if isinstance(item, t):
-            return True
-      return False
-
-      # Returns nothing, or raises an exception.
-      def verify_object(sub_schema):
-         for (k, v) in sub_schema.items():
-            
-            
-            for i in v:
-               if is_basic_data(i):
-                  continue
-               if isinstance(i, dict):
-                  try:
-                     verify_object(i)
-                  except DefaultJSONTypeError as e:
-                     e.append_attr(k)
-                     raise
-               if isinstance(i, list):
-                  for i2 in i:
-
-      try:
-         verify_object(schema)
-      except DefaultJSONTypeError as e:
-         attrs = ", ".join(e.json_attrlist)
-         assert len(attrs) > 0
-         raise TypeError("Found a bad type: " + attrs)
-      return
+# Raises an exception if something failed.
+def run_unit_tests(verifier_class):
 
 
 
-# Returns nothing.
-# Raises an exception if a problem with the schema is found.
-def verify_schema(schema):
-
-
-
-
-
-
-
-# Returns nothing.
-# Raises an exception if a problem with the data is found.
-# PRECONDITION: The schema has been checked with verify_schema().
-def verify(data, schema):
-   raise NotImplementedError
    return
-
-
 
