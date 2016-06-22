@@ -174,6 +174,8 @@ class DynamicChannels(ServerModule):
             listed += 1
          if listed == 0:
             buf = "No channels were recently opened."
+         elif listed == 1:
+            buf = "**Last channel opened:**" + buf2
          else:
             buf = buf.format(str(listed)) + buf2
          await self._client.send_msg(msg, buf)
@@ -269,6 +271,7 @@ class DynamicChannels(ServerModule):
          for ch in self._default_channels:
             default_channels += "\n<#{0}> (ID: {0})".format(ch.id)
          default_channels = default_channels[1:]
+      format_kwargs["default_channels"] = default_channels
 
       buf = buf.format(**format_kwargs)
       await self._client.send_msg(msg, buf)
@@ -482,21 +485,6 @@ class DynamicChannels(ServerModule):
       old_elements = len(self._last_opened)
       self._last_opened = []
       await self._client.send_msg(msg, "{} removed from the last opened list.".format(str(old_elements)))
-      return
-
-   async def _chopen_name_check(self, msg, ch_name):
-      if len(ch_name) < 2:
-         await self._client.send_msg(msg, "Channel name must be at least 2 characters long.")
-         raise errors.OperationAborted
-      elif (ch_name[:1] == "-") or self._re_non_alnum_or_dash.search(ch_name):
-         await self._client.send_msg(msg, "`{}` is an illegal channel name.".format(ch_name))
-         raise errors.OperationAborted
-      elif len(ch_name) > 100:
-         await self._client.send_msg(msg, "Channel name can't be larger than 100 characters.")
-         raise errors.OperationAborted
-      elif self._name_is_default_channel(ch_name):
-         await self._client.send_msg(msg, "Can't open a default channel.")
-         raise errors.OperationAborted
       return
 
    async def _chopen_name_check(self, msg, ch_name):
