@@ -160,9 +160,10 @@ async def close_channel(client, channel, bot_flair_names):
    everyone = channel.server.default_role
    allow = discord.Permissions.none()
    deny = discord.Permissions.all()
+   overwrite = discord.PermissionOverwrite.from_pair(allow=allow, deny=deny)
    try:
       await ensure_bot_permissions(client, channel, bot_flair_names)
-      await client.edit_channel_permissions(channel, everyone, allow=allow, deny=deny)
+      await client.edit_channel_permissions(channel, everyone, overwrite=overwrite)
    except discord.errors.Forbidden as e:
       raise e
    except:
@@ -171,7 +172,15 @@ async def close_channel(client, channel, bot_flair_names):
       await client.send_msg(channel, "This channel failed to close.")
    return
 
-async def open_channel(client, channel, server, bot_flair_names):
+async def open_channel(client, channel_name, server, bot_flair_names):
+   channel = client.search_for_channel_by_name(channel_name, server)
+   if channel is None:
+      try:
+         channel = await client.create_channel(server, channel_name)
+      except discord.errors.Forbidden:
+         await client.send_msg(msg, "Permission error: I'm not allowed to create channels.")
+         raise errors.OperationAborted
+
    print("A CHANNEL OPENED.")
    try:
       await ensure_bot_permissions(client, channel, bot_flair_names)
@@ -190,8 +199,9 @@ async def ensure_bot_permissions(client, channel, bot_flair_names):
       targets = [channel.server.me]
    allow = discord.Permissions.all()
    deny = discord.Permissions.none()
+   overwrite = discord.PermissionOverwrite.from_pair(allow=allow, deny=deny)
    for target in targets:
-      await client.edit_channel_permissions(channel, target, allow=allow, deny=deny)
+      await client.edit_channel_permissions(channel, target, overwrite=overwrite)
    return
 
 #################################################################################

@@ -29,6 +29,8 @@ logger.addHandler(handler)
 
 class MentionBot(clientextended.ClientExtended):
    def __init__(self, **kwargs):
+      self._allow_on_ready = True
+
       super(MentionBot, self).__init__(**kwargs)
 
       self.on_message_lock = asyncio.Lock()
@@ -57,6 +59,13 @@ class MentionBot(clientextended.ClientExtended):
       return
 
    async def on_ready(self):
+      if not self._allow_on_ready:
+         await self.on_message_lock.acquire()
+         await self.on_member_join_lock.acquire()
+         await self.on_member_remove_lock.acquire()
+         await self.send_owner_msg("Attempted to re-initialize. Killing the process.")
+         sys.exit(1)
+      self._allow_on_ready = False
       try:
          await self.set_game_status(self._init_status)
          self._bot_owner_obj = self.search_for_user(self.get_bot_owner_id())

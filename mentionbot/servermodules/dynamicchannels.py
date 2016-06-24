@@ -6,6 +6,7 @@ import re
 import traceback
 import concurrent
 import textwrap
+import collections
 
 import discord
 
@@ -209,14 +210,12 @@ class DynamicChannels(ServerModule):
 
       ch_name = substr.strip().replace(" ", "-").lower()
       await self._chopen_name_check(msg, ch_name)
-      ch = self._client.search_for_channel_by_name(ch_name, self._server)
-      if ch is None:
-         ch = await self._client.create_channel(self._server, ch_name)
       try:
-         await utils.open_channel(self._client, ch, self._server, self._bot_flairs)
+         await utils.open_channel(self._client, ch_name, self._server, self._bot_flairs)
       except discord.errors.Forbidden:
          await self._client.send_msg(msg.channel, "Bot is not allowed to open that.")
          raise errors.OperationAborted
+      ch = self._client.search_for_channel_by_name(ch_name, self._server)
       self._scheduler.schedule_closure(ch, self._channel_timeout)
       
       buf = "Channel opened by <@{}>.".format(msg.author.id)
@@ -485,6 +484,92 @@ class DynamicChannels(ServerModule):
       old_elements = len(self._last_opened)
       self._last_opened = []
       await self._client.send_msg(msg, "{} removed from the last opened list.".format(str(old_elements)))
+      return
+
+   @cmd.add(_cmdd, "permissionrecovery")
+   @cmd.category("Admin - Misc")
+   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
+   async def _cmdf_setmaxactive(self, substr, msg, privilege_level):
+      """
+      `{cmd} [blacklisted channels]` - Re-write bot flair permissions.
+
+      This command simply re-writes full access permissions to all temporary channels, but ignores default channels and channels listed by `[blacklisted channels]`.
+
+      Requires that the bot **temporarily be given full admin rights** to the server before running this command.
+
+      `[blacklisted channels]` is simply a space-delineated string of channel mentions or channel IDs.
+
+      e.g. `{cmd} 123 456 789` will blacklist channels with the IDs `123`, `456`, and `789` from having their permissions overwritten.
+
+      This command is used if changes to underlying APIs without the bot being updated have caused issues with this module's functionality.
+      """
+      client = self._client
+      server = self._server
+
+      args = substr.split()
+      to_ignore = set()
+      for arg in args:
+         ch = client.search_for_channel(arg, serverrestriction=server)
+         if ch is None:
+            buf = "Error: No channel matching `{}` has been found.".format(arg)
+            buf += "\nOperation aborted. No changes have been made."
+            await client.send_msg(msg, buf)
+            raise errors.OperationAborted
+         to_ignore.add(ch.id)
+      for ch in self._default_channels:
+         to_ignore.add(ch.id)
+      buf = "Writing permissions. This operation is not pipelined, so this will take a while."
+      await client.send_msg(msg, buf)
+      print(buf)
+      total_channels = 0
+      ignored = 0
+      non_text_skipped = 0
+      errors = collections.defaultdict(lambda: 0) # errors[error_name] = count
+      success = 0
+      for ch in server.channels:
+         total_channels += 1
+         if ch.id in to_ignore:
+            print("Ignoring #" + ch.name)
+            ignored += 1
+            continue
+         elif ch.type != discord.ChannelType.text:
+            print("Non-text channel #" + ch.name)
+            non_text_skipped += 1
+            continue
+         try:
+            await utils.ensure_bot_permissions(client, ch, self._bot_flairs)
+            success += 1
+         except Exception as e:
+            name = type(e).__name__
+            print("Error for channel #" + ch.name)
+            print(traceback.format_exc())
+            errors[name] += 1
+      buf = textwrap.dedent("""\
+         Operation complete.
+         
+         **Statistics**
+         **Total channels seen**: {total_channels}
+         **Ignored by blacklist or default**: {ignored}
+         **Non-text channels skipped**: {non_text_skipped}
+         **Successful permission changes**: {success}
+         **Errors**:
+         {errors}
+         """).strip()
+      buf2 = ""
+      for (error_name, count) in errors.items():
+         buf2 += "   {} x{}\n".format(error_name, str(count))
+      if len(buf2) == 0:
+         buf2 = "   No errors."
+      else:
+         buf2 = buf2[:-1]
+      new_kwargs = {
+         "total_channels": str(total_channels),
+         "ignored": str(ignored),
+         "non_text_skipped": str(non_text_skipped),
+         "success": str(success),
+         "errors": buf2
+      }
+      await client.send_msg(msg, buf.format(**new_kwargs))
       return
 
    async def _chopen_name_check(self, msg, ch_name):
