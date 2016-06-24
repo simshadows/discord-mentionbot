@@ -94,6 +94,15 @@ class MessageCache:
       await self._client.set_temp_game_status("filling cache buffers.")
       loop = asyncio.get_event_loop()
       
+      total_channels = [0]
+      channels_done = [0]
+      channels_done_lock = asyncio.Lock()
+      all_channels = {}
+      servers = list(self._client.servers)
+      for server in servers:
+         i = all_channels[server.id] = list(server.channels)
+         total_channels[0] += len(i)
+      
       async def cache_server(server):
          ch_dict = None
          ch_dict_lock = asyncio.Lock()
@@ -106,7 +115,7 @@ class MessageCache:
          async def cache_channel(ch):
             if ch.type is discord.ChannelType.voice:
                return
-            print("MessageCache caching messages in #" + ch.name)
+            # print("MessageCache caching messages in #" + ch.name)
 
             # TODO: Rename these variable names.
             # TODO: Turn this into a function? (see duplicated code...)
@@ -137,7 +146,11 @@ class MessageCache:
                   # Insert in front since we're reading messages starting from most recent.
                   msg_buffer.insert(0, self._message_dict(msg))
             except discord.errors.Forbidden:
-               print("MessageCache unable to read #" + ch.name)
+               await channels_done_lock.acquire()
+               channels_done[0] += 1
+               new_args = [str(channels_done[0]), str(total_channels[0]), ch.name]
+               print("({}/{}) MessageCache unable to read #{}".format(*new_args))
+               channels_done_lock.release()
                return
 
             await ch_dict_lock.acquire()
@@ -157,16 +170,21 @@ class MessageCache:
                self._move_to_disk(server.id, ch.id, messages=200)
 
             ch_dict_lock.release()
+            await channels_done_lock.acquire()
+            channels_done[0] += 1
+            new_args = [str(channels_done[0]), str(total_channels[0]), ch.name]
+            print("({}/{}) Cached messages in #{}".format(*new_args))
+            channels_done_lock.release()
 
             return
 
          chcache_futures = []
-         for j in server.channels:
+         for j in all_channels[server.id]:
             chcache_futures.append(loop.create_task(cache_channel(j)))
          await asyncio.gather(*chcache_futures)
 
       scache_futures = []
-      for i in self._client.servers:
+      for i in servers:
          scache_futures.append(loop.create_task(cache_server(i)))
       await asyncio.gather(*scache_futures)
 
