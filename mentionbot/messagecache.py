@@ -32,7 +32,7 @@ class MessageCache:
       print("This will take a while if a lot of messages are being read.")
       await inst._fill_buffers()
       
-      print(inst.get_debugging_info())
+      # print(inst.get_debugging_info())
       return inst
 
    def __init__(self, token):

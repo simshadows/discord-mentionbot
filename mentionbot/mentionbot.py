@@ -392,7 +392,7 @@ async def _client_login(client, token):
 def run(config_dict):
    loop = asyncio.get_event_loop()
 
-   executor = ThreadPoolExecutor(5)
+   executor = ThreadPoolExecutor(50)
    loop.set_default_executor(executor)
 
    client = MentionBot(config_dict=config_dict)

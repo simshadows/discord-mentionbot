@@ -5,6 +5,7 @@ import random
 import os
 import csv
 import collections
+import threading
 
 import discord
 import plotly.plotly as py
@@ -135,7 +136,7 @@ class ServerActivityStatistics(ServerModule):
 
    @cmd.add(_cmdd, "zipf", "wordrank", top=True)
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
-   async def _cmdf_choose(self, substr, msg, privilege_level):
+   async def _cmdf_zipf(self, substr, msg, privilege_level):
       """
       `{cmd}` - Generate word rank statistics. (EXPERIMENTAL)
 
@@ -290,71 +291,214 @@ class ServerActivityStatistics(ServerModule):
       await self._send_plotly_graph_object(msg.channel, plotly_data, plotly_layout)
       return
 
-   @cmd.add(_cmdd, "tempstats", top=True)
+   @cmd.add(_cmdd, "convstats", top=True)
    @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
-   async def _cmdf_tempstats(self, substr, msg, privilege_level):
+   async def _cmdf_conv(self, substr, msg, privilege_level):
       """
-      `{cmd} [text]` - (Temporary and original experimental word rank command.)
-      
-      `1`: Writes every word said in the server onto a file.
+      `{cmd}` - Generate conversation statistics. (EXPERIMENTAL)
 
-      `2`: (MBTI server only) Write a word rank for every MBTI type.
+      <<Write an explanation here>>
       """
-      mbti_types = [
-         "INTJ","INTP","ENTJ","ENTP","INFJ","INFP","ENFJ","ENFP",
-         "ISTJ","ISFJ","ESTJ","ESFJ","ISTP","ISFP","ESTP","ESFP",
-      ]
-      
-      def stats1():
-         text_list = [] # Join later.
-         server = self._res.server
-         for ch in server.channels:
-            for msg_dict in self._res.message_cache_read(server.id, ch.id):
-               text_list.append(msg_dict["c"])
-         text = "\n".join(text_list)
-         self._dump_to_file(text, "TMP_all_text.txt")
-         return
-      def stats2():
-         text_lists = {}
-         for mbti_type in mbti_types:
-            text_lists[mbti_type] = []
-         server = self._res.server
-         user_to_type = {}
-         for member in server.members:
-            mem_role = None
-            for role in member.roles:
-               for mbti_type in mbti_types:
-                  if role.name.lower() == mbti_type.lower():
-                     mem_role = mbti_type
-                     break
-               if not mem_role is None:
-                  break
-            if not mem_role is None:
-               user_to_type[member.id] = mem_role
-         self._dump_to_file(str(user_to_type), filename="TMP_members.txt")
-         for ch in server.channels:
-            for msg_dict in self._res.message_cache_read(server.id, ch.id):
-               author = msg_dict["a"]
-               if author in user_to_type:
-                  text_lists[user_to_type[author]].append(msg_dict["c"])
-         for (k, v) in text_lists.items():
-            text = "\n".join(v)
-            self._dump_to_file(text, "TMP_" + k + ".txt")
-         return
-      to_run = None
-      if substr == "1":
-         await self._client.send_msg(msg, "Writing file of every word said on the server.")
-         to_run = stats1
-      elif substr == "2":
-         await self._client.send_msg(msg, "Writing file of every word said on the server, separate by type.")
-         to_run = stats2
-      else:
-         await self._client.send_msg(msg, "Need to tell me which function to run mate.")
-         return
-      # Prepare for execution in process pool.
+      thread_num = 8
+      timeframe = datetime.timedelta(minutes=5)
+      mention_multiplier = 3 # Interaction rating multiplier for mentions.
+      attachments_flat = 15 # Flat interaction rating added if an attachment is found.
+
+      buf = "Hang on, generating your data."
+      buf += "\n*Note that this is a highly experimental command, and may be broken.*"
+      await self._client.send_msg(msg, buf)
+
       loop = asyncio.get_event_loop()
-      await loop.run_in_executor(None, to_run)
-      await self._client.send_msg(msg, "Done!")
+      assert thread_num > 1
+      jobs = [None for x in range(thread_num)]
+      server = self._res.server
+      all_channels = list(server.channels)
+      jobs_per_thread = int(len(all_channels)/thread_num)
+      assert jobs_per_thread > 0
+      assert len(all_channels) > thread_num
+      for i in range(thread_num - 1):
+         jobs[i] = all_channels[:jobs_per_thread]
+         all_channels = all_channels[jobs_per_thread:]
+      jobs[thread_num - 1] = all_channels # Gets the remaining channels
+      # Now, all the channels are roughly evenly distributed among each
+      # thread.
+
+      interactions = collections.defaultdict(lambda: collections.defaultdict(lambda: 0))
+      interactions_lock = threading.Lock()
+      # interactions[uid1][uid2] = interaction_rating
+      def add_to_interactions(uid1, uid2, interaction_rating):
+         interactions_lock.acquire()
+         i = interactions[uid1][uid2] = interactions[uid1][uid2] + interaction_rating
+         j = interactions[uid2][uid1] = interactions[uid2][uid1] + interaction_rating
+         interactions_lock.release()
+         assert i == j
+         return
+
+      warnings_buf = []
+      warnings_lock = threading.Lock()
+
+      def read_channel(channels):
+         server_id = server.id
+         for ch in channels:
+            print("READING INTERACTIONS IN #" + ch.name)
+            last = [] # Tuples of (member_id, last_post_datetime)
+            for_deletion = [] # elements of last to be deleted. Reinitialize only as necessary.
+            debug_prev = datetime.datetime(datetime.MINYEAR, 1, 1) # This exists entirely for ensuring correctness.
+            for msg_dict in self._res.message_cache_read(server_id, ch.id):
+               author_id = msg_dict["a"]
+               content = msg_dict["c"]
+               timestamp = msg_dict["t"]
+               has_media = (len(msg_dict["h"]) + len(msg_dict["e"])) > 0
+               
+               # assert debug_prev <= timestamp
+               if debug_prev > timestamp:
+                  warnings_lock.acquire()
+                  warnings_buf.append("WARNING: debug_prev > timestamp.\n")
+                  warnings_buf.append("timestamp - debug_prev = " + utils.timedelta_to_string(timestamp - debug_prev) + "\n")
+                  warnings_buf.append("channel " + ch.id + "\n")
+                  warnings_buf.append("author " + author_id + "\n")
+                  warnings_buf.append("content " + content + "\n")
+                  warnings_lock.release()
+               debug_prev = timestamp
+               
+               interaction_rating = len(content)
+               if has_media:
+                  interaction_rating += attachments_flat
+               mentions = set(utils.get_all_mentions(content))
+               mentions.discard(author_id)
+
+               assert isinstance(for_deletion, list) and (len(for_deletion) == 0)
+               # for_deletion = [] # Optimized by only reinitializing when necessary.
+               seen = set() # This exists almost entirely for ensuring correctness.
+               for x in last:
+                  (last_uid, last_time) = (x[0], x[1])
+                  
+                  assert not last_uid in seen
+                  seen.add(last_uid)
+                  
+                  if (last_uid != author_id) and (timestamp - last_time <= timeframe):
+                     multiplier = 1
+                     if last_uid in mentions:
+                        multiplier = mention_multiplier
+                     add_to_interactions(author_id, last_uid, interaction_rating * multiplier)
+                  else:
+                     for_deletion.append(x)
+               if len(for_deletion) > 0:
+                  for x in for_deletion:
+                     last.remove(x)
+                  for_deletion = []
+               # Now we add the current message back in.
+               last.append((author_id, timestamp))
+               # Anyone else who was mentioned now gets interaction rating added as well.
+               for uid in mentions:
+                  if not uid in seen:
+                     add_to_interactions(author_id, uid, interaction_rating * mention_multiplier)
+         return
+      async def read_channel_wrapped(channels):
+         await loop.run_in_executor(None, read_channel, channels)
+         return
+      futures = []
+      for x in jobs:
+         # fn_args = [x]
+         # assert isinstance(fn_args[0], list)
+         futures.append(loop.create_task(read_channel_wrapped(x)))
+      await asyncio.gather(*futures)
+      if not len(warnings_buf) != 0:
+         print("ISSUES:\n" + "".join(warnings_buf))
+      
+      # Get uid to uname mapping
+      uid_to_uname = {x.id: x.name for x in server.members}
+
+      def cpu_bound_work():
+         all_members = [k for (k, v) in interactions.items()]
+
+         ################################
+         # PHASE 1: Spit out raw scores #
+         ################################
+
+         print("WRITING INTERACTION RATINGS TO FILES.")
+         buf = [] # List of strings to be joined later.
+
+         # Top header row
+         buf.append("Raw Scores")
+         for uid in all_members:
+            buf.append("\t")
+            if uid in uid_to_uname:
+               buf.append(uid_to_uname[uid])
+            else:
+               buf.append(uid)
+         # All the other rows
+         for uid1 in all_members: # uid1 for each row
+            buf.append("\n")
+            # First print the member.
+            if uid1 in uid_to_uname:
+               buf.append(uid_to_uname[uid1])
+            else:
+               buf.append(uid1)
+            # Now we print the matrix.
+            for uid2 in all_members: # uid2 for each column
+               buf.append("\t")
+               buf.append(str(interactions[uid1][uid2]))
+         buf = "".join(buf)
+         filename = "interactions_1_raw_scores.txt"
+         self._dump_to_file(buf, filename=filename)
+
+         ################################################
+         # PHASE 2: Convert to a portion average matrix #
+         ################################################
+
+         portion_tables = collections.defaultdict(lambda: {})
+         # portion_tables[uid1][uid2] = portion
+         # This is the portion of the sum of uid1's total interactions in which
+         # uid1 spends on uid2.
+
+         # First, we build each table of portions.
+         for uid in all_members:
+            interactions_sum = 0
+            for uid2 in all_members:
+               interactions_sum += interactions[uid][uid2]
+            for uid2 in all_members:
+               portion_tables[uid][uid2] = float(interactions[uid][uid2]/interactions_sum) * 100
+
+         portion_matrix = collections.defaultdict(lambda: {})
+
+         # Then, we construct the matrix of portion averages.
+         for uid1 in all_members:
+            for uid2 in all_members:
+               value = (portion_tables[uid1][uid2] + portion_tables[uid2][uid1])/2
+               portion_matrix[uid1][uid2] = portion_matrix[uid2][uid1] = value
+
+         # And we spit it out into a file.
+         buf = [] # List of strings to be joined later.
+
+         # Top header row
+         buf.append("Portion Averages")
+         for uid in all_members:
+            buf.append("\t")
+            if uid in uid_to_uname:
+               buf.append(uid_to_uname[uid])
+            else:
+               buf.append(uid)
+         # All the other rows
+         for uid1 in all_members: # uid1 for each row
+            buf.append("\n")
+            # First print the member.
+            if uid1 in uid_to_uname:
+               buf.append(uid_to_uname[uid1])
+            else:
+               buf.append(uid1)
+            # Now we print the matrix.
+            for uid2 in all_members: # uid2 for each column
+               buf.append("\t")
+               buf.append(str(portion_matrix[uid1][uid2]))
+         buf = "".join(buf)
+         filename = "interactions_2_portion_avgs.txt"
+         self._dump_to_file(buf, filename=filename)
+
+         return
+      await loop.run_in_executor(None, cpu_bound_work)
+
+      await self._client.send_msg(msg, "Done. Please check the files.")
       return
 
    ###############################################
