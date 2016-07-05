@@ -3,11 +3,12 @@ import re
 import datetime
 import os
 import copy
+import collections
 
 import discord
 import dateutil.parser
 
-from . import utils
+from . import utils, errors
 
 ARBITRARILY_LARGE_NUMBER = 10000000000000
 
@@ -16,9 +17,16 @@ class MessageCache:
 
    _CH_JSON_FILENAME = "channel.json"
 
+   # RETURNS: A tuple containing:
+   #             [0]: The MessageCache object, and
+   #             [1]: The setup task object which must be awaited from.
+   #          The setup task object sets up the cache, filling it with new
+   #          messages, checking for consistency, etc. Only when this task
+   #          completes can MessageCache properly serve
    @classmethod
    async def get_instance(cls, client, cache_directory):
       self = cls(cls._SECRET_TOKEN)
+
       self._client = client
       self._data_dir = cache_directory + "messagecache/"
       self._messages_before_initialization = []
@@ -28,20 +36,39 @@ class MessageCache:
       # server_id -> channel_id -> list of messages stored in tuples
       # Each message entry is a tuple.
 
-      print("Caching messages...")
-      print("This will take a while if a lot of messages are being read.")
-      await self._fill_buffers()
+      self._read_messages_lock = asyncio.Lock()
       
-      # print(self.get_debugging_info())
-      return self
+      self._queue_messages = True
+      # Whether or not messages are to be queued in
+      # _unprocessed_messages.
+      # Modification is protected by _record_message_lock.
+      self._unprocessed_messages = collections.deque()
+      # Modification of _unprocessed_messages must also be protected by
+      # _record_message_lock. When unused, the deque is trashed until the
+      # next time it is needed.
+      self._record_message_lock = asyncio.Lock()
+      
+      return (self, self._fill_buffers())
 
    def __init__(self, token):
       if not token is self._SECRET_TOKEN:
          raise RuntimeError("Not allowed to instantiate directly. Please use get_instance().")
       return
 
-   # PRECONDITION: Currently not operating on the buffers.
+   # If the cache is still being prepared, this will simply queue up messages
+   # to be processed.
+   # PRECONDITION: Must wait for get_instance() to return before calling
+   #               record_message().
+   @utils.synchronized("_record_message_lock")
    async def record_message(self, msg):
+      if self._queue_messages:
+         self._unprocessed_messages.append(msg)
+      else:
+         await self._record_message(msg)
+      return
+
+   # PRECONDITION: Currently not operating on the buffers.
+   async def _record_message(self, msg):
       if not isinstance(msg.channel, discord.Channel):
          return # Never caches private messages.
 
@@ -68,7 +95,13 @@ class MessageCache:
       return
 
    # Generator reads cached messages from a channel, starting from the earliest.
+   # TODO: Make concurrent reading of the cache possible.
+   # @utils.synchronized("_read_messages_lock") # TODO: I need to synchronize this somehow!!!
    def read_messages(self, server_id, ch_id):
+      raise NotImplementedError("Pls address the sync issue here.")
+      if self._queue_messages:
+         raise errors.CacheUnavailable()
+
       ch_dir = self._get_ch_dir(server_id, ch_id)
 
       file_number = 0
@@ -91,7 +124,7 @@ class MessageCache:
          pass
 
    async def _fill_buffers(self):
-      await self._client.set_temp_game_status("filling cache buffers.")
+      print("Caching messages. Until complete, the message cache will be unavailable.")
       loop = asyncio.get_event_loop()
       
       total_channels = [0]
@@ -283,6 +316,8 @@ class MessageCache:
       return self._data_dir + server_id + "/" + ch_id + "/"
 
    def get_debugging_info(self):
+      if self._queue_messages:
+         return "Service is unavaiilable. (Possibly still initializing.)"
       # buf = "**Currently buffered messages:**\n"
       # for (serv_id, serv_dict) in self._data.items():
       #    for (ch_id, ch_data) in serv_dict.items():

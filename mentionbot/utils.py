@@ -86,6 +86,9 @@ def str_asciionly(text):
 def user_to_str(user):
    return "{0} (ID: {1})".format(str(user.name), str(user.id))
 
+def role_to_str(role):
+   return "{0} (ID: {1})".format(str(role.name), str(role.id))
+
 # Currently unused
 # # This can take either an ID string or a channel object.
 # def ch_to_str(obj):

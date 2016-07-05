@@ -57,6 +57,28 @@ class ServerModuleGroup(HelpNode):
          await module.on_member_remove(member)
       return
 
+   # Like the original get_extra_user_info method, except the tuple's
+   # two fields are lists. Field 1 is a list of field 1 content from the
+   # original method, and similarly with field 2.
+   async def get_extra_user_info(self, member):
+      ret0 = []
+      ret1 = []
+      for module in self._modules_list:
+         info_tuple = await module.get_extra_user_info(member)
+         if not info_tuple is None:
+            # TODO: Are these asserts redundant?
+            assert isinstance(info_tuple, tuple)
+            assert len(info_tuple) == 2
+            if not info_tuple[0] is None:
+               assert isinstance(info_tuple[0], str)
+               ret0.append(info_tuple[0])
+            if not info_tuple[1] is None:
+               assert isinstance(info_tuple[1], str)
+               ret1.append(info_tuple[1])
+      ret0.sort(key=lambda x: x.lower())
+      ret1.sort(key=lambda x: x.lower())
+      return (ret0, ret1)
+
    # Module is referenced by its module name.
    def module_is_installed(self, module_name):
       for module in self._modules_list:

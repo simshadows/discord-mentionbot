@@ -441,21 +441,56 @@ class ServerBotInstance:
             return await self._client.send_msg(msg, substr + " doesn't even exist m8")
       
       # Guaranteed to have a user.
-      buf = "```"
-      buf += "\nID: " + user.id
-      buf += "\nName: " + user.name
-      buf += "\nAvatar hash: "
+      template = textwrap.dedent("""
+         ```
+         ID: {id}
+         Name: {name}{optional_server_nick}
+         Avatar Hash: {avatar_hash}
+         Join date: {join_date} UTC
+         Server Roles:
+         {roles}{optional_extra1}
+         ```{optional_extra2}
+         """).strip()
+
+      avatar_buf = None
       if user.avatar is None:
-         buf += "[no avatar]"
+         avatar_buf = "[no avatar]"
       else:
-         buf += str(user.avatar)
-      buf += "\nJoin date: " + user.joined_at.isoformat() + " UTC"
-      buf += "\nServer Deafened: " + str(user.deaf)
-      buf += "\nServer Mute: " + str(user.mute)
-      buf += "\nServer Roles:"
-      for role in user.roles:
-         buf += "\n   {0} (ID: {1})".format(role.name.replace("@","@ "), role.id)
-      buf += "\n```"
+         avatar_buf = str(user.avatar)
+
+      server_nick_buf = None
+      if user.nick is None:
+         server_nick_buf = ""
+      else:
+         server_nick_buf = "\nServer Nickname: " + str(user.nick)
+
+      roles = sorted(list(user.roles), key=lambda x: x.name.lower())
+      roles_buf = "\n".join(["   " + utils.role_to_str(x) for x in roles])
+
+      (extra1_list, extra2_list) = await self._modules.get_extra_user_info(user)
+      extra1 = None
+      if len(extra1_list) > 0:
+         extra1 = "\n" + "\n".join(extra1_list)
+      else:
+         extra1 = ""
+      extra2 = None
+      if len(extra2_list) > 0:
+         extra2 = "\n\n" + "\n\n".join(extra2_list)
+      else:
+         extra2 = ""
+
+      new_kwargs = {
+         "id": user.id,
+         "name": user.name,
+         "optional_server_nick": server_nick_buf,
+         "avatar_hash": avatar_buf,
+         "join_date": user.joined_at.isoformat(),
+         "roles": roles_buf,
+         "optional_extra1": extra1,
+         "optional_extra2": extra2
+      }
+
+      buf = template.format(**new_kwargs)
       return await self._client.send_msg(msg, buf)
 
    @cmd.add(_cmdd, "role", "rolelist")

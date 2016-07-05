@@ -167,3 +167,34 @@ class ServerModule(HelpNode):
 
    async def on_member_remove(self, member):
       pass
+
+   # Returns additional information to be added to the content presented by
+   # "/user".
+   # RETURNS:  Returns one of two things.
+   #           If no content is to be returned:
+   #              Return None.
+   #           If there is content to be returned, then return:
+   #              A tuple, where:
+   #                 [0]: A string to be added within the monospace block, and
+   #                 [1]: A string to be added after the monospace block.
+   #              However, both fields are optional.
+   #              If a field is unused, just put None in it.
+   #              Note that zero-length strings will be considered content.
+   # EXAMPLE:
+   #     If this function returns ("ABC", "DEF"), then when someone uses the
+   #     "/user" command, they get something that looks like this:
+   #
+   #        ```
+   #        ID: 119384097473822727
+   #        Name: simshadows
+   #        Server Roles:
+   #           @-everyone (ID: 12345)
+   #        ABC
+   #        ```
+   #
+   #        DEF
+   #
+   #     Observing that ABC is in the monospace block, at the end, while
+   #     DEF is after the monospace block + an extra line.
+   async def get_extra_user_info(self, member):
+      pass

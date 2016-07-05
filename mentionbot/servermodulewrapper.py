@@ -284,3 +284,22 @@ class ServerModuleWrapper(HelpNode): #  # TODO Having weird issues here...
       except Exception as e:
          await self._module_method_error_handler(e)
          return
+
+   async def get_extra_user_info(self, member):
+      if not self.is_active():
+         return None
+      ret = None
+      try:
+         ret = await self._module_instance.get_extra_user_info(member)
+         # Check ret's value.
+         if isinstance(ret, tuple):
+            assert len(ret) == 2
+            assert isinstance(ret[0], str) or (ret[0] is None)
+            assert isinstance(ret[1], str) or (ret[1] is None)
+            # If a tuple is returned, there is *some* content in it.
+         else:
+            assert ret is None
+         return ret
+      except Exception as e:
+         await self._module_method_error_handler(e)
+         return None

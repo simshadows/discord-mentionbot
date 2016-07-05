@@ -55,3 +55,6 @@ class Debugging(ServerModule):
    async def on_member_remove(self, member):
       print("DEBUGGING: self.on_member_remove(). Removed member: " + member.name)
       return
+
+   async def get_extra_user_info(self, member):
+      return ("DEBUGGING: User name: " + member.name, "DEBUGGING: Second string.")
