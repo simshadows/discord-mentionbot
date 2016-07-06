@@ -83,12 +83,6 @@ Some modules will need some additional setting up in order to work.
 TODO:
 
 * Planned Features:
-	* Re-implemented persistent storage. (**HIGH PRIORITY**)
-		* Infrastructure to easily define default values (rather than LOTS of key checks).
-		* Database storage instead of JSON?
-		* Or two-phase JSON data check:
-			* Phase 1: JSON schema
-			* Phase 2: Specific checks
 	* Logging service. (**HIGH PRIORITY**)
 		* Server administrators can choose to allow log messages to be sent to a particular channel in a server.
 		* Log messages include channel closures (by the Dynamic Channels module), server-joins (by a future logging module), and initialization.
@@ -105,7 +99,6 @@ TODO:
 	* Pseudorandomness for the `/truth choose` command, so that on average, all players should be chosen the same number of times.
 	* PM Bot Instance.
 		* A PM bot instance will be a private message session is one between a user and the bot.
-	* `.ini` file for cleaner initial bot setup. Holds login token, bot owner ID, wolfram alpha app ID, etc.
 	* More advanced dicerolling in `Random`. (**LOW PRIORITY**)
 	* Data cache backups or recovery. (**LOW PRIORITY**)
 		* The bot should also back up files if they're found to be corrupted (to allow for manual recovery in the case of a bug during runtime).
