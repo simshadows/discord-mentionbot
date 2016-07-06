@@ -83,8 +83,14 @@ def str_asciionly(text):
 # DISCORD #######################################################################
 #################################################################################
 
+def user_nick(user):
+   if user.nick is None:
+      return str(user.name)
+   else:
+      return str(user.nick)
+
 def user_to_str(user):
-   return "{0} (ID: {1})".format(str(user.name), str(user.id))
+   return "{0} (ID: {1})".format(user_nick(user), str(user.id))
 
 def role_to_str(role):
    return "{0} (ID: {1})".format(str(role.name), str(role.id))

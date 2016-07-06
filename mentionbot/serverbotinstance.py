@@ -416,12 +416,12 @@ class ServerBotInstance:
       else:
          user = self._client.search_for_user(substr, enablenamesearch=True, serverrestriction=msg.server)
          if user is None:
-            return await self._client.send_msg(msg, substr + " doesn't even exist m8")
+            return await self._client.send_msg(msg, "**Error:** Failed to find user `" + substr + "`.")
 
       # Guaranteed to have a user.
       avatar = user.avatar_url
       if avatar == "":
-         return await self._client.send_msg(msg, substr + " m8 get an avatar")
+         return await self._client.send_msg(msg, "**Error:** User `" + substr + "` does not have an avatar.")
       else:
          return await self._client.send_msg(msg, avatar)
 
@@ -438,7 +438,8 @@ class ServerBotInstance:
       else:
          user = self._client.search_for_user(substr, enablenamesearch=True, serverrestriction=msg.server)
          if user is None:
-            return await self._client.send_msg(msg, substr + " doesn't even exist m8")
+            await self._client.send_msg(msg, "**Error:** Failed to find user `" + substr + "`.")
+            return
       
       # Guaranteed to have a user.
       template = textwrap.dedent("""
@@ -475,7 +476,7 @@ class ServerBotInstance:
          extra1 = ""
       extra2 = None
       if len(extra2_list) > 0:
-         extra2 = "\n\n" + "\n\n".join(extra2_list)
+         extra2 = "\n" + "\n\n".join(extra2_list)
       else:
          extra2 = ""
 

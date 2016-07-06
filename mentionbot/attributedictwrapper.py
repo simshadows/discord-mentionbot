@@ -38,7 +38,6 @@ class AttributeDictWrapper:
    #     accept_if: A function to verify the value.
    #        Function requirements:
    #           Takes only one argument, which is the data.
-   #           This argument is guaranteed to be
    #           Returns True if the data is acceptable.
    #           Returns False otherwise.
    def get(self, attr_name, other_types=[], accept_if=None):

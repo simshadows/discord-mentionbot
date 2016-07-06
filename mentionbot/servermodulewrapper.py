@@ -100,7 +100,16 @@ class ServerModuleWrapper(HelpNode): #  # TODO Having weird issues here...
       self._user_nonreturning_tasks = []
       self._suppress_autokill = self.SUPPRESS_AUTOKILL_DEFAULT
       res = ServerModuleResources(self._module_class.MODULE_NAME, self._sbi, self)
-      self._module_instance = await self._module_class.get_instance(self._module_cmd_aliases, res)
+      try:
+         self._module_instance = await self._module_class.get_instance(self._module_cmd_aliases, res)
+      except Exception as e:
+         await self.kill()
+         buf_hb = "SeverModuleWrapper.activate()"
+         buf_fi = "This error occurred within the module `{}`.".format(self.module_name)
+         buf_fi += "\nAn exception in during initialization cannot be tolerated."
+         buf_fi += "\nThis module must now be killed."
+         await self._client.report_exception(e, handled_by=buf_hb, final_info=buf_fi)
+         raise RuntimeError("Unable to activate module `{}`.".format(self.module_name))
       return
 
    @utils.synchronized("_state_lock")
