@@ -1145,7 +1145,8 @@ class ServerBotInstance:
       else:
          buf = await self._modules.get_help_detail(substr, "", privilege_level)
          if buf is None:
-            return "No help content found for `{}`.".format(substr)
+            buf = "No such command or module `{}` exists.".format(substr)
+            return 
          if substr is "":
             buf = textwrap.dedent("""
                To read more about other bot commands/functions:

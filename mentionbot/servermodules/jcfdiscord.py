@@ -128,6 +128,15 @@ class JCFDiscord(ServerModule):
       await self._client.send_msg(msg, buf)
       return
 
+   @cmd.add(_cmdd, "iamaspecialsnowflake", top=True)
+   async def _cmdf_typeflair(self, substr, msg, privilege_level):
+      """
+      `{cmd}` - Who's a special little snowflake?
+      """
+      await utils.remove_flairs_by_name(self._client, msg.author, *self._MBTI_TYPES, case_sensitive=False)
+      await self._client.send_msg(msg, "Cleared <@{0}>'s' type flair.".format(msg.author.id))
+      return
+
    @cmd.add(_cmdd, "typeflair")
    async def _cmdf_typeflair(self, substr, msg, privilege_level):
       """

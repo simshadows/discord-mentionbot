@@ -14,6 +14,8 @@ import discord
 re_user_mention = re.compile("<@!?\d+>")
 re_ch_mention = re.compile("<#\d+>")
 
+re_az_09 = re.compile("[a-z0-9]+")
+
 re_digits = re.compile("\d+")
 re_int = re.compile("[-\+]?\d+")
 

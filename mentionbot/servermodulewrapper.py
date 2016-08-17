@@ -103,7 +103,7 @@ class ServerModuleWrapper(HelpNode): #  # TODO Having weird issues here...
       try:
          self._module_instance = await self._module_class.get_instance(self._module_cmd_aliases, res)
       except Exception as e:
-         await self.kill()
+         await self._kill()
          buf_hb = "SeverModuleWrapper.activate()"
          buf_fi = "This error occurred within the module `{}`.".format(self.module_name)
          buf_fi += "\nAn exception in during initialization cannot be tolerated."
@@ -114,6 +114,10 @@ class ServerModuleWrapper(HelpNode): #  # TODO Having weird issues here...
 
    @utils.synchronized("_state_lock")
    async def kill(self):
+      return await self._kill()
+
+   # Unsynchronized version for reentrant use only!
+   async def _kill(self):
       if not self.is_active():
          raise RuntimeError("Module is already inactive.")
       self._is_active = False

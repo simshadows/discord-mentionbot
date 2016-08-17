@@ -120,9 +120,9 @@ class ClientExtended(discord.Client):
    # TODO: Consider renaming this. It's kinda awkward to have both send_msg() and send_message().
    # TODO: self.send_message has other optional parameters. Pls include them somehow...
    async def send_msg(self, destination, text):
-      text = str(text)
-      text = text.replace("@everyone", "@-everyone")
-      text = text.replace("@here", "@-here")
+      text = "\a" + str(text)
+      text = text.replace("@everyone", "@\aeveryone")
+      text = text.replace("@here", "@\ahere")
       if len(text) > 2000:
          text_to_append = "\nSorry m8, can't send more than " + str(self._MESSAGE_MAX_LEN) + " characters."
          content_len = self._MESSAGE_MAX_LEN - len(text_to_append)

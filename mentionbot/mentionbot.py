@@ -403,12 +403,12 @@ def run(config_dict):
    except Exception as e:
       loop.run_until_complete(client.logout())
       print("Error launching client!")
-      print(traceback.format_exc())
+      print(traceback.format_exc(), file=sys.stderr)
    finally:
       try:
          loop.close()
       except:
-         print(traceback.format_exc())
+         print(traceback.format_exc(), file=sys.stderr)
    sys.exit(1) # Should only return on error.
 
 if __name__ == '__main__':
