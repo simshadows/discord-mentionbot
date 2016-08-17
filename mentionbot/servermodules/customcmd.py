@@ -77,18 +77,14 @@ class CustomCmd(ServerModule):
       custom_commands = settings.get("commands")
       # Verify each channel data object.
       for (k, v) in custom_commands.items():
-         print("WOAH 1")
          if not (isinstance(k, str) and self._is_valid_custcmd_name(k)):
             raise ValueError
 
          if not isinstance(v, dict):
             raise ValueError
-         print("WOAH 4")
          v["type"] = self.CmdType[v["type"]] # Failed conversion throws exception.
-         print("WOAH 3")
          self._validate_custcmd_data(v)
          
-      print("WOAH 2")
       self._custom_commands = custom_commands
       return
 
@@ -128,7 +124,7 @@ class CustomCmd(ServerModule):
                await self._client.send_msg(msg, buf)
       return
 
-   @cmd.add(_cmdd, "create")
+   @cmd.add(_cmdd, "add", "create")
    @cmd.category("Custom Command Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_colour(self, substr, msg, privilege_level):
@@ -152,6 +148,15 @@ class CustomCmd(ServerModule):
       Creates a command `{p}ping`, in which the bot will simply reply "pong".
       """
       (left, right) = utils.separate_left_word(substr)
+      if len(self._custom_commands) >= 2000:
+         buf = "**Error:** Too many custom commands are registered."
+         buf += " Please delete one before creating another."
+         await self._client.send_msg(msg, buf)
+         return
+      if len(left) == 0:
+         buf = "**Error:** No arguments has been specified."
+         await self._client.send_msg(msg, buf)
+         return
       if not self._is_valid_custcmd_name(left):
          buf = "**Error:** Invalid command name `{}`.".format(left)
          buf += "\n Command names must be a combination of lower-case letters"
@@ -176,10 +181,43 @@ class CustomCmd(ServerModule):
       await self._client.send_msg(msg, buf)
       return
 
+   @cmd.add(_cmdd, "remove", "delete", "del")
+   @cmd.category("Custom Command Management")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   async def _cmdf_colour(self, substr, msg, privilege_level):
+      """`{cmd} [cmd_name]` - Deletes a custom command."""
+      if not substr in self._custom_commands:
+         buf = "**Error:** The custom command you specified does not exist."
+         await self._client.send_msg(msg, buf)
+         return
+      
+      del self._custom_commands[substr]
+      self._save_settings()
+      buf = "Successfully deleted the custom command `{}`.".format(substr)
+      await self._client.send_msg(msg, buf)
+      return
+
+   @cmd.add(_cmdd, "clear", "removeall", "deleteall", "delall")
+   @cmd.category("Custom Command Management")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   async def _cmdf_colour(self, substr, msg, privilege_level):
+      """`{cmd}` - Clears all custom commands."""
+      self._custom_commands = {}
+      self._save_settings()
+      buf = "Successfully cleared all custom commands."
+      await self._client.send_msg(msg, buf)
+      return
+
    @cmd.add(_cmdd, "list")
    async def _cmdf_colour(self, substr, msg, privilege_level):
       """`{cmd}` - Lists all the custom commands set up."""
+      if len(self._custom_commands) == 0:
+         buf = "**No custom commands are set up.**"
+         await self._client.send_msg(msg, buf)
+         return
+
       custcmd_names = ["`" + k + "`" for (k, v) in self._custom_commands.items()]
+      custcmd_names.sort()
       buf = "**The following custom commands are set up:**\n"
       buf += ", ".join(custcmd_names)
       await self._client.send_msg(msg, buf)
