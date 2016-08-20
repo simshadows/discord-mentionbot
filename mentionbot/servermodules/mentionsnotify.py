@@ -30,7 +30,7 @@ class MentionsNotify(ServerModule):
       await self._client.send_msg(msg, "The notify module currently has no commands. Sorry!")
       return
 
-   async def on_message(self, msg):
+   async def on_message(self, msg, privilege_level):
       for member in msg.mentions:
          if str(member.status) != "offline":
             continue

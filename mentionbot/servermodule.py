@@ -159,7 +159,7 @@ class ServerModule(HelpNode):
 
    # This method is always called every time a message from the module's associated
    # server is received.
-   async def on_message(self, msg):
+   async def on_message(self, msg, privilege_level):
       pass
 
    async def on_member_join(self, member):

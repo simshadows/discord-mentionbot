@@ -101,10 +101,13 @@ class CustomCmd(ServerModule):
       self._res.save_settings(settings)
       return
 
-   async def on_message(self, msg):
+   async def on_message(self, msg, privilege_level):
       # TODO: Lots of potentially redundant string manipulation, but I suppose
       #       I should've defined things better :/
       #       Better safe than sorry, I guess, hence the redundancy.
+
+      if privilege_level == PrivilegeLevel.NO_PRIVILEGE:
+         return # Without warning.
 
       # Get the command name.
       cmd_prefix = self._res.cmd_prefix.strip()
@@ -127,7 +130,7 @@ class CustomCmd(ServerModule):
    @cmd.add(_cmdd, "add", "create")
    @cmd.category("Custom Command Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
-   async def _cmdf_colour(self, substr, msg, privilege_level):
+   async def _cmdf_add(self, substr, msg, privilege_level):
       """
       `{cmd} [cmd_name] [reply]` - Creates a new fixed-reply command.
 
@@ -138,9 +141,7 @@ class CustomCmd(ServerModule):
    
       If the custom command already exists, this will overwrite it.
 
-      If the custom command clashes with an actual command, then when the command \
-      is invoked, then both commands will be carried out. This is to prevent \
-      important commands from being made inaccessible.
+      If the custom command clashes with an actual command, then when the command is invoked, then both commands will be carried out. This is to prevent important commands from being made inaccessible.
 
       **Examples of usage:**
 
@@ -176,7 +177,7 @@ class CustomCmd(ServerModule):
       self._save_settings()
 
       cmd_prefix = self._res.cmd_prefix.strip()
-      buf = "Successfully created a new custom command.".format(cmd_prefix + left)
+      buf = "Successfully created new custom command `{}`.".format(cmd_prefix + left)
       buf += " Please check that it's correct."
       await self._client.send_msg(msg, buf)
       return
@@ -184,7 +185,7 @@ class CustomCmd(ServerModule):
    @cmd.add(_cmdd, "remove", "delete", "del")
    @cmd.category("Custom Command Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
-   async def _cmdf_colour(self, substr, msg, privilege_level):
+   async def _cmdf_remove(self, substr, msg, privilege_level):
       """`{cmd} [cmd_name]` - Deletes a custom command."""
       if not substr in self._custom_commands:
          buf = "**Error:** The custom command you specified does not exist."
@@ -200,7 +201,7 @@ class CustomCmd(ServerModule):
    @cmd.add(_cmdd, "clear", "removeall", "deleteall", "delall")
    @cmd.category("Custom Command Management")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
-   async def _cmdf_colour(self, substr, msg, privilege_level):
+   async def _cmdf_clear(self, substr, msg, privilege_level):
       """`{cmd}` - Clears all custom commands."""
       self._custom_commands = {}
       self._save_settings()
@@ -209,7 +210,7 @@ class CustomCmd(ServerModule):
       return
 
    @cmd.add(_cmdd, "list")
-   async def _cmdf_colour(self, substr, msg, privilege_level):
+   async def _cmdf_list(self, substr, msg, privilege_level):
       """`{cmd}` - Lists all the custom commands set up."""
       if len(self._custom_commands) == 0:
          buf = "**No custom commands are set up.**"

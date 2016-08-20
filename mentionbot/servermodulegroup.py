@@ -31,9 +31,9 @@ class ServerModuleGroup(HelpNode):
          content = await module.msg_preprocessor(content, msg, default_cmd_prefix)
       return content
 
-   async def on_message(self, msg):
+   async def on_message(self, msg, privilege_level):
       for module in self._modules_list:
-         await module.on_message(msg)
+         await module.on_message(msg, privilege_level)
       return
 
    async def process_cmd(self, substr, msg, privilege_level, silentfail=False):

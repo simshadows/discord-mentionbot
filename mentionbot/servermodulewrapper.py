@@ -271,11 +271,11 @@ class ServerModuleWrapper(HelpNode): #  # TODO Having weird issues here...
          await self._module_method_error_handler(e, cmd_msg=msg)
       return
 
-   async def on_message(self, msg):
+   async def on_message(self, msg, privilege_level):
       if not self.is_active():
          return
       try:
-         return await self._module_instance.on_message(msg)
+         return await self._module_instance.on_message(msg, privilege_level)
       except Exception as e:
          await self._module_method_error_handler(e)
          return

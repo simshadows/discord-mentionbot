@@ -44,7 +44,7 @@ class Debugging(ServerModule):
       await self._client.send_msg(msg, "**Sub-command received:** " + substr)
       return
 
-   async def on_message(self, msg):
+   async def on_message(self, msg, privilege_level):
       print("DEBUGGING: self.on_message(): with msg.content = " + msg.content)
       return
 

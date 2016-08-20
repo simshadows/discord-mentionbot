@@ -145,7 +145,7 @@ class DynamicChannels(ServerModule):
          substr = "status"
       return await super(DynamicChannels, self).process_cmd(substr, msg, privilege_level)
 
-   async def on_message(self, msg):
+   async def on_message(self, msg, privilege_level):
       if self._name_is_default_channel(msg.channel.name):
          try:
             self._scheduler.unschedule_closure(msg.channel)

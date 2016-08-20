@@ -229,8 +229,8 @@ class ServerBotInstance:
 
    # Call this to process text (to parse for commands).
    async def process_text(self, substr, msg):
-      await self._modules.on_message(msg)
       privilege_level = self._privileges.get_privilege_level(msg.author)
+      await self._modules.on_message(msg, privilege_level)
       if privilege_level == PrivilegeLevel.NO_PRIVILEGE:
          return # Without warning.
       substr = await self._modules.msg_preprocessor(substr, msg, self._cmd_prefix)
@@ -1146,7 +1146,7 @@ class ServerBotInstance:
          buf = await self._modules.get_help_detail(substr, "", privilege_level)
          if buf is None:
             buf = "No such command or module `{}` exists.".format(substr)
-            return 
+            return buf
          if substr is "":
             buf = textwrap.dedent("""
                To read more about other bot commands/functions:
