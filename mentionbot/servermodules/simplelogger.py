@@ -28,6 +28,8 @@ class SimpleLogger(ServerModule):
    _default_settings = {
       "ch_id": "123", # Placeholder channel ID to be filled later.
 
+      "ena_on_bot_startup": False,
+
       "ena_on_member_join": True,
       "ena_on_member_remove": True,
       "ena_on_member_ban": True,
@@ -36,6 +38,7 @@ class SimpleLogger(ServerModule):
 
    EventAttrName = collections.namedtuple("EventAttrName", ["attr_name", "settings_key"])
    _event_dict = {
+      "on_bot_startup": EventAttrName("_ena_on_bot_startup", "ena_on_bot_startup"),
       "on_member_join": EventAttrName("_ena_on_member_join", "ena_on_member_join"),
       "on_member_remove": EventAttrName("_ena_on_member_remove", "ena_on_member_remove"),
       "on_member_ban": EventAttrName("_ena_on_member_ban", "ena_on_member_ban"),
@@ -55,12 +58,16 @@ class SimpleLogger(ServerModule):
 
       # Event Enable Flags
       # These are typically accessed with _event_dict or _event_list
+      self._ena_on_bot_startup = None # To be loaded.
       self._ena_on_member_join = None # To be loaded.
       self._ena_on_member_remove = None # To be loaded.
       self._ena_on_member_ban = None # To be loaded.
       self._ena_on_member_unban = None # To be loaded.
 
       self._load_settings()
+
+      if self._ena_on_bot_startup:
+         await self._send_log_message("Initialization complete.")
 
       self._res.suppress_autokill(True)
       return
