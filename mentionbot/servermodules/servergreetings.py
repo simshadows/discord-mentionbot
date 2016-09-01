@@ -129,8 +129,9 @@ class PMGreetings(ServerModule):
    ### COMMANDS ###
    ################
 
-   @cmd.add(_cmdd, "status", "view", "setting", "settings",default=True)
-   async def _cmdf_view(self, substr, msg, privilege_level):
+   @cmd.add(_cmdd, "status", "view", "setting", "settings", default=True)
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   async def _cmdf_status(self, substr, msg, privilege_level):
       """`{cmd}` - Shows all settings."""
 
       msg_template = textwrap.dedent("""
@@ -183,7 +184,7 @@ class PMGreetings(ServerModule):
 
    @cmd.add(_cmdd, "pmview")
    @cmd.category("PM Greetings")
-   async def _cmdf_viewmono(self, substr, msg, privilege_level):
+   async def _cmdf_pmview(self, substr, msg, privilege_level):
       """
       `{cmd}` - View a copy of the PM greeting message template.
       """
@@ -194,7 +195,7 @@ class PMGreetings(ServerModule):
 
    @cmd.add(_cmdd, "chview")
    @cmd.category("In-Channel Greetings")
-   async def _cmdf_viewmono(self, substr, msg, privilege_level):
+   async def _cmdf_chview(self, substr, msg, privilege_level):
       """
       `{cmd}` - View a copy of the in-channel greeting message template.
       """
@@ -205,7 +206,7 @@ class PMGreetings(ServerModule):
 
    @cmd.add(_cmdd, "pmdemo")
    @cmd.category("PM Greetings")
-   async def _cmdf_view(self, substr, msg, privilege_level):
+   async def _cmdf_pmdemo(self, substr, msg, privilege_level):
       """`{cmd}` - Get a personalized version of the greeting message via PM."""
       pm_target = msg.author
       buf = self._get_pm_greeting(pm_target)
@@ -216,7 +217,7 @@ class PMGreetings(ServerModule):
 
    @cmd.add(_cmdd, "chdemo")
    @cmd.category("In-Channel Greetings")
-   async def _cmdf_view(self, substr, msg, privilege_level):
+   async def _cmdf_chdemo(self, substr, msg, privilege_level):
       """`{cmd}` - Get a personalized version of the greeting message."""
       buf = "**- - - - - In-Channel Greeting Demo - - - - -**\n"
       buf += self._get_ch_greeting(msg.author)
@@ -227,7 +228,7 @@ class PMGreetings(ServerModule):
    @cmd.add(_cmdd, "pmenable")
    @cmd.category("PM Greetings")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
-   async def _cmdf_viewmono(self, substr, msg, privilege_level):
+   async def _cmdf_pmenable(self, substr, msg, privilege_level):
       """
       `{cmd} [true/false]` - Enable/disable PM greetings.
       """
@@ -247,7 +248,7 @@ class PMGreetings(ServerModule):
    @cmd.add(_cmdd, "chenable")
    @cmd.category("In-Channel Greetings")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
-   async def _cmdf_viewmono(self, substr, msg, privilege_level):
+   async def _cmdf_chenable(self, substr, msg, privilege_level):
       """
       `{cmd} [true/false]` - Enable/disable in-channel greetings.
       """
@@ -267,7 +268,7 @@ class PMGreetings(ServerModule):
    @cmd.add(_cmdd, "pmtemplate")
    @cmd.category("PM Greetings")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
-   async def _cmdf_setmessage(self, substr, msg, privilege_level):
+   async def _cmdf_pmtemplate(self, substr, msg, privilege_level):
       """
       `{cmd} [message contents]` - Set the PM greeting template.
 
@@ -291,7 +292,7 @@ class PMGreetings(ServerModule):
    @cmd.add(_cmdd, "chtemplate")
    @cmd.category("In-Channel Greetings")
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
-   async def _cmdf_setmessage(self, substr, msg, privilege_level):
+   async def _cmdf_chtemplate(self, substr, msg, privilege_level):
       """
       `{cmd} [message contents]` - Set the In-channel greeting template.
 

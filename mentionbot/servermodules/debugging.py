@@ -56,5 +56,13 @@ class Debugging(ServerModule):
       print("DEBUGGING: self.on_member_remove(). Removed member: " + member.name)
       return
 
+   async def on_member_ban(self, member):
+      print("DEBUGGING: self.on_member_ban(). Banned member: " + member.name)
+      return
+
+   async def on_member_unban(self, user):
+      print("DEBUGGING: self.on_member_unban(). Unbanned user: " + user.name)
+      return
+
    async def get_extra_user_info(self, member):
       return ("DEBUGGING: User name: " + member.name, "DEBUGGING: Second string.")

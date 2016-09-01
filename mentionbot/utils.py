@@ -86,7 +86,7 @@ def str_asciionly(text):
 #################################################################################
 
 def user_nick(user):
-   if user.nick is None:
+   if not hasattr(user, "nick") or (user.nick is None):
       return str(user.name)
    else:
       return str(user.nick)

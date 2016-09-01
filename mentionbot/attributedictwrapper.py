@@ -107,9 +107,9 @@ class AttributeDictWrapper:
          await mentionbot.send_owner_msg(buf)
       return
 
-   ###
-   ### Common data verification functions for get() accept_if
-   ###
+   ##############################################################
+   ### Common data verification functions for get() accept_if ###
+   ##############################################################
 
    @staticmethod
    def str_not_empty(x):

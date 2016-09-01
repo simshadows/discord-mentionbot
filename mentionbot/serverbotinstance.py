@@ -282,6 +282,14 @@ class ServerBotInstance:
       await self._modules.on_member_remove(member)
       return
 
+   async def on_member_ban(self, member):
+      await self._modules.on_member_ban(member)
+      return
+
+   async def on_member_unban(self, user):
+      await self._modules.on_member_unban(user)
+      return
+
    ########################################################################################
    # CORE COMMANDS ########################################################################
    ########################################################################################

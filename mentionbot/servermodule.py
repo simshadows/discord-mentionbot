@@ -168,6 +168,12 @@ class ServerModule(HelpNode):
    async def on_member_remove(self, member):
       pass
 
+   async def on_member_ban(self, member):
+      pass
+
+   async def on_member_unban(self, user):
+      pass
+
    # Returns additional information to be added to the content presented by
    # "/user".
    # RETURNS:  Returns one of two things.

@@ -298,6 +298,24 @@ class ServerModuleWrapper(HelpNode): #  # TODO Having weird issues here...
          await self._module_method_error_handler(e)
          return
 
+   async def on_member_ban(self, member):
+      if not self.is_active():
+         return
+      try:
+         return await self._module_instance.on_member_ban(member)
+      except Exception as e:
+         await self._module_method_error_handler(e)
+         return
+
+   async def on_member_unban(self, user):
+      if not self.is_active():
+         return
+      try:
+         return await self._module_instance.on_member_unban(user)
+      except Exception as e:
+         await self._module_method_error_handler(e)
+         return
+
    async def get_extra_user_info(self, member):
       if not self.is_active():
          return None
