@@ -1,6 +1,7 @@
 import textwrap
 from copy import deepcopy
 
+from . import utils
 from .servermodule import ServerModule
 
 class AttributeDictWrapper:
@@ -76,6 +77,8 @@ class AttributeDictWrapper:
          self._data[attr_name] = default_value
          return default_value
 
+   # If no changes were made, this will return an empty string.
+   # TODO: Make this return None.
    def get_change_log(self):
       if len(self._modifications_log) > 0:
          text = "\n".join(self._modifications_log)
@@ -103,3 +106,17 @@ class AttributeDictWrapper:
          buf += change_log + "\n```"
          await mentionbot.send_owner_msg(buf)
       return
+
+   ###
+   ### Common data verification functions for get() accept_if
+   ###
+
+   @staticmethod
+   def str_not_empty(x):
+      assert isinstance(x, str)
+      return len(x) > 0
+
+   @staticmethod
+   def str_digits_only(x):
+      assert isinstance(x, str)
+      return utils.re_digits.fullmatch(x)

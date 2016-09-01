@@ -97,6 +97,9 @@ def user_to_str(user):
 def role_to_str(role):
    return "{0} (ID: {1})".format(str(role.name), str(role.id))
 
+def ch_to_mention(channel):
+   return "<#" + channel.id + ">"
+
 # Currently unused
 # # This can take either an ID string or a channel object.
 # def ch_to_str(obj):
