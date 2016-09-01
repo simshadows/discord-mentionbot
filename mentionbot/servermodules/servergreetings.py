@@ -294,7 +294,7 @@ class PMGreetings(ServerModule):
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_chtemplate(self, substr, msg, privilege_level):
       """
-      `{cmd} [message contents]` - Set the In-channel greeting template.
+      `{cmd} [message contents]` - Set the in-channel greeting template.
 
       Messages are personalized using substitution tokens. This allows you to insert the user's name, the server's name, etc.
 
@@ -311,6 +311,28 @@ class PMGreetings(ServerModule):
       self._save_settings()
 
       await self._client.send_msg(msg, "Successfully set the new in-channel greeting template. Please double-check.")
+      return
+
+   @cmd.add(_cmdd, "setchannel", "setch")
+   @cmd.category("In-Channel Greetings")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   async def _cmdf_setchannel(self, substr, msg, privilege_level):
+      """
+      `{cmd} [channel]` - Set the channel to send in-channel greeting messages.
+      """
+      ch_obj = None
+      if len(substr) == 0:
+         ch_obj = msg.channel
+      else:
+         ch_obj = self._client.search_for_channel(substr, enablenamesearch=True, serverrestriction=self._server)
+
+      if ch_obj is None:
+         buf = "**Error:** Channel not found. No changes were made."
+      else:
+         self._ch_msg_channelid = ch_obj.id
+         self._save_settings()
+         buf = "In-channel greeting messages will now be sent in " + utils.ch_to_mention(ch_obj) + "."
+      await self._client.send_msg(msg, buf)
       return
 
    async def on_member_join(self, member):
