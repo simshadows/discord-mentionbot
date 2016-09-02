@@ -187,13 +187,11 @@ class ServerBotInstance:
             extra_info = "Error installing module {}. Skipping.".format(module_name)
             await self._client.report_exception(e, extra_info=extra_info)
       self._modules = ServerModuleGroup(initial_modules=modules, core_help_pages=cls._help_page_list)
-
-      try:
-         self._cmd_prefix = data["cmd prefix"]
-      except KeyError:
-         self._cmd_prefix = data["cmd prefix"] = self._default_command_prefix
          
       self._storage.save_server_settings(data)
+
+      self._cmd_prefix = self._storage.get_prefix(self._default_command_prefix)
+      self._main_help_content = self._storage.get_main_help_content()
 
       return self
 
@@ -297,38 +295,6 @@ class ServerBotInstance:
    #############################
    ### GENERAL CORE COMMANDS ###
    #############################
-
-   @cmd.add(_cmdd, "help")
-   @_core_command(_helpd, "core")
-   async def _cmdf_help(self, substr, msg, privilege_level):
-      """
-      `{cmd} [...]` - Retrieve more information about how to use the bot.
-
-      Able to retrieve information on modules and commands.
-
-      **Examples:**
-
-      `{cmd}`
-      A summary of where to find more information.
-
-      `{cmd} core`
-      More info on all the core commands.
-
-      `{cmd} help uptime`
-      More info on the `{p}uptime` command.
-
-      `{cmd} random`
-      More info on the `Random` module.
-
-      `{cmd} random coin`
-      More info on the `{p}random coin` command from the `Random` module.
-
-      `{cmd} coin`
-      Same as `{cmd} random coin`, since `{cmd} coin` is an alias of the command.
-      """
-      help_content = await self._get_help_content(substr, msg, self.cmd_prefix, privilege_level)
-      await self._client.send_msg(msg, help_content)
-      return
 
    @cmd.add(_cmdd, "source", "src", "github", "git")
    @_core_command(_helpd, "core")
@@ -923,6 +889,123 @@ class ServerBotInstance:
       buf = "User {0} has a bot command privilege level of `{1}`.".format(user_obj.name, priv_str)
       return buf
 
+   ####################
+   ### HELP COMMAND ###
+   ####################
+
+   @cmd.add(_cmdd, "help")
+   @_core_command(_helpd, "core")
+   async def _cmdf_help(self, substr, msg, privilege_level):
+      """
+      `{cmd} [...]` - Retrieve more information about how to use the bot.
+
+      Able to retrieve information on modules and commands.
+
+      **Examples:**
+
+      `{cmd}`
+      A summary of where to find more information.
+
+      `{cmd} core`
+      More info on all the core commands.
+
+      `{cmd} help uptime`
+      More info on the `{p}uptime` command.
+
+      `{cmd} random`
+      More info on the `Random` module.
+
+      `{cmd} random coin`
+      More info on the `{p}random coin` command from the `Random` module.
+
+      `{cmd} coin`
+      Same as `{cmd} random coin`, since `{cmd} coin` is an alias of the command.
+      """
+      help_content = None
+
+      get_custom_content = False
+      for_further_help = "main"
+
+      if (not self._main_help_content is None) and (len(substr) == 0):
+         get_custom_content = True
+      elif substr == for_further_help:
+         substr = ""
+
+      if get_custom_content:
+         assert isinstance(self._main_help_content, str)
+
+         format_kwargs = {
+            "p": self._cmd_prefix,
+            "custom_content": self._main_help_content,
+            "for_further_help": for_further_help,
+         }
+
+         help_content = textwrap.dedent("""
+            {custom_content}
+
+            **Can't find what you're looking for? For more commands, see `{p}help {for_further_help}`.**
+            """).strip().format(**format_kwargs)
+      else:
+         help_content = await self._get_help_content(substr, msg, self.cmd_prefix, privilege_level)
+      
+      await self._client.send_msg(msg, help_content)
+      return
+
+   @cmd.add(_cmdd, "setmainhelp")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Help Menu Customization")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   async def _cmdf_setmainhelp(self, substr, msg, privilege_level):
+      """
+      `{cmd} [text]` - Set custom main help menu content.
+      `{cmd}` - Clear the current custom main help menu content.
+      """
+      if len(substr) > 1800: # Arbitrary limit
+         await self._client.send_msg(msg, "**Error:** Too many characters.")
+         return
+
+      confirmation_text = None
+
+      if len(substr) == 0:
+         substr = None
+         confirmation_text = "Successfully cleared custom help menu content."
+      else:
+         confirmation_text = "Successfully set custom help menu content. Please double-check."
+      
+      self._main_help_content = substr
+      self._storage.save_main_help_content(substr)
+
+      await self._client.send_msg(msg, confirmation_text)
+      return
+
+   ### Related Services ###
+
+   async def _get_help_content(self, substr, msg, cmd_prefix, privilege_level):
+      buf = None
+      if substr == "[...]":
+         buf = textwrap.dedent("""
+            Oh, sorry, I meant you can query any available module or command by adding more to the help command you just used.
+
+            `{p}help` gives you a summary of all the other places you can reach via this help command, in order to find more bot commands.
+
+            `{p}help random` gives you a summary of the commands for the module of random number generation commands.
+
+            `{p}help coin` gives you a detailed explanation of what the `{p}coin` command actually does.
+
+            (Note: These commands may not work if the `Random` module is not installed.)
+            """)
+      else:
+         buf = await self._modules.get_help_detail(substr, "", privilege_level)
+         if buf is None:
+            buf = "No such command or module `{}` exists.".format(substr)
+            return buf
+         if substr is "":
+            buf = textwrap.dedent("""
+               To read more about other bot commands/functions:
+               **`{p}help [...]`**
+               """).strip() + "\n\n" + buf
+      return buf.format(p=cmd_prefix, grp="")
+
    ###################################################
    ### OTHER GENERAL MANAGEMENT/DEBUGGING COMMANDS ###
    ###################################################
@@ -932,11 +1015,22 @@ class ServerBotInstance:
    @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
    async def _cmdf_prefix(self, substr, msg, privilege_level):
       """`{cmd} [new prefix]` - Set new command prefix."""
+      if len(substr.split()) > 1:
+         await self._client.send_msg(msg, "**Error:** Whitespace is not allowed for command prefixes.")
+         return
+
       if len(substr) == 0:
-         raise errors.InvalidCommandArgumentsError
+         substr = self._default_command_prefix
+
       self._cmd_prefix = substr
-      buf = "`{}` set as command prefix.".format(self._cmd_prefix)
-      buf += "\nThe help message is now invoked using `{}help`.".format(self._cmd_prefix)
+      self._storage.save_prefix(substr)
+
+      buf = textwrap.dedent("""
+         `{p}` set as command prefix.
+         For example, the help message is now invoked using `{p}help`.
+         Please note that if a custom help menu is set up, you must check if it needs to be rewritten.
+         """).strip()
+      buf = buf.format(p=self._cmd_prefix)
       await self._client.send_msg(msg, buf)
       return
 
@@ -1135,32 +1229,6 @@ class ServerBotInstance:
       buf = "<@\a119384097473822727>"
       await self._client.send_msg(msg, buf)
       return
-
-   async def _get_help_content(self, substr, msg, cmd_prefix, privilege_level):
-      buf = None
-      if substr == "[...]":
-         buf = textwrap.dedent("""
-            Oh, sorry, I meant you can query any available module or command by adding more to the help command you just used.
-
-            `{p}help` gives you a summary of all the other places you can reach via this help command, in order to find more bot commands.
-
-            `{p}help random` gives you a summary of the commands for the module of random number generation commands.
-
-            `{p}help coin` gives you a detailed explanation of what the `{p}coin` command actually does.
-
-            (Note: These commands may not work if the `Random` module is not installed.)
-            """)
-      else:
-         buf = await self._modules.get_help_detail(substr, "", privilege_level)
-         if buf is None:
-            buf = "No such command or module `{}` exists.".format(substr)
-            return buf
-         if substr is "":
-            buf = textwrap.dedent("""
-               To read more about other bot commands/functions:
-               **`{p}help [...]`**
-               """).strip() + "\n\n" + buf
-      return buf.format(p=cmd_prefix, grp="")
    
    def get_presence_timedelta(self):
       return datetime.datetime.utcnow() - self.initialization_timestamp

@@ -29,10 +29,10 @@ class TruthGame(ServerModule):
 
    _PARTICIPANT_DELIMITER = " --> "
 
-   _RULES_STRING = textwrap.dedent("""\
-   **Rules for a game of _Truth_**:
-   idk, ask the people playing it.
-   """)
+   _RULES_STRING = textwrap.dedent("""
+      **Rules for a game of _Truth_**:
+      idk, ask the people playing it.
+      """).strip()
 
    async def _initialize(self, resources):
       self._client = resources.client

@@ -100,7 +100,7 @@ class SimpleLogger(ServerModule):
 
    async def _get_help_header_text(self, privilege_level):
       buf = textwrap.dedent("""
-         This module sends simple server events to a specified channel on the server. This makes it easy for server administration to keep track of what's happening.
+         This module sends simple server event logs to a specified channel on the server. This makes it easy for server administration to keep track of what's happening.
          """).strip()
       return buf
 

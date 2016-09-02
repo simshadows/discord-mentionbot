@@ -19,21 +19,6 @@ class ServerPersistentStorage:
       ],
    }
 
-   # TODO: Figure out how schemas work.
-   # SETTINGS_JSONSCHEMA = {
-   #    "title": "Server Settings",
-   #    "properties": {
-   #       "Server Name": "string",
-   #       "Installed Modules": [
-   #          "string",
-   #       ],
-   #    },
-   #    "required": [
-   #       "Server Name",
-   #       "Installed Modules",
-   #    ],
-   # }
-
    def __init__(self, settings_filepath, server):
       self._server = server
       self._settings_filepath = settings_filepath
@@ -49,7 +34,7 @@ class ServerPersistentStorage:
       if data["Server Name"] != self._server.name:
          data["Server Name"] = self._server.name
          utils.json_write(self._settings_filepath, data=data)
-      # TODO: Add additional data verification with jsonschema
+      # TODO: Add additional data verification
       return data
 
    def save_server_settings(self, data):
@@ -85,6 +70,41 @@ class ServerPersistentStorage:
       data["bot command privileges"] = settings_dict
       self.save_server_settings(data)
       return
+
+   def save_main_help_content(self, content):
+      assert (content is None) or isinstance(content, str)
+      data = self.get_server_settings()
+      data["main_help_content"] = content
+      self.save_server_settings(data)
+      return
+
+   def get_main_help_content(self):
+      data = self.get_server_settings()
+      content = None
+      try:
+         content = data["main_help_content"]
+      except KeyError:
+         content = None
+      assert (content is None) or isinstance(content, str)
+      return content
+
+   def save_prefix(self, new_prefix):
+      assert isinstance(new_prefix, str)
+      data = self.get_server_settings()
+      data["cmd prefix"] = new_prefix
+      self.save_server_settings(data)
+      return
+
+   def get_prefix(self, default_prefix):
+      assert isinstance(default_prefix, str)
+      data = self.get_server_settings()
+      prefix = None
+      try:
+         prefix = data["cmd prefix"]
+      except KeyError:
+         prefix = default_prefix
+      assert isinstance(prefix, str)
+      return prefix
 
 
 

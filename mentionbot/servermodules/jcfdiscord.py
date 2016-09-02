@@ -160,11 +160,12 @@ class JCFDiscord(ServerModule):
       await self._client.send_msg(msg, "Assigned <@{0}> the type flair '{1}'.".format(msg.author.id, new_role_name))
       return
 
-   @cmd.add(_cmdd, "subreddit", default=True)
-   async def _cmdf_noot(self, substr, msg, privilege_level):
-      """`{cmd}` - Get a link to the JCFDiscord community's subreddit."""
-      await self._client.send_msg(msg, "Our subreddit is at https://www.reddit.com/r/JCFDiscord/.")
-      return
+   # Temporarily unavailable.
+   # @cmd.add(_cmdd, "subreddit", default=True)
+   # async def _cmdf_noot(self, substr, msg, privilege_level):
+   #    """`{cmd}` - Get a link to the JCFDiscord community's subreddit."""
+   #    await self._client.send_msg(msg, "Our subreddit is at https://www.reddit.com/r/JCFDiscord/.")
+   #    return
 
    @cmd.add(_cmdd, "swole", top=True)
    async def _cmdf_swole(self, substr, msg, privilege_level):

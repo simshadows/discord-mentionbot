@@ -101,18 +101,20 @@ class WolframAlpha(ServerModule):
       """`{cmd} [word]` - Get word definition from WA."""
       if substr == "":
          await self._client.send_msg(msg, "Error: No text input made for query. Aborting.")
-      else:
-         result = await self.wa_query("define " + substr, msg.channel)
-         buf = ""
-         try:
-            pods = list(result.pods)
-            buf = "**" + pods[0].text + "**\n" + pods[1].text
-         except:
-            print(traceback.format_exc())
-            buf = "Error: Unknown error. Aborting."
-         if len(buf) == 0:
-            buf = "No result."
-         await self._client.send_msg(msg, buf)
+         return
+
+      result = await self.wa_query("define " + substr, msg.channel)
+
+      if len(pods) <= 1:
+         await self._client.send_msg(msg, "No result.")
+         return
+
+      pods = list(result.pods)
+      buf = "**" + pods[0].text + "**\n" + pods[1].text
+      if len(buf) == 0:
+         raise Exception
+      
+      await self._client.send_msg(msg, buf)
       return
 
    @cmd.add(_cmdd, "maxpods")
