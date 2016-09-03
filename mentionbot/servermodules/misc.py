@@ -77,7 +77,7 @@ class Misc(ServerModule):
 
    @cmd.add(_cmdd, "ud", "urbandictionary", "urban", top=True)
    async def _cmdf_ud(self, substr, msg, privilege_level):
-      """`{cmd}` - Query urban dictionary."""
+      """`{cmd} [query]` - Query urban dictionary."""
       if len(substr) == 0:
          raise errors.InvalidCommandArgumentsError
       substr_encoded = urllibparse.quote(substr)

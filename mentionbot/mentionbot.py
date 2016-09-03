@@ -38,6 +38,7 @@ class MentionBot(clientextended.ClientExtended):
       self.on_member_remove_lock = asyncio.Lock()
       self.on_member_ban_lock = asyncio.Lock()
       self.on_member_unban_lock = asyncio.Lock()
+      self.on_member_update_lock = asyncio.Lock()
 
       self._conf = kwargs["config_dict"]
       assert isinstance(self._conf, dict)
@@ -262,6 +263,20 @@ class MentionBot(clientextended.ClientExtended):
       return
 
 
+   async def on_member_update(self, before, after):
+      await self.on_member_update_lock.acquire()
+      try:
+         await self._on_member_update(before, after)
+      finally:
+         self.on_member_update_lock.release()
+      return
+   async def _on_member_update(self, before, after):
+      server = before.server
+      assert server is after.server # Quick consistency check.
+      await self._bot_instances[server].on_member_update(before, after)
+      return
+
+
    async def on_server_join(self, server):
       raise RuntimeError("Undefined behaviour on server join. Must restart.")
 
@@ -412,6 +427,7 @@ class MentionBot(clientextended.ClientExtended):
       await self.on_member_remove_lock.acquire()
       await self.on_member_ban_lock.acquire()
       await self.on_member_unban_lock.acquire()
+      await self.on_member_update_lock.acquire()
       return
 
    def release_all_locks(self):
@@ -420,6 +436,7 @@ class MentionBot(clientextended.ClientExtended):
       self.on_member_remove_lock.release()
       self.on_member_ban_lock.release()
       self.on_member_unban_lock.release()
+      self.on_member_update_lock.release()
       return
 
 async def _client_login(client, token):

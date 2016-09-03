@@ -67,6 +67,11 @@ class ServerModuleGroup(HelpNode):
          await module.on_member_unban(user)
       return
 
+   async def on_member_update(self, before, after):
+      for module in self._modules_list:
+         await module.on_member_update(before, after)
+      return
+
    # Like the original get_extra_user_info method, except the tuple's
    # two fields are lists. Field 1 is a list of field 1 content from the
    # original method, and similarly with field 2.

@@ -288,6 +288,10 @@ class ServerBotInstance:
       await self._modules.on_member_unban(user)
       return
 
+   async def on_member_update(self, before, after):
+      await self._modules.on_member_update(before, after)
+      return
+
    ########################################################################################
    # CORE COMMANDS ########################################################################
    ########################################################################################
@@ -420,18 +424,19 @@ class ServerBotInstance:
          ```
          ID: {id}
          Name: {name}{optional_server_nick}
-         Avatar Hash: {avatar_hash}
          Join date: {join_date} UTC
          Server Roles:
          {roles}{optional_extra1}
          ```{optional_extra2}
          """).strip()
+      # Removed:
+      #  Avatar Hash: {avatar_hash}
 
-      avatar_buf = None
-      if user.avatar is None:
-         avatar_buf = "[no avatar]"
-      else:
-         avatar_buf = str(user.avatar)
+      # avatar_buf = None
+      # if user.avatar is None:
+      #    avatar_buf = "[no avatar]"
+      # else:
+      #    avatar_buf = str(user.avatar)
 
       server_nick_buf = None
       if user.nick is None:
@@ -458,7 +463,7 @@ class ServerBotInstance:
          "id": user.id,
          "name": user.name,
          "optional_server_nick": server_nick_buf,
-         "avatar_hash": avatar_buf,
+         # "avatar_hash": avatar_buf,
          "join_date": user.joined_at.isoformat(),
          "roles": roles_buf,
          "optional_extra1": extra1,

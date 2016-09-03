@@ -316,6 +316,15 @@ class ServerModuleWrapper(HelpNode): #  # TODO Having weird issues here...
          await self._module_method_error_handler(e)
          return
 
+   async def on_member_update(self, before, after):
+      if not self.is_active():
+         return
+      try:
+         return await self._module_instance.on_member_update(before, after)
+      except Exception as e:
+         await self._module_method_error_handler(e)
+         return
+
    async def get_extra_user_info(self, member):
       if not self.is_active():
          return None

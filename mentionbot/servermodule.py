@@ -174,6 +174,9 @@ class ServerModule(HelpNode):
    async def on_member_unban(self, user):
       pass
 
+   async def on_member_update(self, before, after):
+      pass
+
    # Returns additional information to be added to the content presented by
    # "/user".
    # RETURNS:  Returns one of two things.

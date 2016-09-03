@@ -14,7 +14,7 @@ class UserBios(ServerModule):
 
    MODULE_NAME = "User Bios"
    MODULE_SHORT_DESCRIPTION = "User biographies."
-   RECOMMENDED_CMD_NAMES = ["userbios"]
+   RECOMMENDED_CMD_NAMES = ["userbios", "userbio"]
    
    _SECRET_TOKEN = utils.SecretToken()
    _cmdd = {}
