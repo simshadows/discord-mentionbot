@@ -62,7 +62,7 @@ class UserBios(ServerModule):
       self._res.save_settings(settings)
       return
 
-   @cmd.add(_cmdd, "get")
+   @cmd.add(_cmdd, "get", default=True)
    async def _cmdf_get(self, substr, msg, privilege_level):
       """
       `{cmd} [user]` - Get the user's bio.
