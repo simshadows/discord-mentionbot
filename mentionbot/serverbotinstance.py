@@ -1058,6 +1058,21 @@ class ServerBotInstance:
          await self.process_text(right, replacement_msg) # TODO: Make this call on_message()
       return
 
+   @cmd.add(_cmdd, "chmsg")
+   @_core_command(_helpd, "admin")
+   @cmd.category("Bot Owner Only")
+   @cmd.minimum_privilege(PrivilegeLevel.BOT_OWNER)
+   async def _cmdf_chmsg(self, substr, msg, privilege_level):
+      """`{cmd} [channel] [text]` - Send the text to the target channel."""
+      (left, right) = utils.separate_left_word(substr)
+      ch_obj = self._client.search_for_channel(left, serverrestriction=self._server)
+      if ch_obj is None:
+         await self._client.send_msg(msg, "**Error:** Channel not found.")
+      else:
+         await self._client.send_msg(ch_obj, right)
+         await self._client.send_msg(msg, "Message sent to " + utils.ch_to_mention(ch_obj) + ".")
+      return
+
    @cmd.add(_cmdd, "setgame", "setgamestatus")
    @_core_command(_helpd, "admin")
    @cmd.category("Bot Owner Only")
