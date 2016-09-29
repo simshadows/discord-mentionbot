@@ -54,6 +54,10 @@ class JCFDiscord(ServerModule):
       "BOTS": "Si - Te - Fi - Ne",
       "POOP": "Di - Ar - Rh - Ea",
       "PTSD": "Tr - Ig - Ge - Rd",
+      # "PHIL": "Sh - It - He - Ad",
+      "AIDS": "In - Fe - Ct - Ed",
+      "TWAT": "Sh - It - He - Ad",
+      "NICE": "Si - Fe - Ti - Ne",
    }
    # "ESPN": "Sp - Or - Ts - Tv", "ISPN": "Or - Sp - Tv - Ts",
    # "ESPS": "Op - Sr - Ts - Tv", "ISPS": "Sr - Op - Tv - Ts",
