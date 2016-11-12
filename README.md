@@ -1,11 +1,14 @@
+# This project is no longer maintained.
+
+This has since been superceded by a new project:<br>
+https://github.com/simshadows/discord-simbot
+
 # Discord - mentionbot
 An extensible, module-based chatroom bot for [Discord](https://discordapp.com/).
 
-~~**This bot is still at a really early stage in development. It isn't particularly user-friendly, help messages are broken, and the code's rather messy at the moment. I suggest you wait until the bot's a little better-baked.**~~
+**This version is still fully functional, but I want to write a better architecture using the lessons learnt from my experience writing this first version. I considered refactoring the current one, but the design is too settled.**
 
-**I intend to rewrite mentionbot in the future. This version is still fully functional, but I want to write a better architecture using the lessons learnt from my experience writing this first version. I considered refactoring the current one, but the design is too settled.**
-
-**Problems with my current version include: Poor synchronization (can only serve one command at a time), inconsistent and illogical implementations at parts (such as the commands implementation), poor performance (lots and lots of unnecessary function calls), and I want to implement sharding, and I wrote no unit tests. Most of these problems emerged when I returned to developing the bot after a few months of hiatus. I found my design to be just too bloody complex and poorly documented. Additionally, I'd like to write components that will allow me to streamline server plugin development somehow. For example, there are a lot of commands that involve just changing one variable such as a channel...**
+**Problems with my current version include: Poor synchronization (can only serve one command at a time), inconsistent and illogical implementations at parts (such as the commands implementation), poor performance (lots and lots of unnecessary function calls), and I want to implement sharding, and I wrote no unit tests. Most of these problems emerged when I returned to developing the bot after a few months of hiatus. I found my design to be just too bloody complex and poorly documented. Additionally, I'd like to write components that will allow me to streamline server plugin development somehow. For example, there are a lot of commands that involve just changing one variable such as a channel.**
 
 # Key features:
 
