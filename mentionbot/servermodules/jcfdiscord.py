@@ -160,6 +160,7 @@ class JCFDiscord(ServerModule):
          await self._client.send_msg(msg, "Role '{}'' does not exist. Aborting with no changes.".format(new_role))
          raise errors.OperationAborted
       await utils.remove_flairs_by_name(self._client, msg.author, *self._MBTI_TYPES, case_sensitive=False)
+      await asyncio.sleep(1)
       await self._client.add_roles(msg.author, new_role)
       await self._client.send_msg(msg, "Assigned <@{0}> the type flair '{1}'.".format(msg.author.id, new_role_name))
       return
