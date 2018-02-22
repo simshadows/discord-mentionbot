@@ -81,6 +81,65 @@ class SelfServeColours(ServerModule):
       await self._client.send_msg(msg, "Assigned <@{0}> the colour #{1}.".format(member.id, rgb_code_str))
       return
 
+   @cmd.add(_cmdd, "clean")
+   @cmd.minimum_privilege(PrivilegeLevel.ADMIN)
+   async def _cmdf_clean(self, substr, msg, privilege_level):
+      """
+      Cleans out all unused colour roles.
+
+      This carries out a dry run by default, meaning that it doesn't actually delete any roles. To carry out the role deletion, use the command `{cmd} finalrun`.
+      """
+      # First process the input.
+      finalrun = False
+      if substr == "finalrun":
+         finalrun = True
+      elif substr != "":
+         raise errors.InvalidCommandArgumentsError
+      
+      # Get all colour roles
+      all_colours = {
+         x for x in self._res.server.roles if self._re_rgb_code.fullmatch(x.name)
+      }
+      # Get what's unused
+      roles_used = set()
+      for member in self._res.server.members:
+         roles_used.update(x for x in member.roles)
+      colours_unused = all_colours - roles_used
+
+      if len(colours_unused) == 0:
+         await self._client.send_msg(msg, "No unused colour roles.")
+         return
+
+      if finalrun:
+         # WE DELETE ROLES HERE.
+         await self._client.send_msg(msg, "Please wait while roles are deleted...")
+         server = self._res.server
+         client = self._client
+         for colour_role in colours_unused:
+            await client.delete_role(server, colour_role)
+
+      buf = []
+      if finalrun:
+         buf.append(str(len(colours_unused)) + " deleted:\n```")
+      else:
+         buf.append(str(len(colours_unused)) + " to be deleted:\n```")
+      #buf += ["ID: " + str(x.id) + ", Name: " + str(x.name) for x in colours_unused]
+      buf += [str(x.name) for x in colours_unused]
+      buf.append("```")
+      await self._client.send_msg(msg, "\n".join(buf))
+
+      if not finalrun:
+         buf = "This is a dryrun. As such, nothing was deleted. To delete these roles, use the command `"
+         buf += self._res.cmd_prefix + "colourmod clean finalrun`."
+         await self._client.send_msg(msg, buf)
+      return
+
+   # TODO: Maybe automatically delete unused roles here.
+   # async def on_member_remove(self, member):
+      # return
+   # async def on_member_update(self, before, after):
+      # return
+
    async def _remove_colour_roles(self, member):
       # Remove any role that is an rgb code.
       to_remove = []
